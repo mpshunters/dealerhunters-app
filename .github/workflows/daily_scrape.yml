@@ -32,7 +32,13 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: python scripts/fetch_dealer_news.py
-
+        
+      - name: Detect signals
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python scripts/detect_signal_matches.py
+        
       - name: Seed beta opportunities
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
