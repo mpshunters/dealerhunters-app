@@ -1,15 +1,14 @@
-import requests
+from supabase import create_client
+import os
 
 print("DealerHunters scraper starting...")
 
-sources = [
-    "https://www.autoremarketing.com",
-    "https://digitaldealer.com"
-]
+url = os.environ.get("SUPABASE_URL")
+key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 
-for source in sources:
-    try:
-        r = requests.get(source, timeout=20)
-        print(f"{source}: {r.status_code}")
-    except Exception as e:
-        print(f"{source}: {e}")
+if not url or not key:
+    raise Exception("Missing Supabase credentials")
+
+supabase = create_client(url, key)
+
+print("Connected to Supabase")
