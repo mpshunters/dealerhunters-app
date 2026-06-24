@@ -1,0 +1,2 @@
+const SUPABASE_URL = "https://xahazlzuxowamknucprs.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhaGF6bHp1eG93YW1rbnVjcHJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMDgxMjIsImV4cCI6MjA5Nzg4NDEyMn0.8dJRTfxWADd4T2YddQHfeZrFdo4xBaV-7PODACPc7-E";
