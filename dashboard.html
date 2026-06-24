@@ -4,9 +4,137 @@
   <meta charset="UTF-8" />
   <title>DealerHunters Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
 </head>
 <body>
-  <h1>DealerHunters Dashboard</h1>
-  <p>Dealer opportunity feed will appear here.</p>
+ <!DOCTYPE html>
+<html>
+<head>
+    <title>DealerHunters Dashboard</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+
+    <style>
+        body{
+            font-family:Arial,sans-serif;
+            background:#f5f7fb;
+            margin:0;
+            padding:20px;
+        }
+
+        h1{
+            margin-bottom:10px;
+        }
+
+        .stats{
+            background:white;
+            padding:20px;
+            border-radius:10px;
+            margin-bottom:20px;
+            box-shadow:0 2px 8px rgba(0,0,0,.08);
+        }
+
+        .card{
+            background:white;
+            padding:20px;
+            border-radius:10px;
+            margin-bottom:15px;
+            box-shadow:0 2px 8px rgba(0,0,0,.08);
+        }
+
+        .score{
+            float:right;
+            font-weight:bold;
+            color:green;
+        }
+
+        .signal{
+            color:#0d6efd;
+            font-weight:bold;
+        }
+
+        .pitch{
+            margin-top:10px;
+            color:#555;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>DealerHunters Beta</h1>
+
+<div class="stats">
+    Total Opportunities:
+    <span id="total">0</span>
+</div>
+
+<div id="results"></div>
+
+<script>
+
+const client = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+);
+
+async function loadOpportunities(){
+
+    const { data, error } = await client
+        .from("opportunities")
+        .select("*")
+        .order("confidence_score",{ascending:false});
+
+    if(error){
+        console.error(error);
+        return;
+    }
+
+    document.getElementById("total").innerText = data.length;
+
+    const container = document.getElementById("results");
+
+    data.forEach(item=>{
+
+        container.innerHTML += `
+            <div class="card">
+
+                <div class="score">
+                    ${item.confidence_score}
+                </div>
+
+                <h2>${item.dealership_name}</h2>
+
+                <p>
+                    ${item.city}, ${item.state}
+                </p>
+
+                <p class="signal">
+                    ${item.signal_type}
+                </p>
+
+                <p>
+                    ${item.ai_summary}
+                </p>
+
+                <div class="pitch">
+                    <strong>Suggested Pitch:</strong>
+                    ${item.pitch_angle}
+                </div>
+
+            </div>
+        `;
+    });
+
+}
+
+loadOpportunities();
+
+</script>
+
+</body>
+</html>
 </body>
 </html>
