@@ -11,17 +11,16 @@ if not url or not key:
 
 supabase = create_client(url, key)
 
-
 matches = supabase.table("signal_matches") \
     .select("*") \
+    .or_("processed.eq.false,processed.is.null") \
     .execute()
 
+print(f"Found {len(matches.data)} unprocessed signal matches")
 
-print(f"Found {len(matches.data)} signal matches")
-
+created = 0
 
 for match in matches.data:
-
     raw = supabase.table("raw_signals") \
         .select("*") \
         .eq("id", match["raw_signal_id"]) \
@@ -29,53 +28,29 @@ for match in matches.data:
         .execute()
 
     if not raw.data:
+        supabase.table("signal_matches").update({"processed": True}).eq("id", match["id"]).execute()
         continue
-
-
-    existing = supabase.table("opportunities") \
-        .select("id") \
-        .eq("signal_id", match["id"]) \
-        .execute()
-
-
-    if existing.data:
-        continue
-
 
     source = raw.data
 
-
     pitch = {
-        "Ownership Change": "Grand reopening campaign",
-        "Marketing Hire": "90-day traffic generation plan",
-        "Leadership Change": "New leadership growth strategy",
-        "Expansion": "Local awareness campaign"
-    }.get(
-        match["signal_type"],
-        "Dealer growth campaign"
-    )
-
+        "ownership_change": "Grand reopening campaign",
+        "new_rooftop":      "Local awareness campaign",
+        "hiring":           "90-day traffic generation plan",
+        "oem_event":        "Factory event campaign",
+    }.get(match["signal_type"], "Dealer growth campaign")
 
     supabase.table("opportunities").insert({
-
-        "signal_id": match["id"],
-
+        "signal_id":        match["id"],
         "opportunity_type": match["signal_type"],
-
-        "fit_score": match["fit_score"],
-
-        "ai_summary":
-            f"{match['signal_type']} detected from {source.get('source_name')}",
-
-        "pitch_angle":
-            pitch
-
+        "fit_score":        match["fit_score"],
+        "ai_summary":       f"{match['signal_type']} detected from {source.get('source_name')}",
+        "pitch_angle":      pitch,
     }).execute()
 
+    supabase.table("signal_matches").update({"processed": True}).eq("id", match["id"]).execute()
 
-    print(
-        f"Created opportunity: {match['signal_type']}"
-    )
+    created += 1
+    print(f"Created opportunity: {match['signal_type']} | {source.get('source_name')}")
 
-
-print("Opportunity creation complete")
+print(f"Opportunity creation complete. {created} created.")
