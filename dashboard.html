@@ -1,63 +1,99 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>DealerHunters Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js"></script>
-</head>
-<body>
- <!DOCTYPE html>
 <html>
 <head>
     <title>DealerHunters Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
 
     <style>
-        body{
-            font-family:Arial,sans-serif;
-            background:#f5f7fb;
-            margin:0;
-            padding:20px;
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f7fb;
+            margin: 0;
+            padding: 20px;
+            color: #111827;
         }
 
-        h1{
-            margin-bottom:10px;
+        h1 {
+            margin-bottom: 5px;
         }
 
-        .stats{
-            background:white;
-            padding:20px;
-            border-radius:10px;
-            margin-bottom:20px;
-            box-shadow:0 2px 8px rgba(0,0,0,.08);
+        .subtitle {
+            color: #6b7280;
+            margin-bottom: 20px;
         }
 
-        .card{
-            background:white;
-            padding:20px;
-            border-radius:10px;
-            margin-bottom:15px;
-            box-shadow:0 2px 8px rgba(0,0,0,.08);
+        .stats {
+            background: white;
+            padding: 18px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.08);
+            font-weight: bold;
         }
 
-        .score{
-            float:right;
-            font-weight:bold;
-            color:green;
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.08);
         }
 
-        .signal{
-            color:#0d6efd;
-            font-weight:bold;
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            align-items: flex-start;
         }
 
-        .pitch{
-            margin-top:10px;
-            color:#555;
+        .score {
+            font-weight: bold;
+            color: #047857;
+            background: #d1fae5;
+            padding: 6px 10px;
+            border-radius: 999px;
+            white-space: nowrap;
+        }
+
+        .location {
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .signal {
+            display: inline-block;
+            color: #1d4ed8;
+            background: #dbeafe;
+            font-weight: bold;
+            padding: 5px 9px;
+            border-radius: 999px;
+            margin-top: 12px;
+        }
+
+        .summary {
+            margin-top: 14px;
+            line-height: 1.45;
+        }
+
+        .pitch {
+            margin-top: 12px;
+            padding: 12px;
+            border-left: 4px solid #f97316;
+            background: #fff7ed;
+        }
+
+        .empty, .error {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.08);
+        }
+
+        .error {
+            color: #991b1b;
         }
     </style>
 </head>
@@ -65,76 +101,99 @@
 <body>
 
 <h1>DealerHunters Beta</h1>
+<div class="subtitle">Dealership buying signals for direct mail, digital, and traffic-generation campaigns.</div>
 
 <div class="stats">
     Total Opportunities:
-    <span id="total">0</span>
+    <span id="total">Loading...</span>
 </div>
 
 <div id="results"></div>
 
 <script>
-
 const client = supabase.createClient(
     SUPABASE_URL,
     SUPABASE_ANON_KEY
 );
 
-async function loadOpportunities(){
+function valueOrFallback(value, fallback = "Not provided") {
+    return value === null || value === undefined || value === "" ? fallback : value;
+}
+
+async function loadOpportunities() {
+    const results = document.getElementById("results");
+    const total = document.getElementById("total");
 
     const { data, error } = await client
         .from("opportunities")
         .select("*")
-        .order("confidence_score",{ascending:false});
+        .order("confidence_score", { ascending: false });
 
-    if(error){
-        console.error(error);
+    console.log("DealerHunters DATA:", data);
+    console.log("DealerHunters ERROR:", error);
+
+    if (error) {
+        total.innerText = "Error";
+        results.innerHTML = `
+            <div class="error">
+                <strong>Could not load opportunities.</strong><br>
+                ${error.message}
+            </div>
+        `;
         return;
     }
 
-    document.getElementById("total").innerText = data.length;
+    if (!data || data.length === 0) {
+        total.innerText = "0";
+        results.innerHTML = `
+            <div class="empty">
+                No opportunities found. If Supabase has rows, check RLS policies and Data API permissions for the opportunities table.
+            </div>
+        `;
+        return;
+    }
 
-    const container = document.getElementById("results");
+    total.innerText = data.length;
+    results.innerHTML = "";
 
-    data.forEach(item=>{
+    data.forEach(item => {
+        const dealershipName = valueOrFallback(item.dealership_name, "Unnamed Dealership");
+        const city = valueOrFallback(item.city, "");
+        const state = valueOrFallback(item.state, "");
+        const location = city || state ? `${city}${city && state ? ", " : ""}${state}` : "Location not provided";
 
-        container.innerHTML += `
+        const signalType = valueOrFallback(item.signal_type, item.opportunity_type || "Signal not provided");
+        const summary = valueOrFallback(item.ai_summary, "No summary available yet.");
+        const pitch = valueOrFallback(item.pitch_angle, item.recommended_offer || "No pitch recommendation yet.");
+        const score = valueOrFallback(item.confidence_score, item.fit_score || "N/A");
+
+        results.innerHTML += `
             <div class="card">
-
-                <div class="score">
-                    ${item.confidence_score}
+                <div class="card-header">
+                    <div>
+                        <h2>${dealershipName}</h2>
+                        <div class="location">${location}</div>
+                    </div>
+                    <div class="score">Score: ${score}</div>
                 </div>
 
-                <h2>${item.dealership_name}</h2>
+                <div class="signal">${signalType}</div>
 
-                <p>
-                    ${item.city}, ${item.state}
-                </p>
-
-                <p class="signal">
-                    ${item.signal_type}
-                </p>
-
-                <p>
-                    ${item.ai_summary}
-                </p>
+                <div class="summary">
+                    ${summary}
+                </div>
 
                 <div class="pitch">
-                    <strong>Suggested Pitch:</strong>
-                    ${item.pitch_angle}
+                    <strong>Suggested Pitch:</strong><br>
+                    ${pitch}
                 </div>
-
             </div>
         `;
     });
-
 }
 
 loadOpportunities();
-
 </script>
 
-</body>
-</html>
 </body>
 </html>
