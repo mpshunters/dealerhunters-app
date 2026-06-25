@@ -88,19 +88,86 @@ def generate_ai_content(raw_text, signal_type, source_name):
         )
 
 
-def find_matching_dealership(name):
+def _pick_best(rows, city, state):
+    """Among multiple candidates, prefer city+state match."""
+    if len(rows) == 1:
+        return rows[0]
+
+    def score(row):
+        s = 0
+        if city and row.get("city") and city.lower() == row["city"].lower():
+            s += 2
+        if state and row.get("state") and state.upper() == (row["state"] or "").upper():
+            s += 1
+        return s
+
+    return max(rows, key=score)
+
+
+def find_matching_dealership(name, city=None, state=None):
     if not name or name == "Unnamed Dealership":
         return None
+
+    name_clean = name.strip()
+
+    # Pass 1 — forward: DB name contains extracted name
+    # e.g. extracted="AutoNation" matches DB="AutoNation Ford Mobile"
     try:
-        result = supabase.table("dealerships") \
+        rows = supabase.table("dealerships") \
             .select("dealership_name, city, state, phone, website, franchise") \
-            .ilike("dealership_name", f"%{name}%") \
-            .limit(1) \
-            .execute()
-        return result.data[0] if result.data else None
+            .ilike("dealership_name", f"%{name_clean}%") \
+            .limit(10) \
+            .execute().data or []
+        if rows:
+            best = _pick_best(rows, city, state)
+            qual = "exact" if best["dealership_name"].lower() == name_clean.lower() else "partial"
+            print(f"    [DB match - {qual}] '{best['dealership_name']}'")
+            return best
     except Exception as e:
-        print(f"Dealership lookup failed ({e})")
-        return None
+        print(f"    Dealership lookup pass 1 failed: {e}")
+
+    # Pass 2 — reverse: extracted name contains DB name
+    # e.g. extracted="Grieger's Chrysler Dodge Jeep Ram" matches DB="Grieger's"
+    # Query by first significant word (≥4 chars), then filter in Python.
+    words = [w for w in name_clean.split() if len(w) >= 4]
+    first_word = words[0] if words else name_clean.split()[0]
+    try:
+        candidates = supabase.table("dealerships") \
+            .select("dealership_name, city, state, phone, website, franchise") \
+            .ilike("dealership_name", f"%{first_word}%") \
+            .limit(50) \
+            .execute().data or []
+        reverse = [
+            r for r in candidates
+            if r.get("dealership_name")
+            and len(r["dealership_name"]) >= 5
+            and r["dealership_name"].lower() in name_clean.lower()
+        ]
+        if reverse:
+            best = _pick_best(reverse, city, state)
+            print(f"    [DB match - partial] '{best['dealership_name']}' (reverse contains)")
+            return best
+    except Exception as e:
+        print(f"    Dealership lookup pass 2 failed: {e}")
+
+    # Pass 3 — first word + state: last resort when name is too generic
+    # e.g. "AutoNation" + "CA" avoids cross-state false positives
+    if state:
+        try:
+            rows = supabase.table("dealerships") \
+                .select("dealership_name, city, state, phone, website, franchise") \
+                .ilike("dealership_name", f"%{first_word}%") \
+                .eq("state", state.upper()) \
+                .limit(5) \
+                .execute().data or []
+            if rows:
+                best = _pick_best(rows, city, state)
+                print(f"    [DB match - first word] '{best['dealership_name']}' via '{first_word}' + {state}")
+                return best
+        except Exception as e:
+            print(f"    Dealership lookup pass 3 failed: {e}")
+
+    return None
 
 
 matches = supabase.table("signal_matches") \
@@ -139,7 +206,7 @@ for match in matches.data:
         source.get("source_name", "unknown source"),
     )
 
-    matched = find_matching_dealership(dealer["dealership_name"])
+    matched = find_matching_dealership(dealer["dealership_name"], dealer.get("city"), dealer.get("state"))
 
     record = {
         "signal_id":        match["id"],
