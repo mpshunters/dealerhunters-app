@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 from supabase import create_client
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
+from datetime import datetime, timezone
 import requests
 import re
 import os
@@ -152,6 +153,11 @@ for source in sources.data:
         except Exception as e:
             print(f"  Skipped {article_url}: {e}")
             continue
+
+    supabase.table("source_registry").update({
+        "last_scraped_at": datetime.now(timezone.utc).isoformat(),
+        "last_error":      None,
+    }).eq("id", source_id).execute()
 
     print(f"  {inserted} new articles from {source_name}")
     total_inserted += inserted
