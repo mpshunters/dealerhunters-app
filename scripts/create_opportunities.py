@@ -84,7 +84,7 @@ def generate_ai_content(raw_text, signal_type, source_name):
 
 matches = supabase.table("signal_matches") \
     .select("*") \
-    .or_("processed.eq.false,processed.is.null") \
+    .or_("processed.is.false,processed.is.null") \
     .execute()
 
 print(f"Found {len(matches.data)} unprocessed signal matches")
