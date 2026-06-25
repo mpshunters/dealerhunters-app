@@ -1,195 +1,395 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>DealerHunters Dashboard</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <title>DealerHunters</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="config.js"></script>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: #ECEEF2;
+      color: #111827;
+      min-height: 100vh;
+    }
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f5f7fb;
-            margin: 0;
-            padding: 20px;
-            color: #111827;
-        }
+    /* ── Header ── */
+    .header {
+      background: #1A3A5C;
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
 
-        h1 {
-            margin-bottom: 5px;
-        }
+    .logo-wordmark {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
 
-        .subtitle {
-            color: #6b7280;
-            margin-bottom: 20px;
-        }
+    .logo-name {
+      font-size: 21px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.4px;
+      line-height: 1;
+    }
 
-        .stats {
-            background: white;
-            padding: 18px 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,.08);
-            font-weight: bold;
-        }
+    .logo-tagline {
+      font-size: 11.5px;
+      color: rgba(255,255,255,0.55);
+      font-weight: 400;
+      letter-spacing: 0.1px;
+    }
 
-        .card {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,.08);
-        }
+    /* ── Main ── */
+    .main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 28px 16px 48px;
+    }
 
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            gap: 20px;
-            align-items: flex-start;
-        }
+    /* ── Stats bar ── */
+    .stats-bar {
+      background: white;
+      border-radius: 10px;
+      padding: 14px 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: #6B7280;
+    }
 
-        .score {
-            font-weight: bold;
-            color: #047857;
-            background: #d1fae5;
-            padding: 6px 10px;
-            border-radius: 999px;
-            white-space: nowrap;
-        }
+    .stats-count {
+      font-size: 22px;
+      font-weight: 800;
+      color: #1A3A5C;
+    }
 
-        .location {
-            color: #6b7280;
-            margin-top: 4px;
-        }
+    /* ── Card ── */
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      margin-bottom: 16px;
+      padding: 22px 24px 18px;
+      border-left: 4px solid transparent;
+      transition: border-color 0.25s ease;
+    }
 
-        .signal {
-            display: inline-block;
-            color: #1d4ed8;
-            background: #dbeafe;
-            font-weight: bold;
-            padding: 5px 9px;
-            border-radius: 999px;
-            margin-top: 12px;
-        }
+    .card.contacted {
+      border-left-color: #059669;
+    }
 
-        .summary {
-            margin-top: 14px;
-            line-height: 1.45;
-        }
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+      gap: 12px;
+    }
 
-        .pitch {
-            margin-top: 12px;
-            padding: 12px;
-            border-left: 4px solid #f97316;
-            background: #fff7ed;
-        }
+    .card-identity {
+      flex: 1;
+      min-width: 0;
+    }
 
-        .empty, .error {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,.08);
-        }
+    .dealer-name {
+      font-size: 19px;
+      font-weight: 700;
+      color: #111827;
+      line-height: 1.25;
+    }
 
-        .error {
-            color: #991b1b;
-        }
-    </style>
+    .location {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: #9CA3AF;
+      font-size: 13px;
+      margin-top: 5px;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 999px;
+      margin-bottom: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .summary {
+      font-size: 14px;
+      line-height: 1.65;
+      color: #374151;
+      margin-bottom: 14px;
+    }
+
+    /* ── Pitch box ── */
+    .pitch-box {
+      border-left: 4px solid #E8401C;
+      background: #FFF8F6;
+      padding: 11px 14px;
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 18px;
+    }
+
+    .pitch-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #E8401C;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      margin-bottom: 4px;
+    }
+
+    .pitch-text {
+      font-size: 13.5px;
+      font-weight: 500;
+      color: #1A3A5C;
+      line-height: 1.5;
+    }
+
+    /* ── Card footer ── */
+    .card-footer {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .btn-contact {
+      background: #1A3A5C;
+      color: white;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      letter-spacing: 0.1px;
+      transition: background 0.15s ease;
+    }
+
+    .btn-contact:hover:not(:disabled) {
+      background: #E8401C;
+    }
+
+    .btn-contact.is-contacted {
+      background: #ECFDF5;
+      color: #059669;
+      cursor: default;
+    }
+
+    /* ── States ── */
+    .state-card {
+      background: white;
+      border-radius: 12px;
+      padding: 48px 24px;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      color: #6B7280;
+      font-size: 15px;
+    }
+
+    .state-card.error { color: #991B1B; }
+  </style>
 </head>
-
 <body>
 
-<h1>DealerHunters Beta</h1>
-<div class="subtitle">Dealership buying signals for direct mail, digital, and traffic-generation campaigns.</div>
+<header class="header">
+  <!-- Bullseye + SUV logo -->
+  <svg width="46" height="46" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <!-- Outer ring -->
+    <circle cx="24" cy="24" r="22" stroke="#E8401C" stroke-width="2.5"/>
+    <!-- Inner ring -->
+    <circle cx="24" cy="24" r="13.5" stroke="#E8401C" stroke-width="2"/>
+    <!-- Crosshairs -->
+    <line x1="24" y1="1"  x2="24" y2="10"  stroke="#E8401C" stroke-width="2" stroke-linecap="round"/>
+    <line x1="24" y1="38" x2="24" y2="47"  stroke="#E8401C" stroke-width="2" stroke-linecap="round"/>
+    <line x1="1"  y1="24" x2="10" y2="24"  stroke="#E8401C" stroke-width="2" stroke-linecap="round"/>
+    <line x1="38" y1="24" x2="47" y2="24"  stroke="#E8401C" stroke-width="2" stroke-linecap="round"/>
+    <!-- SUV body -->
+    <path d="M8 27 H40 V34 Q40 36 38 36 H10 Q8 36 8 34 Z" fill="#E8401C"/>
+    <!-- SUV roof/cab -->
+    <path d="M11 27 L14.5 20 H32.5 L37 27 Z" fill="#E8401C"/>
+    <!-- Window -->
+    <path d="M16 26.5 L18.5 21.5 H30 L33.5 26.5 Z" fill="#1A3A5C" opacity="0.45"/>
+    <!-- Front wheel -->
+    <circle cx="32.5" cy="36" r="4"   fill="#1A3A5C"/>
+    <circle cx="32.5" cy="36" r="2"   fill="white"/>
+    <!-- Rear wheel -->
+    <circle cx="15.5" cy="36" r="4"   fill="#1A3A5C"/>
+    <circle cx="15.5" cy="36" r="2"   fill="white"/>
+  </svg>
 
-<div class="stats">
-    Total Opportunities:
-    <span id="total">Loading...</span>
-</div>
+  <div class="logo-wordmark">
+    <span class="logo-name">DealerHunters</span>
+    <span class="logo-tagline">Automotive buying signals for CR Advertising</span>
+  </div>
+</header>
 
-<div id="results"></div>
+<main class="main">
+  <div class="stats-bar">
+    <span class="stats-count" id="total">—</span>
+    <span>active opportunities</span>
+  </div>
+  <div id="results"></div>
+</main>
 
 <script>
-const client = supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY
-);
+const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-function valueOrFallback(value, fallback = "Not provided") {
-    return value === null || value === undefined || value === "" ? fallback : value;
+const SIGNAL_CONFIG = {
+  'ownership_change':  { label: 'Ownership Change',  color: '#B91C1C', bg: '#FEE2E2' },
+  'hiring':            { label: 'Marketing Hire',    color: '#1D4ED8', bg: '#DBEAFE' },
+  'new_rooftop':       { label: 'Expansion',         color: '#047857', bg: '#D1FAE5' },
+  'oem_event':         { label: 'OEM Event',         color: '#6D28D9', bg: '#EDE9FE' },
+  // Legacy Title Case (seeded records)
+  'Ownership Change':  { label: 'Ownership Change',  color: '#B91C1C', bg: '#FEE2E2' },
+  'Marketing Hire':    { label: 'Marketing Hire',    color: '#1D4ED8', bg: '#DBEAFE' },
+  'Leadership Change': { label: 'Leadership Change', color: '#6D28D9', bg: '#EDE9FE' },
+  'Expansion':         { label: 'Expansion',         color: '#047857', bg: '#D1FAE5' },
+};
+
+const DEFAULT_SIGNAL = { label: 'Signal Detected', color: '#374151', bg: '#F3F4F6' };
+
+const PIN_ICON = `<svg width="11" height="14" viewBox="0 0 12 15" fill="none">
+  <path d="M6 0C3.51 0 1.5 2.01 1.5 4.5c0 3.375 4.5 9 4.5 9s4.5-5.625 4.5-9C10.5 2.01 8.49 0 6 0zm0 6.375A1.875 1.875 0 1 1 6 2.625a1.875 1.875 0 0 1 0 3.75z" fill="#9CA3AF"/>
+</svg>`;
+
+function scoreGauge(rawScore) {
+  const score = Math.min(Math.max(Number(rawScore) || 0, 0), 100);
+  const r = 20;
+  const circ = +(2 * Math.PI * r).toFixed(2);
+  const offset = +(circ * (1 - score / 100)).toFixed(2);
+  const stroke = score >= 80 ? '#059669' : score >= 50 ? '#E8401C' : '#9CA3AF';
+
+  return `
+    <svg width="58" height="58" viewBox="0 0 60 60" style="flex-shrink:0">
+      <circle cx="30" cy="30" r="${r}" fill="none" stroke="#E5E7EB" stroke-width="6"/>
+      <circle cx="30" cy="30" r="${r}" fill="none" stroke="${stroke}" stroke-width="6"
+        stroke-dasharray="${circ}" stroke-dashoffset="${offset}"
+        stroke-linecap="round" transform="rotate(-90 30 30)"/>
+      <text x="30" y="35" text-anchor="middle"
+        font-family="Inter,system-ui,sans-serif" font-size="13" font-weight="700"
+        fill="#111827">${score}</text>
+    </svg>`;
+}
+
+async function markContacted(id, card, btn) {
+  btn.textContent = 'Saving…';
+  btn.disabled = true;
+
+  const { error } = await client
+    .from('opportunities')
+    .update({ status: 'contacted' })
+    .eq('id', id);
+
+  if (error) {
+    console.error('Mark contacted error:', error);
+    btn.textContent = 'Mark Contacted';
+    btn.disabled = false;
+    return;
+  }
+
+  card.classList.add('contacted');
+  btn.textContent = '✓ Contacted';
+  btn.classList.add('is-contacted');
 }
 
 async function loadOpportunities() {
-    const results = document.getElementById("results");
-    const total = document.getElementById("total");
+  const results = document.getElementById('results');
+  const totalEl = document.getElementById('total');
 
-    const { data, error } = await client
-        .from("opportunities")
-        .select("*")
-        .order("confidence_score", { ascending: false });
+  const { data, error } = await client
+    .from('opportunities')
+    .select('*')
+    .order('confidence_score', { ascending: false });
 
-    console.log("DealerHunters DATA:", data);
-    console.log("DealerHunters ERROR:", error);
+  if (error) {
+    totalEl.textContent = '—';
+    results.innerHTML = `<div class="state-card error">
+      <strong>Could not load opportunities.</strong><br><br>${error.message}
+    </div>`;
+    return;
+  }
 
-    if (error) {
-        total.innerText = "Error";
-        results.innerHTML = `
-            <div class="error">
-                <strong>Could not load opportunities.</strong><br>
-                ${error.message}
-            </div>
-        `;
-        return;
+  if (!data || data.length === 0) {
+    totalEl.textContent = '0';
+    results.innerHTML = `<div class="state-card">
+      No opportunities yet. The pipeline populates this automatically each day.
+    </div>`;
+    return;
+  }
+
+  totalEl.textContent = data.length;
+  results.innerHTML = '';
+
+  data.forEach(item => {
+    const name      = item.dealership_name || 'Unnamed Dealership';
+    const city      = item.city  || '';
+    const state     = item.state || '';
+    const location  = [city, state].filter(Boolean).join(', ') || 'Location unavailable';
+    const rawType   = item.signal_type || item.opportunity_type || '';
+    const signal    = SIGNAL_CONFIG[rawType] || DEFAULT_SIGNAL;
+    const summary   = item.ai_summary   || 'No summary available.';
+    const pitch     = item.pitch_angle  || item.recommended_offer || 'No pitch available.';
+    const score     = item.confidence_score ?? item.fit_score ?? 0;
+    const contacted = item.status === 'contacted';
+
+    const card = document.createElement('div');
+    card.className = 'card' + (contacted ? ' contacted' : '');
+
+    card.innerHTML = `
+      <div class="card-top">
+        <div class="card-identity">
+          <div class="dealer-name">${name}</div>
+          <div class="location">${PIN_ICON} ${location}</div>
+        </div>
+        ${scoreGauge(score)}
+      </div>
+
+      <span class="badge" style="color:${signal.color}; background:${signal.bg}">
+        ${signal.label}
+      </span>
+
+      <div class="summary">${summary}</div>
+
+      <div class="pitch-box">
+        <div class="pitch-label">Suggested Pitch</div>
+        <div class="pitch-text">${pitch}</div>
+      </div>
+
+      <div class="card-footer">
+        <button
+          class="btn-contact${contacted ? ' is-contacted' : ''}"
+          data-id="${item.id}"
+          ${contacted ? 'disabled' : ''}>
+          ${contacted ? '✓ Contacted' : 'Mark Contacted'}
+        </button>
+      </div>
+    `;
+
+    if (!contacted) {
+      card.querySelector('.btn-contact')
+        .addEventListener('click', e => markContacted(item.id, card, e.currentTarget));
     }
 
-    if (!data || data.length === 0) {
-        total.innerText = "0";
-        results.innerHTML = `
-            <div class="empty">
-                No opportunities found. If Supabase has rows, check RLS policies and Data API permissions for the opportunities table.
-            </div>
-        `;
-        return;
-    }
-
-    total.innerText = data.length;
-    results.innerHTML = "";
-
-    data.forEach(item => {
-        const dealershipName = valueOrFallback(item.dealership_name, "Unnamed Dealership");
-        const city = valueOrFallback(item.city, "");
-        const state = valueOrFallback(item.state, "");
-        const location = city || state ? `${city}${city && state ? ", " : ""}${state}` : "Location not provided";
-
-        const signalType = valueOrFallback(item.signal_type, item.opportunity_type || "Signal not provided");
-        const summary = valueOrFallback(item.ai_summary, "No summary available yet.");
-        const pitch = valueOrFallback(item.pitch_angle, item.recommended_offer || "No pitch recommendation yet.");
-        const score = valueOrFallback(item.confidence_score, item.fit_score || "N/A");
-
-        results.innerHTML += `
-            <div class="card">
-                <div class="card-header">
-                    <div>
-                        <h2>${dealershipName}</h2>
-                        <div class="location">${location}</div>
-                    </div>
-                    <div class="score">Score: ${score}</div>
-                </div>
-
-                <div class="signal">${signalType}</div>
-
-                <div class="summary">
-                    ${summary}
-                </div>
-
-                <div class="pitch">
-                    <strong>Suggested Pitch:</strong><br>
-                    ${pitch}
-                </div>
-            </div>
-        `;
-    });
+    results.appendChild(card);
+  });
 }
 
 loadOpportunities();
