@@ -153,6 +153,7 @@ for match in matches.data:
         "ai_summary":       ai_summary,
         "pitch_angle":      pitch_angle,
         "source_name":      source.get("source_name"),
+        "source_url":       source.get("article_url"),
     }
 
     if matched:
