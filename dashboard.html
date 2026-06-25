@@ -18,6 +18,7 @@
       background-size: 24px 24px;
       color: #1A1F36;
       min-height: 100vh;
+      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10' fill='none' stroke='%2310B981' stroke-width='1.2'/%3E%3Ccircle cx='12' cy='12' r='4' fill='none' stroke='%2310B981' stroke-width='1.2'/%3E%3Cline x1='12' y1='1' x2='12' y2='6' stroke='%2310B981' stroke-width='1.2'/%3E%3Cline x1='12' y1='18' x2='12' y2='23' stroke='%2310B981' stroke-width='1.2'/%3E%3Cline x1='1' y1='12' x2='6' y2='12' stroke='%2310B981' stroke-width='1.2'/%3E%3Cline x1='18' y1='12' x2='23' y2='12' stroke='%2310B981' stroke-width='1.2'/%3E%3C/svg%3E") 12 12, crosshair;
     }
 
     /* ── Header ───────────────────────────────────────────────── */
@@ -1763,11 +1764,11 @@ async function loadOpportunities() {
 
   if (dealerResult.error) {
     console.warn('Dealerships count unavailable:', dealerResult.error.message);
-    animateCount(statDealerships, 19000);
+    animateCount(statDealerships, 25000);
   } else if (dealerResult.count != null && dealerResult.count > 0) {
     animateCount(statDealerships, dealerResult.count);
   } else {
-    animateCount(statDealerships, 19000);
+    animateCount(statDealerships, 25000);
   }
 
   if (error) {
