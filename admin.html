@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>DealerHunters Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- config.js provides SUPABASE_URL and SUPABASE_ANON_KEY -->
+  <script src="config.js"></script>
+  <!--
+    Create admin-config.js (do NOT commit it — add to .gitignore):
+      const ADMIN_SERVICE_KEY = 'your-supabase-service-role-key';
+      const ADMIN_GH_TOKEN    = 'ghp_your-github-pat-with-actions-write';
+    Without these, write operations and pipeline trigger will not work.
+  -->
+  <script src="admin-config.js" onerror="console.warn('admin-config.js not found — write ops disabled')"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green:   #10B981;
+      --green-l: #34D399;
+      --red:     #EF4444;
+      --amber:   #F59E0B;
+      --blue:    #3B82F6;
+      --purple:  #8B5CF6;
+      --header:  #111827;
+      --sidebar: #1F2937;
+      --bg:      #F9FAFB;
+      --card:    #FFFFFF;
+      --border:  #E5E7EB;
+      --text:    #111827;
+      --muted:   #6B7280;
+      --faint:   #9CA3AF;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Auth overlay ───────────────────────────────────────────── */
+    #auth-overlay {
+      position: fixed; inset: 0;
+      background: #0D1117;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999;
+    }
+    #auth-overlay.hidden { display: none; }
+
+    .auth-card {
+      background: #1F2937;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 40px 44px;
+      width: 360px;
+      text-align: center;
+    }
+    .auth-logo { font-size: 24px; font-weight: 800; margin-bottom: 6px; }
+    .auth-logo .dealer  { color: #fff; }
+    .auth-logo .hunters { color: var(--green); }
+    .auth-subtitle { font-size: 12px; color: rgba(255,255,255,0.35); margin-bottom: 28px; }
+    .auth-label { display: block; text-align: left; font-size: 11px; font-weight: 600;
+                  color: rgba(255,255,255,0.45); letter-spacing: 0.7px; text-transform: uppercase;
+                  margin-bottom: 7px; }
+    .auth-input {
+      width: 100%; padding: 11px 14px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      color: #fff; font-size: 14px; font-family: inherit;
+      outline: none; transition: border-color 0.15s;
+    }
+    .auth-input:focus { border-color: var(--green); }
+    .auth-btn {
+      width: 100%; margin-top: 16px;
+      padding: 12px; border: none; border-radius: 8px;
+      background: var(--green); color: #fff;
+      font-size: 14px; font-weight: 600; font-family: inherit;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .auth-btn:hover { background: var(--green-l); }
+    .auth-error {
+      margin-top: 12px; font-size: 12px;
+      color: var(--red); display: none;
+    }
+
+    /* ── Header ─────────────────────────────────────────────────── */
+    .header {
+      background: var(--header);
+      height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 28px;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 100;
+    }
+    .header::after {
+      content: '';
+      position: absolute; bottom: 0; left: 0;
+      height: 2px; width: 100%;
+      background: linear-gradient(90deg, transparent 0%, #10B981 30%, #34D399 50%, #10B981 70%, transparent 100%);
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
+    .logo-name { font-size: 19px; font-weight: 800; letter-spacing: -0.4px; line-height: 1; }
+    .logo-name .dealer  { color: #fff; }
+    .logo-name .hunters { color: var(--green); }
+    .admin-badge {
+      background: rgba(139,92,246,0.2);
+      border: 1px solid rgba(139,92,246,0.4);
+      color: #A78BFA;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.8px; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 5px;
+    }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .header-env {
+      font-size: 11px; color: rgba(255,255,255,0.35);
+    }
+    .header-env strong { color: rgba(255,255,255,0.6); }
+    #logout-btn {
+      background: none; border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 6px; padding: 4px 12px;
+      color: rgba(255,255,255,0.5); font-size: 12px; font-family: inherit;
+      cursor: pointer; transition: all 0.15s;
+    }
+    #logout-btn:hover { color: #fff; border-color: rgba(255,255,255,0.35); }
+
+    /* ── Layout ─────────────────────────────────────────────────── */
+    .app-body {
+      display: flex; flex: 1; overflow: hidden; height: calc(100vh - 60px);
+    }
+
+    /* ── Sidebar ─────────────────────────────────────────────────── */
+    .sidebar {
+      width: 220px; flex-shrink: 0;
+      background: var(--sidebar);
+      padding: 20px 0;
+      overflow-y: auto;
+      display: flex; flex-direction: column;
+    }
+    .sidebar-section-label {
+      font-size: 9.5px; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: rgba(255,255,255,0.25);
+      padding: 18px 20px 6px;
+    }
+    .sidebar-section-label:first-child { padding-top: 4px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 20px; cursor: pointer;
+      color: rgba(255,255,255,0.5);
+      font-size: 13px; font-weight: 500;
+      transition: background 0.12s, color 0.12s;
+      border-left: 2px solid transparent;
+      user-select: none;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.8); }
+    .nav-item.active {
+      background: rgba(16,185,129,0.1);
+      color: var(--green);
+      border-left-color: var(--green);
+    }
+    .nav-icon { font-size: 14px; width: 18px; text-align: center; }
+    .nav-badge {
+      margin-left: auto;
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.4);
+      font-size: 10px; font-weight: 600;
+      padding: 1px 6px; border-radius: 999px;
+    }
+    .nav-item.active .nav-badge { background: rgba(16,185,129,0.15); color: var(--green); }
+
+    .sidebar-footer {
+      margin-top: auto; padding: 16px 20px;
+      font-size: 10.5px; color: rgba(255,255,255,0.2);
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    /* ── Main content ────────────────────────────────────────────── */
+    .main {
+      flex: 1; overflow-y: auto;
+      padding: 28px 36px;
+    }
+
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .section-title {
+      font-size: 20px; font-weight: 700; color: var(--text);
+      margin-bottom: 4px;
+    }
+    .section-desc {
+      font-size: 13px; color: var(--muted);
+      margin-bottom: 24px;
+    }
+
+    /* ── Stat row ────────────────────────────────────────────────── */
+    .stat-row { display: flex; gap: 14px; margin-bottom: 24px; flex-wrap: wrap; }
+    .mini-stat {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px 18px; min-width: 130px; flex: 1;
+    }
+    .mini-stat-val { font-size: 24px; font-weight: 700; color: var(--text); line-height: 1; }
+    .mini-stat-val.green { color: var(--green); }
+    .mini-stat-val.red   { color: var(--red); }
+    .mini-stat-val.amber { color: var(--amber); }
+    .mini-stat-val.blue  { color: var(--blue); }
+    .mini-stat-lbl { font-size: 11px; color: var(--faint); margin-top: 5px; font-weight: 500; }
+
+    /* ── Cards ───────────────────────────────────────────────────── */
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px 24px; margin-bottom: 16px;
+    }
+    .card-title { font-size: 14px; font-weight: 600; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+
+    /* ── Pipeline step cards ─────────────────────────────────────── */
+    .steps-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .step-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px 16px;
+    }
+    .step-card.ok    { border-left: 3px solid var(--green); }
+    .step-card.warn  { border-left: 3px solid var(--amber); }
+    .step-card.error { border-left: 3px solid var(--red); }
+    .step-name { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .step-time { font-size: 13px; color: var(--text); font-weight: 500; }
+    .step-status { font-size: 11px; margin-top: 4px; }
+    .step-status.ok    { color: var(--green); }
+    .step-status.warn  { color: var(--amber); }
+    .step-status.error { color: var(--red); }
+
+    .run-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
+    .countdown-pill {
+      background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2);
+      border-radius: 999px; padding: 6px 14px;
+      font-size: 12px; color: rgba(16,185,129,0.9); font-weight: 600;
+    }
+    .run-pill {
+      background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.25);
+      border-radius: 999px; padding: 6px 14px;
+      font-size: 12px; color: #A78BFA; font-weight: 600;
+    }
+
+    /* ── Tables ──────────────────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th {
+      text-align: left; font-size: 10.5px; font-weight: 700;
+      color: var(--faint); text-transform: uppercase; letter-spacing: 0.6px;
+      padding: 10px 12px; border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    tbody tr { border-bottom: 1px solid #F3F4F6; transition: background 0.1s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #F9FAFB; }
+    tbody td { padding: 11px 12px; vertical-align: middle; }
+    td.mono { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 11.5px; color: var(--muted); }
+
+    .table-toolbar {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 14px; flex-wrap: wrap;
+    }
+
+    /* ── Badges ──────────────────────────────────────────────────── */
+    .status-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; }
+    .dot-green  { background: var(--green); }
+    .dot-amber  { background: var(--amber); }
+    .dot-red    { background: var(--red); }
+    .dot-gray   { background: #D1D5DB; }
+
+    .pill {
+      display: inline-block; padding: 2px 9px; border-radius: 999px;
+      font-size: 11px; font-weight: 600;
+    }
+    .pill-green  { background: #D1FAE5; color: #065F46; }
+    .pill-amber  { background: #FEF3C7; color: #92400E; }
+    .pill-red    { background: #FEE2E2; color: #991B1B; }
+    .pill-gray   { background: #F3F4F6; color: #6B7280; }
+    .pill-blue   { background: #DBEAFE; color: #1E40AF; }
+    .pill-purple { background: #EDE9FE; color: #5B21B6; }
+
+    /* ── Buttons ─────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px; border-radius: 7px; border: none;
+      font-size: 12px; font-weight: 600; font-family: inherit;
+      cursor: pointer; transition: all 0.15s; white-space: nowrap;
+    }
+    .btn-primary { background: var(--green); color: #fff; }
+    .btn-primary:hover { background: #059669; }
+    .btn-secondary { background: #F3F4F6; color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: var(--border); }
+    .btn-danger { background: #FEE2E2; color: var(--red); border: 1px solid #FECACA; }
+    .btn-danger:hover { background: #FECACA; }
+    .btn-purple { background: rgba(139,92,246,0.12); color: #7C3AED; border: 1px solid rgba(139,92,246,0.25); }
+    .btn-purple:hover { background: rgba(139,92,246,0.2); }
+    .btn-sm { padding: 4px 10px; font-size: 11px; border-radius: 5px; }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* ── Toggle switch ───────────────────────────────────────────── */
+    .toggle-wrap { display: inline-flex; align-items: center; gap: 6px; }
+    .toggle {
+      position: relative; width: 34px; height: 18px;
+      cursor: pointer;
+    }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; inset: 0;
+      background: #D1D5DB; border-radius: 999px;
+      transition: background 0.2s;
+    }
+    .toggle-slider::before {
+      content: ''; position: absolute;
+      height: 12px; width: 12px; border-radius: 50%;
+      left: 3px; top: 3px; background: white;
+      transition: transform 0.2s;
+    }
+    input:checked + .toggle-slider { background: var(--green); }
+    input:checked + .toggle-slider::before { transform: translateX(16px); }
+
+    /* ── Inputs ──────────────────────────────────────────────────── */
+    .input, .select {
+      padding: 8px 11px; border: 1px solid var(--border);
+      border-radius: 7px; font-size: 13px; font-family: inherit;
+      color: var(--text); background: white; outline: none;
+      transition: border-color 0.15s;
+    }
+    .input:focus, .select:focus { border-color: var(--green); }
+    .input-sm { padding: 5px 9px; font-size: 12px; }
+
+    /* ── Bar chart ───────────────────────────────────────────────── */
+    .bar-chart { display: flex; flex-direction: column; gap: 7px; }
+    .bar-row { display: flex; align-items: center; gap: 10px; }
+    .bar-label { width: 44px; font-size: 11px; font-weight: 600; color: var(--muted); text-align: right; flex-shrink: 0; }
+    .bar-track { flex: 1; height: 18px; background: #F3F4F6; border-radius: 4px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 4px; background: var(--green); transition: width 0.6s ease; }
+    .bar-fill.low { background: var(--amber); }
+    .bar-fill.critical { background: var(--red); }
+    .bar-count { width: 52px; font-size: 11.5px; font-weight: 600; color: var(--text); text-align: right; flex-shrink: 0; }
+
+    /* ── Error log ───────────────────────────────────────────────── */
+    .error-log {
+      background: #0D1117; border-radius: 8px;
+      padding: 14px 16px; font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 11.5px; color: #C9D1D9; max-height: 220px; overflow-y: auto;
+    }
+    .error-log-entry { padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .error-log-entry:last-child { border-bottom: none; }
+    .err-time { color: rgba(255,255,255,0.3); margin-right: 8px; }
+    .err-msg  { color: #FF7B72; }
+    .err-step { color: rgba(255,255,255,0.5); margin-right: 6px; }
+    .err-empty { color: rgba(255,255,255,0.25); font-style: italic; }
+
+    /* ── Modal ───────────────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 500; display: none;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: white; border-radius: 14px;
+      padding: 28px 32px; width: 440px; max-width: 94vw;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+    .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 18px; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+    .form-row { margin-bottom: 14px; }
+    .form-label { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 5px; display: block; }
+    .form-input { width: 100%; padding: 8px 11px; border: 1px solid var(--border); border-radius: 7px; font-size: 13px; font-family: inherit; outline: none; }
+    .form-input:focus { border-color: var(--green); }
+
+    /* ── Toast ───────────────────────────────────────────────────── */
+    #toast {
+      position: fixed; bottom: 28px; right: 28px;
+      background: #111827; color: white;
+      padding: 12px 18px; border-radius: 9px;
+      font-size: 13px; font-weight: 500;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      z-index: 999; opacity: 0; transform: translateY(8px);
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none;
+    }
+    #toast.show { opacity: 1; transform: translateY(0); }
+    #toast.success::before { content: '✓  '; color: var(--green); }
+    #toast.error::before   { content: '✕  '; color: var(--red); }
+
+    /* ── Opportunities table extras ──────────────────────────────── */
+    .opp-filter-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .bulk-bar {
+      display: none; align-items: center; gap: 10px;
+      background: #EEF2FF; border: 1px solid #C7D2FE;
+      border-radius: 8px; padding: 8px 14px; margin-bottom: 10px;
+      font-size: 13px; font-weight: 500; color: #3730A3;
+    }
+    .bulk-bar.show { display: flex; }
+    #selected-count { font-weight: 700; }
+
+    /* ── Run pill live indicator ──────────────────────────────────── */
+    .gh-run-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; border-radius: 8px;
+      background: var(--card); border: 1px solid var(--border);
+      margin-bottom: 8px; font-size: 13px;
+    }
+    .gh-run-status { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .gh-run-status.success    { background: var(--green); }
+    .gh-run-status.failure    { background: var(--red); }
+    .gh-run-status.in_progress { background: var(--amber); animation: pulse 1.5s infinite; }
+    .gh-run-status.queued      { background: var(--blue); }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .gh-run-name { font-weight: 500; flex: 1; }
+    .gh-run-time { font-size: 11px; color: var(--faint); }
+    .gh-run-link { font-size: 11px; color: var(--blue); text-decoration: none; }
+    .gh-run-link:hover { text-decoration: underline; }
+
+    /* ── Keywords chip display ───────────────────────────────────── */
+    .kw-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+    .kw-chip {
+      background: #F3F4F6; color: var(--muted);
+      font-size: 11px; padding: 2px 7px; border-radius: 4px;
+    }
+
+    /* ── Digest preview ──────────────────────────────────────────── */
+    .digest-preview-box {
+      border: 1px solid var(--border); border-radius: 10px;
+      padding: 20px; max-height: 340px; overflow-y: auto;
+      background: #FAFAFA;
+    }
+
+    /* ── Missing states ──────────────────────────────────────────── */
+    .missing-states { display: flex; flex-wrap: wrap; gap: 7px; }
+    .state-chip {
+      font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 5px;
+    }
+    .state-chip.ok      { background: #D1FAE5; color: #065F46; }
+    .state-chip.warn    { background: #FEF3C7; color: #92400E; }
+    .state-chip.missing { background: #FEE2E2; color: #991B1B; }
+
+    /* ── Scrollbar ───────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 99px; }
+
+    /* ── Responsive ──────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .sidebar { width: 52px; }
+      .nav-item span:not(.nav-icon) { display: none; }
+      .sidebar-section-label, .sidebar-footer { display: none; }
+      .main { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Auth overlay ─────────────────────────────────────────────── -->
+<div id="auth-overlay">
+  <div class="auth-card">
+    <div class="auth-logo"><span class="dealer">Dealer</span><span class="hunters">Hunters</span></div>
+    <div class="auth-subtitle">Admin Command Center</div>
+    <label class="auth-label">Password</label>
+    <input class="auth-input" id="auth-pw" type="password" placeholder="Enter admin password" autocomplete="off" />
+    <button class="auth-btn" id="auth-submit">Access Admin</button>
+    <div class="auth-error" id="auth-error">Incorrect password.</div>
+  </div>
+</div>
+
+<!-- ── Header ───────────────────────────────────────────────────── -->
+<header class="header">
+  <a class="header-left" href="dashboard.html" style="text-decoration:none;display:flex;align-items:center;gap:12px">
+    <div class="logo-name"><span class="dealer">Dealer</span><span class="hunters">Hunters</span></div>
+    <span class="admin-badge">Admin</span>
+  </a>
+  <div class="header-right">
+    <span class="header-env">Internal only — <strong>not customer-facing</strong></span>
+    <button id="logout-btn">Sign out</button>
+  </div>
+</header>
+
+<!-- ── App body ──────────────────────────────────────────────────── -->
+<div class="app-body">
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-section-label">Pipeline</div>
+    <div class="nav-item active" data-section="pipeline">
+      <span class="nav-icon">⚡</span><span>Pipeline Health</span>
+    </div>
+
+    <div class="sidebar-section-label">Data</div>
+    <div class="nav-item" data-section="sources">
+      <span class="nav-icon">📡</span><span>Sources</span>
+      <span class="nav-badge" id="nav-sources-count">—</span>
+    </div>
+    <div class="nav-item" data-section="signals">
+      <span class="nav-icon">🎯</span><span>Signal Rules</span>
+      <span class="nav-badge" id="nav-signals-count">—</span>
+    </div>
+    <div class="nav-item" data-section="database">
+      <span class="nav-icon">🗄️</span><span>Database</span>
+    </div>
+
+    <div class="sidebar-section-label">Ops</div>
+    <div class="nav-item" data-section="opportunities">
+      <span class="nav-icon">📋</span><span>Opportunities</span>
+      <span class="nav-badge" id="nav-opps-count">—</span>
+    </div>
+    <div class="nav-item" data-section="digest">
+      <span class="nav-icon">📬</span><span>Digest</span>
+    </div>
+
+    <div class="sidebar-footer">DealerHunters Admin v1</div>
+  </nav>
+
+  <!-- Main content -->
+  <main class="main">
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- SECTION 1: PIPELINE HEALTH                                -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section id="section-pipeline" class="section active">
+      <div class="section-title">Pipeline Health</div>
+      <div class="section-desc">Live status of each daily pipeline step. Schedule: 6:17 AM Central (11:17 UTC).</div>
+
+      <div class="run-row">
+        <button class="btn btn-purple" id="run-pipeline-btn">▶ Run Pipeline Now</button>
+        <div class="countdown-pill">⏱ Next run: <span id="countdown">—</span></div>
+        <div class="run-pill" id="gh-token-status">GH token: checking…</div>
+      </div>
+
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-title">Recent GitHub Actions Runs</div>
+        <div id="gh-runs-list">
+          <div style="color:var(--faint);font-size:13px">Loading…</div>
+        </div>
+      </div>
+
+      <div class="steps-grid" id="steps-grid">
+        <!-- Populated by JS -->
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          Error Log
+          <span class="pill pill-gray" style="font-size:11px" id="error-count-badge">—</span>
+        </div>
+        <div class="error-log" id="error-log">
+          <div class="err-empty">Loading…</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- SECTION 2: SOURCE MANAGEMENT                              -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section id="section-sources" class="section">
+      <div class="section-title">Source Management</div>
+      <div class="section-desc">News and signal sources scraped daily. Toggle active/inactive without redeploying.</div>
+
+      <div class="stat-row" id="sources-stats"></div>
+
+      <div class="card">
+        <div class="table-toolbar">
+          <span style="font-size:13px;font-weight:600;color:var(--muted)">All Sources</span>
+          <div style="flex:1"></div>
+          <button class="btn btn-primary btn-sm" id="add-source-btn">+ Add Source</button>
+        </div>
+        <div class="table-wrap">
+          <table id="sources-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>URL</th>
+                <th>Type</th>
+                <th>Health</th>
+                <th>Last Scraped</th>
+                <th>Active</th>
+              </tr>
+            </thead>
+            <tbody id="sources-tbody">
+              <tr><td colspan="6" style="color:var(--faint);text-align:center;padding:24px">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- SECTION 3: SIGNAL RULES                                   -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section id="section-signals" class="section">
+      <div class="section-title">Signal Rules</div>
+      <div class="section-desc">Keywords that trigger signal detection. Changes take effect on next pipeline run.</div>
+
+      <div class="stat-row" id="signals-stats"></div>
+
+      <div class="card">
+        <div class="table-toolbar">
+          <span style="font-size:13px;font-weight:600;color:var(--muted)">All Rules</span>
+          <div style="flex:1"></div>
+          <button class="btn btn-primary btn-sm" id="add-rule-btn">+ Add Rule</button>
+        </div>
+        <div class="table-wrap">
+          <table id="signals-table">
+            <thead>
+              <tr>
+                <th>Rule Name</th>
+                <th>Signal Type</th>
+                <th>Keywords</th>
+                <th>Weight</th>
+                <th>Fires Today</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="signals-tbody">
+              <tr><td colspan="6" style="color:var(--faint);text-align:center;padding:24px">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- SECTION 4: DATABASE STATS                                 -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section id="section-database" class="section">
+      <div class="section-title">Database Stats</div>
+      <div class="section-desc">Dealer coverage by state. States under 100 dealers are highlighted.</div>
+
+      <div class="stat-row" id="db-stats"></div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="card">
+          <div class="card-title">Top 15 States by Dealer Count</div>
+          <div class="bar-chart" id="state-bar-chart">
+            <div style="color:var(--faint);font-size:13px">Loading…</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Coverage Status</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px">
+            <span class="state-chip ok">500+</span>&nbsp;solid &nbsp;
+            <span class="state-chip warn">100–499</span>&nbsp;thin &nbsp;
+            <span class="state-chip missing">&lt;100</span>&nbsp;needs seeding
+          </div>
+          <div class="missing-states" id="coverage-map">
+            <div style="color:var(--faint);font-size:13px">Loading…</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- SECTION 5: OPPORTUNITIES                                  -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section id="section-opportunities" class="section">
+      <div class="section-title">All Opportunities</div>
+      <div class="section-desc">Full opportunity history. Bulk delete, mark contacted, or export CSV.</div>
+
+      <div class="stat-row" id="opps-stats"></div>
+
+      <div class="card">
+        <div class="opp-filter-bar">
+          <select class="select input-sm" id="opp-status-filter">
+            <option value="">All Statuses</option>
+            <option value="new">New</option>
+            <option value="contacted">Contacted</option>
+            <option value="closed">Closed</option>
+          </select>
+          <select class="select input-sm" id="opp-signal-filter">
+            <option value="">All Signals</option>
+            <option value="ownership_change">Ownership Change</option>
+            <option value="hiring">Hiring</option>
+            <option value="new_rooftop">New Rooftop</option>
+            <option value="oem_event">OEM Event</option>
+            <option value="expansion">Expansion</option>
+            <option value="leadership_change">Leadership Change</option>
+            <option value="weak_digital">Weak Digital</option>
+          </select>
+          <select class="select input-sm" id="opp-date-filter">
+            <option value="">All Time</option>
+            <option value="1">Today</option>
+            <option value="7">Last 7 Days</option>
+            <option value="30">Last 30 Days</option>
+          </select>
+          <input class="input input-sm" id="opp-search" placeholder="Search dealership…" style="min-width:180px" />
+          <div style="flex:1"></div>
+          <button class="btn btn-secondary btn-sm" id="opp-export-btn">⬇ Export CSV</button>
+        </div>
+
+        <div class="bulk-bar" id="bulk-bar">
+          <span><span id="selected-count">0</span> selected</span>
+          <button class="btn btn-danger btn-sm" id="bulk-delete-btn">Delete Selected</button>
+          <button class="btn btn-secondary btn-sm" id="bulk-contacted-btn">Mark Contacted</button>
+          <button class="btn btn-secondary btn-sm" id="bulk-clear-btn">Clear</button>
+        </div>
+
+        <div class="table-wrap">
+          <table id="opps-table">
+            <thead>
+              <tr>
+                <th><input type="checkbox" id="opp-select-all" /></th>
+                <th>Dealership</th>
+                <th>Location</th>
+                <th>Signal</th>
+                <th>Score</th>
+                <th>Status</th>
+                <th>Hot</th>
+                <th>Source</th>
+                <th>Detected</th>
+                <th>Delete</th>
+              </tr>
+            </thead>
+            <tbody id="opps-tbody">
+              <tr><td colspan="10" style="color:var(--faint);text-align:center;padding:24px">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:10px;font-size:12px;color:var(--faint)" id="opps-count-label"></div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- SECTION 6: DIGEST                                         -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section id="section-digest" class="section">
+      <div class="section-title">Digest Management</div>
+      <div class="section-desc">Daily email digest settings, history, and test sends.</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <div class="card">
+          <div class="card-title">Current Settings</div>
+          <table style="font-size:13px">
+            <tbody>
+              <tr><td style="color:var(--muted);padding:6px 0;width:120px">Send time</td><td style="font-weight:600">6:17 AM Central</td></tr>
+              <tr><td style="color:var(--muted);padding:6px 0">From</td><td>DealerHunters &lt;digest@dealerhunters.io&gt;</td></tr>
+              <tr><td style="color:var(--muted);padding:6px 0">Recipient</td><td id="digest-recipient" style="font-weight:600">—</td></tr>
+              <tr><td style="color:var(--muted);padding:6px 0">Schedule</td><td><code style="font-size:11.5px;background:#F3F4F6;padding:2px 6px;border-radius:4px">17 11 * * *</code></td></tr>
+            </tbody>
+          </table>
+          <div style="margin-top:16px">
+            <button class="btn btn-purple" id="test-digest-btn">📬 Send Test Digest Now</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Next Digest Preview</div>
+          <div class="digest-preview-box" id="digest-preview">
+            <div style="color:var(--faint);font-size:13px">Loading opportunities for preview…</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Digest History <span class="pill pill-gray" id="digest-count-badge">—</span></div>
+        <div class="table-wrap">
+          <table id="digest-table">
+            <thead>
+              <tr>
+                <th>Sent At</th>
+                <th>Opportunities</th>
+                <th>Recipient</th>
+                <th>Status</th>
+                <th>Resend ID</th>
+              </tr>
+            </thead>
+            <tbody id="digest-tbody">
+              <tr><td colspan="5" style="color:var(--faint);text-align:center;padding:24px">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div><!-- end .app-body -->
+
+<!-- ── Modals ────────────────────────────────────────────────────── -->
+
+<!-- Add Source Modal -->
+<div class="modal-overlay" id="modal-source">
+  <div class="modal">
+    <div class="modal-title">Add Source</div>
+    <div class="form-row">
+      <label class="form-label">Source Name</label>
+      <input class="form-input" id="src-name" placeholder="e.g. Automotive News" />
+    </div>
+    <div class="form-row">
+      <label class="form-label">URL</label>
+      <input class="form-input" id="src-url" placeholder="https://..." />
+    </div>
+    <div class="form-row">
+      <label class="form-label">Source Type</label>
+      <select class="form-input" id="src-type">
+        <option value="dealer_news">dealer_news</option>
+        <option value="trade_pub">trade_pub</option>
+        <option value="local_news">local_news</option>
+        <option value="press_release">press_release</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="modal-source-cancel">Cancel</button>
+      <button class="btn btn-primary" id="modal-source-save">Add Source</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Signal Rule Modal -->
+<div class="modal-overlay" id="modal-rule">
+  <div class="modal">
+    <div class="modal-title">Add Signal Rule</div>
+    <div class="form-row">
+      <label class="form-label">Rule Name</label>
+      <input class="form-input" id="rule-name" placeholder="e.g. ownership_change_v3" />
+    </div>
+    <div class="form-row">
+      <label class="form-label">Signal Type</label>
+      <select class="form-input" id="rule-type">
+        <option value="ownership_change">ownership_change</option>
+        <option value="hiring">hiring</option>
+        <option value="new_rooftop">new_rooftop</option>
+        <option value="oem_event">oem_event</option>
+        <option value="expansion">expansion</option>
+        <option value="leadership_change">leadership_change</option>
+        <option value="weak_digital">weak_digital</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Keywords (comma-separated)</label>
+      <input class="form-input" id="rule-keywords" placeholder="new owner, acquired, sold to" />
+    </div>
+    <div class="form-row">
+      <label class="form-label">Weight (1 = general, 2 = moderate, 3 = highly specific)</label>
+      <select class="form-input" id="rule-weight">
+        <option value="1">1 — General</option>
+        <option value="2" selected>2 — Moderate</option>
+        <option value="3">3 — Highly Specific</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="modal-rule-cancel">Cancel</button>
+      <button class="btn btn-primary" id="modal-rule-save">Add Rule</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Delete Modal -->
+<div class="modal-overlay" id="modal-confirm">
+  <div class="modal">
+    <div class="modal-title" id="confirm-title">Are you sure?</div>
+    <p id="confirm-body" style="font-size:14px;color:var(--muted);line-height:1.6"></p>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="confirm-cancel">Cancel</button>
+      <button class="btn btn-danger" id="confirm-ok">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   CONFIG
+   Fill in admin-config.js (not committed) with:
+     const ADMIN_SERVICE_KEY = 'your-supabase-service-role-key';
+     const ADMIN_GH_TOKEN    = 'ghp_your-github-pat-with-actions-write';
+══════════════════════════════════════════════════════════════════ */
+const SUPABASE_ADMIN_KEY = (typeof ADMIN_SERVICE_KEY !== 'undefined' && ADMIN_SERVICE_KEY)
+  ? ADMIN_SERVICE_KEY
+  : SUPABASE_ANON_KEY;
+
+const GH_TOKEN = (typeof ADMIN_GH_TOKEN !== 'undefined') ? ADMIN_GH_TOKEN : '';
+const GH_REPO  = 'mpshunters/dealerhunters-app';
+const GH_WORKFLOW = 'daily_scrape.yml';
+
+const ADMIN_PASSWORD = 'dh-admin-2026';
+
+/* ── Auth ──────────────────────────────────────────────────────── */
+const overlay   = document.getElementById('auth-overlay');
+const authPw    = document.getElementById('auth-pw');
+const authErr   = document.getElementById('auth-error');
+const authBtn   = document.getElementById('auth-submit');
+
+function checkAuth() {
+  if (sessionStorage.getItem('dh_admin_auth') === '1') {
+    overlay.classList.add('hidden');
+    init();
+  }
+}
+
+authBtn.addEventListener('click', () => {
+  if (authPw.value === ADMIN_PASSWORD) {
+    sessionStorage.setItem('dh_admin_auth', '1');
+    overlay.classList.add('hidden');
+    init();
+  } else {
+    authErr.style.display = 'block';
+    authPw.value = '';
+    authPw.focus();
+    // Wrong password → redirect after brief delay
+    setTimeout(() => { window.location.href = 'https://dealerhunters.com'; }, 1200);
+  }
+});
+authPw.addEventListener('keydown', e => { if (e.key === 'Enter') authBtn.click(); });
+
+document.getElementById('logout-btn').addEventListener('click', () => {
+  sessionStorage.removeItem('dh_admin_auth');
+  location.reload();
+});
+
+checkAuth();
+
+/* ── Supabase client (service role if available) ─────────────────── */
+const adminClient = supabase.createClient(SUPABASE_URL, SUPABASE_ADMIN_KEY);
+
+/* ── Utilities ─────────────────────────────────────────────────── */
+function esc(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function timeAgo(ts) {
+  if (!ts) return '—';
+  const diff = Date.now() - new Date(ts).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1)  return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  return `${d}d ago`;
+}
+
+function fmtDate(ts) {
+  if (!ts) return '—';
+  return new Date(ts).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+}
+
+function fmtDateShort(ts) {
+  if (!ts) return '—';
+  return new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+let toastTimer;
+function toast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.className = '', 3000);
+}
+
+/* ── Modal helpers ──────────────────────────────────────────────── */
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+let confirmResolve = null;
+function confirm(title, body) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-body').textContent  = body;
+  openModal('modal-confirm');
+  return new Promise(res => { confirmResolve = res; });
+}
+document.getElementById('confirm-cancel').addEventListener('click', () => { closeModal('modal-confirm'); confirmResolve && confirmResolve(false); });
+document.getElementById('confirm-ok').addEventListener('click',     () => { closeModal('modal-confirm'); confirmResolve && confirmResolve(true); });
+
+/* ── Navigation ─────────────────────────────────────────────────── */
+let activeSection = 'pipeline';
+const loaders = {};
+
+function loadSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(`section-${name}`).classList.add('active');
+  document.querySelector(`[data-section="${name}"]`).classList.add('active');
+  activeSection = name;
+  if (loaders[name]) loaders[name]();
+}
+
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => loadSection(item.dataset.section));
+});
+
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 1: PIPELINE
+═══════════════════════════════════════════════════════════════════ */
+function nextRunMs() {
+  const now  = new Date();
+  const next = new Date();
+  next.setUTCHours(11, 17, 0, 0);
+  if (next <= now) next.setUTCDate(next.getUTCDate() + 1);
+  return next - now;
+}
+
+function updateCountdown() {
+  const ms  = nextRunMs();
+  const h   = Math.floor(ms / 3600000);
+  const m   = Math.floor((ms % 3600000) / 60000);
+  const s   = Math.floor((ms % 60000) / 1000);
+  document.getElementById('countdown').textContent = `${h}h ${m}m ${s}s`;
+}
+setInterval(updateCountdown, 1000);
+updateCountdown();
+
+async function loadPipeline() {
+  // GH token check
+  const ghStatus = document.getElementById('gh-token-status');
+  if (!GH_TOKEN) {
+    ghStatus.textContent = 'GH token: not configured';
+    ghStatus.style.background = 'rgba(239,68,68,0.1)';
+    ghStatus.style.borderColor = 'rgba(239,68,68,0.25)';
+    ghStatus.style.color = '#F87171';
+  } else {
+    ghStatus.textContent = 'GH token: configured ✓';
+    ghStatus.style.background = 'rgba(16,185,129,0.1)';
+    ghStatus.style.borderColor = 'rgba(16,185,129,0.25)';
+    ghStatus.style.color = 'var(--green)';
+  }
+
+  // GitHub recent runs
+  const runsList = document.getElementById('gh-runs-list');
+  if (GH_TOKEN) {
+    try {
+      const resp = await fetch(
+        `https://api.github.com/repos/${GH_REPO}/actions/workflows/${GH_WORKFLOW}/runs?per_page=5`,
+        { headers: { Authorization: `Bearer ${GH_TOKEN}`, Accept: 'application/vnd.github.v3+json' } }
+      );
+      const data = await resp.json();
+      const runs = data.workflow_runs || [];
+      if (!runs.length) {
+        runsList.innerHTML = '<div style="color:var(--faint);font-size:13px">No runs found.</div>';
+      } else {
+        runsList.innerHTML = runs.map(r => `
+          <div class="gh-run-row">
+            <div class="gh-run-status ${r.conclusion || r.status}"></div>
+            <div class="gh-run-name">${esc(r.display_title || r.head_commit?.message?.split('\n')[0] || 'Triggered')}</div>
+            <div class="gh-run-time">${fmtDate(r.updated_at)}</div>
+            <span class="pill ${r.conclusion === 'success' ? 'pill-green' : r.conclusion === 'failure' ? 'pill-red' : 'pill-amber'}">${r.conclusion || r.status}</span>
+            <a class="gh-run-link" href="${r.html_url}" target="_blank">View →</a>
+          </div>`).join('');
+      }
+    } catch (e) {
+      runsList.innerHTML = `<div style="color:var(--red);font-size:13px">GitHub API error: ${esc(e.message)}</div>`;
+    }
+  } else {
+    runsList.innerHTML = '<div style="color:var(--faint);font-size:13px">Configure ADMIN_GH_TOKEN in admin-config.js to see run history.</div>';
+  }
+
+  // Pipeline step timestamps from Supabase
+  const [rawRes, matchRes, oppRes, digestRes] = await Promise.all([
+    adminClient.from('raw_signals').select('created_at').order('created_at', { ascending: false }).limit(1),
+    adminClient.from('signal_matches').select('created_at').order('created_at', { ascending: false }).limit(1),
+    adminClient.from('opportunities').select('created_at').order('created_at', { ascending: false }).limit(1),
+    adminClient.from('digest_log').select('sent_at').order('sent_at', { ascending: false }).limit(1),
+  ]);
+
+  const STEPS = [
+    { name: 'Scrape Sources',       time: rawRes.data?.[0]?.created_at,    note: 'last article fetched' },
+    { name: 'Detect Signals',       time: matchRes.data?.[0]?.created_at,  note: 'last signal match' },
+    { name: 'Create Opportunities', time: oppRes.data?.[0]?.created_at,    note: 'last opportunity' },
+    { name: 'Send Digest',          time: digestRes.data?.[0]?.sent_at,    note: 'last digest sent' },
+  ];
+
+  const todayCutoff = Date.now() - 24 * 60 * 60 * 1000;
+  document.getElementById('steps-grid').innerHTML = STEPS.map(s => {
+    const t   = s.time ? new Date(s.time).getTime() : 0;
+    const cls = !t ? 'warn' : t > todayCutoff ? 'ok' : 'warn';
+    const statusText = !t ? 'No data yet'
+      : t > todayCutoff ? '✓ Ran today'
+      : `⚠ Last: ${timeAgo(s.time)}`;
+    return `<div class="step-card ${cls}">
+      <div class="step-name">${esc(s.name)}</div>
+      <div class="step-time">${s.time ? timeAgo(s.time) : '—'}</div>
+      <div class="step-status ${cls}">${statusText}</div>
+      <div style="font-size:10.5px;color:var(--faint);margin-top:2px">${esc(s.note)}</div>
+    </div>`;
+  }).join('');
+
+  // Error log: errors from source_registry
+  const errRes = await adminClient.from('source_registry')
+    .select('source_name, last_error, health_status')
+    .not('last_error', 'is', null)
+    .neq('last_error', '')
+    .order('source_name')
+    .limit(10);
+
+  const errLog = document.getElementById('error-log');
+  const errs   = errRes.data || [];
+  document.getElementById('error-count-badge').textContent = errs.length || '0';
+  if (!errs.length) {
+    errLog.innerHTML = '<div class="err-empty">No errors logged — all sources healthy.</div>';
+  } else {
+    errLog.innerHTML = errs.map(e =>
+      `<div class="error-log-entry"><span class="err-step">[${esc(e.source_name)}]</span><span class="err-msg">${esc(e.last_error)}</span></div>`
+    ).join('');
+  }
+}
+
+// Run Pipeline Now
+document.getElementById('run-pipeline-btn').addEventListener('click', async () => {
+  if (!GH_TOKEN) {
+    toast('ADMIN_GH_TOKEN not set in admin-config.js', 'error'); return;
+  }
+  const ok = await confirm('Trigger Pipeline Run', 'This will immediately dispatch the Daily Dealer Signal Scrape workflow on GitHub Actions. Continue?');
+  if (!ok) return;
+  const btn = document.getElementById('run-pipeline-btn');
+  btn.disabled = true; btn.textContent = '▶ Triggering…';
+  try {
+    const resp = await fetch(
+      `https://api.github.com/repos/${GH_REPO}/actions/workflows/${GH_WORKFLOW}/dispatches`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${GH_TOKEN}`,
+          Accept: 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ref: 'main' }),
+      }
+    );
+    if (resp.status === 204) {
+      toast('Pipeline triggered — check GitHub Actions for progress');
+      setTimeout(() => loadPipeline(), 3000);
+    } else {
+      const err = await resp.json().catch(() => ({}));
+      toast(`GitHub error ${resp.status}: ${err.message || 'unknown'}`, 'error');
+    }
+  } catch (e) {
+    toast(`Request failed: ${e.message}`, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '▶ Run Pipeline Now';
+  }
+});
+
+loaders.pipeline = loadPipeline;
+
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 2: SOURCES
+═══════════════════════════════════════════════════════════════════ */
+let sourcesData = [];
+
+async function loadSources() {
+  const { data, error } = await adminClient.from('source_registry').select('*').order('source_name');
+  if (error) { toast(`Error loading sources: ${error.message}`, 'error'); return; }
+  sourcesData = data || [];
+
+  const active   = sourcesData.filter(s => s.active);
+  const inactive = sourcesData.filter(s => !s.active);
+  const today    = new Date(); today.setHours(0,0,0,0);
+  const scrapedToday = sourcesData.filter(s => s.last_scraped_at && new Date(s.last_scraped_at) >= today);
+
+  document.getElementById('nav-sources-count').textContent = sourcesData.length;
+  document.getElementById('sources-stats').innerHTML = `
+    <div class="mini-stat"><div class="mini-stat-val">${sourcesData.length}</div><div class="mini-stat-lbl">Total Sources</div></div>
+    <div class="mini-stat"><div class="mini-stat-val green">${active.length}</div><div class="mini-stat-lbl">Active</div></div>
+    <div class="mini-stat"><div class="mini-stat-val amber">${inactive.length}</div><div class="mini-stat-lbl">Inactive</div></div>
+    <div class="mini-stat"><div class="mini-stat-val blue">${scrapedToday.length}</div><div class="mini-stat-lbl">Scraped Today</div></div>
+  `;
+
+  const today0 = new Date(); today0.setHours(0,0,0,0);
+  document.getElementById('sources-tbody').innerHTML = sourcesData.map(s => {
+    const scrapedDt = s.last_scraped_at ? new Date(s.last_scraped_at) : null;
+    const freshToday = scrapedDt && scrapedDt >= today0;
+    let dot = '';
+    if (!s.active)        dot = '<span class="status-dot dot-gray"></span>Inactive';
+    else if (freshToday)  dot = '<span class="status-dot dot-green"></span>Healthy';
+    else                  dot = '<span class="status-dot dot-amber"></span>Stale';
+
+    const healthBadge = s.health_status === 'healthy' ? 'pill-green'
+      : s.health_status === 'error' ? 'pill-red' : 'pill-gray';
+
+    return `<tr>
+      <td style="font-weight:500">${esc(s.source_name)}</td>
+      <td class="mono"><a href="${esc(s.source_url)}" target="_blank" rel="noopener" style="color:var(--blue);text-decoration:none">${esc((s.source_url || '').replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''))}</a></td>
+      <td><span class="pill pill-gray">${esc(s.source_type || '—')}</span></td>
+      <td><span class="${s.health_status ? '' : ''}${dot.includes('Healthy') ? '' : ''}">${dot}</span></td>
+      <td style="color:var(--muted);font-size:12px">${timeAgo(s.last_scraped_at)}</td>
+      <td>
+        <label class="toggle"><input type="checkbox" class="source-toggle" data-id="${s.id}" ${s.active ? 'checked' : ''} /><span class="toggle-slider"></span></label>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--faint);padding:20px">No sources found</td></tr>';
+
+  // Toggle handlers
+  document.querySelectorAll('.source-toggle').forEach(chk => {
+    chk.addEventListener('change', async function() {
+      const { error } = await adminClient.from('source_registry').update({ active: this.checked }).eq('id', this.dataset.id);
+      if (error) { toast('Update failed', 'error'); this.checked = !this.checked; }
+      else toast(`Source ${this.checked ? 'activated' : 'deactivated'}`);
+    });
+  });
+}
+
+// Add Source modal
+document.getElementById('add-source-btn').addEventListener('click',    () => openModal('modal-source'));
+document.getElementById('modal-source-cancel').addEventListener('click', () => closeModal('modal-source'));
+document.getElementById('modal-source-save').addEventListener('click', async () => {
+  const name = document.getElementById('src-name').value.trim();
+  const url  = document.getElementById('src-url').value.trim();
+  const type = document.getElementById('src-type').value;
+  if (!name || !url) { toast('Name and URL are required', 'error'); return; }
+  const { error } = await adminClient.from('source_registry').insert({ source_name: name, source_url: url, source_type: type, active: true, state: 'ALL' });
+  if (error) { toast(`Insert failed: ${error.message}`, 'error'); return; }
+  closeModal('modal-source');
+  document.getElementById('src-name').value = '';
+  document.getElementById('src-url').value  = '';
+  toast('Source added');
+  loadSources();
+});
+
+loaders.sources = loadSources;
+
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 3: SIGNAL RULES
+═══════════════════════════════════════════════════════════════════ */
+let signalRules = [];
+
+async function loadSignals() {
+  const [rulesRes, matchRes] = await Promise.all([
+    adminClient.from('signal_rules').select('*').order('signal_type'),
+    adminClient.from('signal_matches').select('rule_id, created_at').gte('created_at', new Date().toISOString().split('T')[0] + 'T00:00:00'),
+  ]);
+  if (rulesRes.error) { toast(`Error: ${rulesRes.error.message}`, 'error'); return; }
+
+  signalRules = rulesRes.data || [];
+  const todayMatches = matchRes.data || [];
+  const fireCounts = {};
+  for (const m of todayMatches) {
+    fireCounts[m.rule_id] = (fireCounts[m.rule_id] || 0) + 1;
+  }
+
+  const totalKw = signalRules.reduce((sum, r) => sum + (r.keywords?.length || 0), 0);
+  document.getElementById('nav-signals-count').textContent = signalRules.length;
+  document.getElementById('signals-stats').innerHTML = `
+    <div class="mini-stat"><div class="mini-stat-val">${signalRules.length}</div><div class="mini-stat-lbl">Total Rules</div></div>
+    <div class="mini-stat"><div class="mini-stat-val blue">${totalKw}</div><div class="mini-stat-lbl">Total Keywords</div></div>
+    <div class="mini-stat"><div class="mini-stat-val green">${todayMatches.length}</div><div class="mini-stat-lbl">Matches Today</div></div>
+    <div class="mini-stat"><div class="mini-stat-val amber">${[...new Set(signalRules.map(r => r.signal_type))].length}</div><div class="mini-stat-lbl">Signal Types</div></div>
+  `;
+
+  const weightLabel = { 1: '1 — General', 2: '2 — Moderate', 3: '3 — Specific' };
+  document.getElementById('signals-tbody').innerHTML = signalRules.map(r => {
+    const chips = (r.keywords || []).map(k => `<span class="kw-chip">${esc(k)}</span>`).join('');
+    const fires = fireCounts[r.id] || 0;
+    return `<tr>
+      <td style="font-weight:500;font-size:12.5px">${esc(r.rule_name)}</td>
+      <td><span class="pill pill-blue">${esc(r.signal_type)}</span></td>
+      <td><div class="kw-chips">${chips}</div></td>
+      <td><span class="pill ${r.fit_score === 3 ? 'pill-green' : r.fit_score === 2 ? 'pill-blue' : 'pill-gray'}">${weightLabel[r.fit_score] || r.fit_score}</span></td>
+      <td><span class="${fires > 0 ? 'pill pill-green' : ''}" style="${fires === 0 ? 'color:var(--faint)' : ''}">${fires > 0 ? fires + ' fires' : '0'}</span></td>
+      <td>
+        <button class="btn btn-secondary btn-sm edit-rule-btn" data-id="${r.id}" style="margin-right:6px">Edit</button>
+        <button class="btn btn-danger btn-sm delete-rule-btn" data-id="${r.id}" data-name="${esc(r.rule_name)}">Delete</button>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--faint);padding:20px">No rules found</td></tr>';
+
+  // Edit rule: open modal populated with rule data
+  document.querySelectorAll('.edit-rule-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const rule = signalRules.find(r => r.id == btn.dataset.id);
+      if (!rule) return;
+      document.getElementById('rule-name').value     = rule.rule_name;
+      document.getElementById('rule-type').value     = rule.signal_type;
+      document.getElementById('rule-keywords').value = (rule.keywords || []).join(', ');
+      document.getElementById('rule-weight').value   = rule.fit_score;
+      document.getElementById('modal-rule-save').dataset.editId = rule.id;
+      openModal('modal-rule');
+    });
+  });
+
+  // Delete rule
+  document.querySelectorAll('.delete-rule-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const ok = await confirm('Delete Rule', `Delete rule "${btn.dataset.name}"? This cannot be undone.`);
+      if (!ok) return;
+      const { error } = await adminClient.from('signal_rules').delete().eq('id', btn.dataset.id);
+      if (error) toast(`Delete failed: ${error.message}`, 'error');
+      else { toast('Rule deleted'); loadSignals(); }
+    });
+  });
+}
+
+document.getElementById('add-rule-btn').addEventListener('click', () => {
+  delete document.getElementById('modal-rule-save').dataset.editId;
+  document.getElementById('rule-name').value = '';
+  document.getElementById('rule-keywords').value = '';
+  openModal('modal-rule');
+});
+document.getElementById('modal-rule-cancel').addEventListener('click', () => closeModal('modal-rule'));
+document.getElementById('modal-rule-save').addEventListener('click', async () => {
+  const name   = document.getElementById('rule-name').value.trim();
+  const type   = document.getElementById('rule-type').value;
+  const kwRaw  = document.getElementById('rule-keywords').value;
+  const weight = parseInt(document.getElementById('rule-weight').value, 10);
+  const editId = document.getElementById('modal-rule-save').dataset.editId;
+  const keywords = kwRaw.split(',').map(k => k.trim()).filter(Boolean);
+  if (!name || !keywords.length) { toast('Name and at least one keyword required', 'error'); return; }
+
+  const payload = { rule_name: name, signal_type: type, keywords, fit_score: weight };
+  const op = editId
+    ? adminClient.from('signal_rules').update(payload).eq('id', editId)
+    : adminClient.from('signal_rules').insert(payload);
+  const { error } = await op;
+  if (error) { toast(`Save failed: ${error.message}`, 'error'); return; }
+  closeModal('modal-rule');
+  toast(editId ? 'Rule updated' : 'Rule added');
+  loadSignals();
+});
+
+loaders.signals = loadSignals;
+
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 4: DATABASE STATS
+═══════════════════════════════════════════════════════════════════ */
+const US_STATES = ['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'];
+
+async function loadDatabase() {
+  const [totalRes, stateRes] = await Promise.all([
+    adminClient.from('dealerships').select('id', { count: 'exact', head: true }),
+    adminClient.from('dealerships').select('state').not('state', 'is', null),
+  ]);
+
+  const total = totalRes.count || 0;
+
+  // Count by state
+  const stateCounts = {};
+  for (const row of (stateRes.data || [])) {
+    const s = row.state?.trim().toUpperCase();
+    if (s) stateCounts[s] = (stateCounts[s] || 0) + 1;
+  }
+  const stateEntries = Object.entries(stateCounts).sort((a, b) => b[1] - a[1]);
+  const top15 = stateEntries.slice(0, 15);
+  const maxCount = top15[0]?.[1] || 1;
+
+  const stateWithData = stateEntries.length;
+  const missingStates = US_STATES.filter(s => !stateCounts[s]).length;
+
+  document.getElementById('db-stats').innerHTML = `
+    <div class="mini-stat"><div class="mini-stat-val green">${total.toLocaleString()}</div><div class="mini-stat-lbl">Total Dealerships</div></div>
+    <div class="mini-stat"><div class="mini-stat-val blue">${stateWithData}</div><div class="mini-stat-lbl">States with Data</div></div>
+    <div class="mini-stat"><div class="mini-stat-val amber">${missingStates}</div><div class="mini-stat-lbl">States Missing</div></div>
+    <div class="mini-stat"><div class="mini-stat-val">${stateEntries[0]?.[0] || '—'}</div><div class="mini-stat-lbl">Top State</div></div>
+  `;
+
+  document.getElementById('state-bar-chart').innerHTML = top15.map(([state, count]) => {
+    const pct = (count / maxCount * 100).toFixed(1);
+    const cls = count < 100 ? 'critical' : count < 500 ? 'low' : '';
+    return `<div class="bar-row">
+      <div class="bar-label">${esc(state)}</div>
+      <div class="bar-track"><div class="bar-fill ${cls}" style="width:${pct}%"></div></div>
+      <div class="bar-count">${count.toLocaleString()}</div>
+    </div>`;
+  }).join('');
+
+  // Coverage map for all 50 states
+  document.getElementById('coverage-map').innerHTML = US_STATES.map(s => {
+    const count = stateCounts[s] || 0;
+    const cls = count >= 500 ? 'ok' : count >= 100 ? 'warn' : 'missing';
+    return `<span class="state-chip ${cls}" title="${count} dealerships">${s}${count < 100 ? ' (' + count + ')' : ''}</span>`;
+  }).join('');
+}
+
+loaders.database = loadDatabase;
+
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 5: OPPORTUNITIES
+═══════════════════════════════════════════════════════════════════ */
+let allOpps = [], filteredOpps = [], selectedIds = new Set();
+
+function getOppFilters() {
+  return {
+    status:  document.getElementById('opp-status-filter').value,
+    signal:  document.getElementById('opp-signal-filter').value,
+    days:    document.getElementById('opp-date-filter').value,
+    search:  document.getElementById('opp-search').value.toLowerCase().trim(),
+  };
+}
+
+function applyOppFilters() {
+  const f = getOppFilters();
+  filteredOpps = allOpps.filter(o => {
+    if (f.status && o.status !== f.status) return false;
+    if (f.signal && o.opportunity_type !== f.signal) return false;
+    if (f.days) {
+      const cutoff = Date.now() - parseInt(f.days) * 86400000;
+      if (!o.created_at || new Date(o.created_at).getTime() < cutoff) return false;
+    }
+    if (f.search && !(o.dealership_name || '').toLowerCase().includes(f.search)) return false;
+    return true;
+  });
+  renderOppsTable();
+}
+
+function signalLabel(t) {
+  const MAP = { ownership_change: 'Ownership Change', hiring: 'Hiring', new_rooftop: 'New Rooftop', oem_event: 'OEM Event', expansion: 'Expansion', leadership_change: 'Leadership Change', weak_digital: 'Weak Digital' };
+  return MAP[t] || t || '—';
+}
+
+function renderOppsTable() {
+  selectedIds.clear();
+  document.getElementById('bulk-bar').classList.remove('show');
+  document.getElementById('opp-select-all').checked = false;
+
+  const statusPill = { new: 'pill-blue', contacted: 'pill-green', closed: 'pill-gray' };
+  document.getElementById('opps-tbody').innerHTML = filteredOpps.map(o => `
+    <tr>
+      <td><input type="checkbox" class="opp-check" data-id="${o.id}" /></td>
+      <td style="font-weight:500;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(o.dealership_name)}</td>
+      <td style="color:var(--muted);font-size:12px">${esc([o.city, o.state].filter(Boolean).join(', '))}</td>
+      <td><span class="pill pill-blue" style="font-size:10.5px">${esc(signalLabel(o.opportunity_type))}</span></td>
+      <td style="font-weight:600">${o.confidence_score || '—'}</td>
+      <td><span class="pill ${statusPill[o.status] || 'pill-gray'}">${esc(o.status || '—')}</span></td>
+      <td style="text-align:center">${o.is_hot_lead ? '🔥' : ''}</td>
+      <td style="font-size:11px;color:var(--muted);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+        ${o.source_url && !o.source_url.includes('dealerhunters.com')
+          ? `<a href="${esc(o.source_url)}" target="_blank" style="color:var(--blue);text-decoration:none">Link</a>` : '—'}
+      </td>
+      <td style="color:var(--muted);font-size:12px;white-space:nowrap">${timeAgo(o.created_at)}</td>
+      <td><button class="btn btn-danger btn-sm opp-del-btn" data-id="${o.id}" data-name="${esc(o.dealership_name)}">✕</button></td>
+    </tr>`).join('') || '<tr><td colspan="10" style="text-align:center;color:var(--faint);padding:24px">No results</td></tr>';
+
+  document.getElementById('opps-count-label').textContent = `Showing ${filteredOpps.length} of ${allOpps.length} opportunities`;
+
+  // Checkbox handlers
+  document.querySelectorAll('.opp-check').forEach(chk => {
+    chk.addEventListener('change', function() {
+      this.checked ? selectedIds.add(this.dataset.id) : selectedIds.delete(this.dataset.id);
+      document.getElementById('selected-count').textContent = selectedIds.size;
+      document.getElementById('bulk-bar').classList.toggle('show', selectedIds.size > 0);
+    });
+  });
+
+  // Per-row delete
+  document.querySelectorAll('.opp-del-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const ok = await confirm('Delete Opportunity', `Delete opportunity for ${btn.dataset.name}?`);
+      if (!ok) return;
+      const { error } = await adminClient.from('opportunities').delete().eq('id', btn.dataset.id);
+      if (error) toast(`Delete failed: ${error.message}`, 'error');
+      else { toast('Deleted'); allOpps = allOpps.filter(o => o.id != btn.dataset.id); applyOppFilters(); }
+    });
+  });
+}
+
+document.getElementById('opp-select-all').addEventListener('change', function() {
+  document.querySelectorAll('.opp-check').forEach(c => {
+    c.checked = this.checked;
+    this.checked ? selectedIds.add(c.dataset.id) : selectedIds.delete(c.dataset.id);
+  });
+  document.getElementById('selected-count').textContent = selectedIds.size;
+  document.getElementById('bulk-bar').classList.toggle('show', selectedIds.size > 0);
+});
+
+document.getElementById('bulk-clear-btn').addEventListener('click', () => {
+  selectedIds.clear();
+  document.querySelectorAll('.opp-check').forEach(c => c.checked = false);
+  document.getElementById('bulk-bar').classList.remove('show');
+  document.getElementById('opp-select-all').checked = false;
+});
+
+document.getElementById('bulk-delete-btn').addEventListener('click', async () => {
+  const ids = [...selectedIds];
+  const ok  = await confirm('Delete Selected', `Permanently delete ${ids.length} opportunity(ies)?`);
+  if (!ok) return;
+  const { error } = await adminClient.from('opportunities').delete().in('id', ids);
+  if (error) { toast(`Delete failed: ${error.message}`, 'error'); return; }
+  toast(`Deleted ${ids.length} opportunities`);
+  allOpps = allOpps.filter(o => !ids.includes(String(o.id)));
+  applyOppFilters();
+});
+
+document.getElementById('bulk-contacted-btn').addEventListener('click', async () => {
+  const ids = [...selectedIds];
+  const { error } = await adminClient.from('opportunities').update({ status: 'contacted' }).in('id', ids);
+  if (error) { toast(`Update failed: ${error.message}`, 'error'); return; }
+  toast(`Marked ${ids.length} as contacted`);
+  allOpps = allOpps.map(o => ids.includes(String(o.id)) ? { ...o, status: 'contacted' } : o);
+  applyOppFilters();
+});
+
+['opp-status-filter','opp-signal-filter','opp-date-filter'].forEach(id => {
+  document.getElementById(id).addEventListener('change', applyOppFilters);
+});
+document.getElementById('opp-search').addEventListener('input', applyOppFilters);
+
+document.getElementById('opp-export-btn').addEventListener('click', () => {
+  const cols = ['id','dealership_name','city','state','opportunity_type','confidence_score','status','source_url','created_at','is_hot_lead'];
+  const rows = filteredOpps.map(r => cols.map(c => JSON.stringify(r[c] ?? '')).join(','));
+  const csv  = [cols.join(','), ...rows].join('\n');
+  const a    = Object.assign(document.createElement('a'), {
+    href: 'data:text/csv,' + encodeURIComponent(csv),
+    download: `opportunities-${new Date().toISOString().split('T')[0]}.csv`,
+  });
+  a.click();
+  toast('CSV exported');
+});
+
+async function loadOpportunities() {
+  const { data, error } = await adminClient.from('opportunities').select('*').order('created_at', { ascending: false });
+  if (error) { toast(`Error: ${error.message}`, 'error'); return; }
+  allOpps = data || [];
+
+  const newCount   = allOpps.filter(o => o.status === 'new').length;
+  const contacted  = allOpps.filter(o => o.status === 'contacted').length;
+  const hot        = allOpps.filter(o => o.is_hot_lead).length;
+
+  document.getElementById('nav-opps-count').textContent = allOpps.length;
+  document.getElementById('opps-stats').innerHTML = `
+    <div class="mini-stat"><div class="mini-stat-val">${allOpps.length}</div><div class="mini-stat-lbl">Total</div></div>
+    <div class="mini-stat"><div class="mini-stat-val blue">${newCount}</div><div class="mini-stat-lbl">New</div></div>
+    <div class="mini-stat"><div class="mini-stat-val green">${contacted}</div><div class="mini-stat-lbl">Contacted</div></div>
+    <div class="mini-stat"><div class="mini-stat-val amber">${hot}</div><div class="mini-stat-lbl">Hot Leads</div></div>
+  `;
+  filteredOpps = [...allOpps];
+  renderOppsTable();
+}
+
+loaders.opportunities = loadOpportunities;
+
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 6: DIGEST
+═══════════════════════════════════════════════════════════════════ */
+async function loadDigest() {
+  const [digestRes, newOppsRes] = await Promise.all([
+    adminClient.from('digest_log').select('*').order('sent_at', { ascending: false }).limit(30),
+    adminClient.from('opportunities').select('dealership_name,city,state,opportunity_type,confidence_score,ai_summary')
+      .eq('status', 'new').order('confidence_score', { ascending: false }).limit(8),
+  ]);
+
+  const logs = digestRes.data || [];
+
+  // Recipient from last log
+  if (logs[0]?.recipient) {
+    document.getElementById('digest-recipient').textContent = logs[0].recipient;
+  }
+
+  document.getElementById('digest-count-badge').textContent = logs.length;
+  document.getElementById('digest-tbody').innerHTML = logs.map(d => `
+    <tr>
+      <td style="white-space:nowrap">${fmtDate(d.sent_at)}</td>
+      <td style="font-weight:600">${d.opportunities_count ?? '—'}</td>
+      <td style="color:var(--muted);font-size:12px">${esc(d.recipient || '—')}</td>
+      <td><span class="pill ${d.status === 'sent' ? 'pill-green' : 'pill-red'}">${esc(d.status)}</span></td>
+      <td class="mono" style="font-size:11px;color:var(--faint)">${esc((d.resend_id || '—').substring(0, 28))}</td>
+    </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--faint);padding:20px">No digest history yet</td></tr>';
+
+  // Next digest preview
+  const newOpps = newOppsRes.data || [];
+  if (!newOpps.length) {
+    document.getElementById('digest-preview').innerHTML = '<div style="color:var(--faint);font-size:13px;text-align:center;padding:20px 0">No new opportunities in queue.</div>';
+  } else {
+    document.getElementById('digest-preview').innerHTML = `
+      <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:10px">${newOpps.length} opportunity(ies) in next digest</div>
+      ${newOpps.map(o => `
+        <div style="padding:10px 0;border-bottom:1px solid #EAECF0">
+          <div style="font-weight:600;font-size:13px">${esc(o.dealership_name)}</div>
+          <div style="font-size:11px;color:var(--muted)">${esc([o.city, o.state].filter(Boolean).join(', '))} · <span class="pill pill-blue" style="font-size:10px">${esc(signalLabel(o.opportunity_type))}</span> · Score ${o.confidence_score || '—'}</div>
+          ${o.ai_summary ? `<div style="font-size:12px;color:#374151;margin-top:4px;line-height:1.5">${esc(o.ai_summary.substring(0,120))}${o.ai_summary.length > 120 ? '…' : ''}</div>` : ''}
+        </div>`).join('')}`;
+  }
+}
+
+document.getElementById('test-digest-btn').addEventListener('click', async () => {
+  const ok = await confirm('Send Test Digest', 'This will trigger the send_daily_digest.py script via GitHub Actions dispatch. Continue?');
+  if (!ok) return;
+  if (!GH_TOKEN) { toast('ADMIN_GH_TOKEN not set in admin-config.js', 'error'); return; }
+  const btn = document.getElementById('test-digest-btn');
+  btn.disabled = true; btn.textContent = 'Sending…';
+  try {
+    const resp = await fetch(
+      `https://api.github.com/repos/${GH_REPO}/actions/workflows/${GH_WORKFLOW}/dispatches`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${GH_TOKEN}`, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ref: 'main' }),
+      }
+    );
+    if (resp.status === 204) toast('Pipeline triggered — digest will send at end of run');
+    else toast(`Error ${resp.status}`, 'error');
+  } catch(e) {
+    toast(e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '📬 Send Test Digest Now';
+  }
+});
+
+loaders.digest = loadDigest;
+
+/* ── Bootstrap ──────────────────────────────────────────────────── */
+function init() {
+  loadPipeline();
+}
+</script>
+</body>
+</html>
