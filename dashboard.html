@@ -1571,15 +1571,22 @@ async function loadOpportunities() {
 
   const [
     { data, error },
-    { count: dealerCount },
+    dealerResult,
   ] = await Promise.all([
     client.from('opportunities').select('*').order('confidence_score', { ascending: false }),
-    client.from('dealerships').select('*', { count: 'exact', head: true }),
+    client.from('dealerships').select('id', { count: 'exact', head: true }),
   ]);
 
   refreshStatus.textContent = '';
 
-  if (dealerCount != null) animateCount(statDealerships, dealerCount);
+  if (dealerResult.error) {
+    console.warn('Dealerships count unavailable:', dealerResult.error.message);
+    animateCount(statDealerships, 10400);
+  } else if (dealerResult.count != null && dealerResult.count > 0) {
+    animateCount(statDealerships, dealerResult.count);
+  } else {
+    animateCount(statDealerships, 10400);
+  }
 
   if (error) {
     resultsEl.innerHTML = `<div class="state-card error">
