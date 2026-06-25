@@ -171,11 +171,6 @@ for i, dealer in enumerate(dealers_raw, 1):
         "state":           "IA",
         "rooftop_status":  "active",
     }
-    # Include optional fields only if non-empty
-    if dealer.get("address"):
-        record["address"] = dealer["address"]
-    if dealer.get("zip"):
-        record["zip"] = dealer["zip"]
 
     try:
         supabase.table("dealerships").insert(record).execute()
