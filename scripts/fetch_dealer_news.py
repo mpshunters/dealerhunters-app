@@ -23,11 +23,19 @@ ARTICLE_PATTERN = re.compile(r'/news/|/dealers/|/retail/|/20\d{2}/')
 MAX_ARTICLES = 10
 
 
-def is_article_link(href, base_domain):
+def normalize_url(u):
+    """Strip trailing slash and fragment for comparison."""
+    return u.rstrip("/").split("#")[0]
+
+
+def is_article_link(href, base_domain, source_url):
     parsed = urlparse(href)
     if parsed.netloc and parsed.netloc != base_domain:
         return False
     if not parsed.scheme or parsed.scheme not in ("http", "https"):
+        return False
+    # Skip if the link resolves back to the source homepage itself
+    if normalize_url(href) == normalize_url(source_url):
         return False
     path = parsed.path
     return bool(ARTICLE_PATTERN.search(href)) or len(path) > 40
@@ -42,7 +50,7 @@ def extract_article_links(soup, base_url):
         if href in seen:
             continue
         seen.add(href)
-        if is_article_link(href, base_domain):
+        if is_article_link(href, base_domain, base_url):
             links.append(href)
     return links[:MAX_ARTICLES]
 

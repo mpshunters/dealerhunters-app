@@ -123,7 +123,13 @@ for match in matches.data:
     source = raw.data
     raw_text = source.get("raw_text") or source.get("title") or ""
 
-    dealer   = extract_dealer_info(raw_text)
+    dealer = extract_dealer_info(raw_text)
+
+    if not dealer["dealership_name"] or dealer["dealership_name"] == "Unnamed Dealership":
+        print(f"Skipped: no dealership identified in article ({source.get('source_name', 'unknown')})")
+        supabase.table("signal_matches").update({"processed": True}).eq("id", match["id"]).execute()
+        continue
+
     ai_summary, pitch_angle = generate_ai_content(
         raw_text,
         match["signal_type"],
