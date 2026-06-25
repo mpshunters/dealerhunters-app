@@ -29,7 +29,6 @@
       align-items: center;
       justify-content: space-between;
       position: relative;
-      overflow: hidden;
     }
 
     /* Animated emerald sweep line */
@@ -51,6 +50,8 @@
       display: flex;
       align-items: center;
       gap: 14px;
+      text-decoration: none;
+      color: inherit;
     }
 
     .logo-wordmark { display: flex; flex-direction: column; gap: 3px; }
@@ -899,7 +900,7 @@
 
 <!-- ── Header ── -->
 <header class="header">
-  <div class="header-left">
+  <a class="header-left" href="https://dealerhunters.com" title="DealerHunters home">
     <svg width="44" height="44" viewBox="0 0 40 40" fill="none" aria-hidden="true">
       <circle cx="20" cy="20" r="18" stroke="#10B981" stroke-width="1.5"/>
       <line x1="20" y1="1"  x2="20" y2="9"  stroke="#10B981" stroke-width="1.5" stroke-linecap="round"/>
@@ -918,7 +919,7 @@
       </div>
       <div class="logo-tagline">Dealer signals. Delivered daily.</div>
     </div>
-  </div>
+  </a>
   <div class="header-right">
     <div class="live-indicator">
       <div class="live-dot"></div>
