@@ -514,6 +514,83 @@
     .filter-pill.hot-pill { border-color: #FB923C; color: #C2410C; }
     .filter-pill.hot-pill.active { background: #FFF7ED; border-color: #C2410C; color: #C2410C; }
 
+    /* ── Score tooltip ── */
+    .score-wrap {
+      position: relative;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .score-tip-btn {
+      background: none;
+      border: 1px solid #D1D5DB;
+      color: #9CA3AF;
+      font-size: 9px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: default;
+      border-radius: 999px;
+      width: 15px; height: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      position: relative;
+      line-height: 1;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .score-tip-btn:hover { border-color: #9CA3AF; color: #6B7280; }
+    .score-tip {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      right: 0;
+      background: #1F2937;
+      color: rgba(255,255,255,0.85);
+      font-size: 11.5px;
+      line-height: 1.6;
+      padding: 10px 13px;
+      border-radius: 9px;
+      min-width: 215px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+      z-index: 200;
+      white-space: nowrap;
+    }
+    .score-tip-btn:hover .score-tip { opacity: 1; pointer-events: auto; }
+    .score-tip-row { padding: 1px 0; }
+    .score-tip-row strong { color: #10B981; margin-right: 6px; font-size: 12px; }
+    .score-tip-hr { height: 1px; background: rgba(255,255,255,0.1); margin: 6px 0; }
+
+    /* ── Section headers ── */
+    .section-hd {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 20px 0 14px;
+    }
+    .section-hd:first-child { margin-top: 4px; }
+    .section-hd::after { content: ''; flex: 1; height: 1px; background: #EAECF0; }
+    .section-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.9px;
+      text-transform: uppercase;
+      color: #6B7280;
+      white-space: nowrap;
+    }
+    .section-count {
+      background: #F3F4F6;
+      color: #6B7280;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 999px;
+    }
+
     .location {
       display: flex;
       align-items: center;
@@ -1323,7 +1400,89 @@ function renderSkeletons() {
     </div>`).join('');
 }
 
-/* ── Render cards ── */
+/* ── Card builder ── */
+function buildCard(item, i) {
+  const name     = item.dealership_name || 'Unnamed Dealership';
+  const location = [item.city, item.state].filter(Boolean).join(', ') || 'Location unavailable';
+  const signal   = getSignal(item);
+  const score    = item.confidence_score ?? item.fit_score ?? 0;
+  const summary  = item.ai_summary  || 'No summary available.';
+  const pitch    = item.pitch_angle || item.recommended_offer || 'No pitch available.';
+  const isNew    = item.status === 'new';
+  const delay    = Math.min(i, 8) * 75;
+  const detected = timeAgo(item.created_at);
+
+  const steps     = item.outreach_steps || {};
+  const doneCount = OUTREACH_STEPS.filter(s => steps[s.key]).length;
+  const allDone   = doneCount === OUTREACH_STEPS.length;
+
+  const isRealUrl = item.source_url
+    && item.source_url.startsWith('http')
+    && !item.source_url.includes('dealerhunters.com');
+  const srcLink = isRealUrl
+    ? `<a href="${esc(item.source_url)}" target="_blank" rel="noopener noreferrer" class="source-link">View source article →</a>`
+    : '';
+
+  const stepsHtml = OUTREACH_STEPS.map(s => `
+    <label class="outreach-step">
+      <input type="checkbox" class="step-check" data-id="${item.id}" data-step="${s.key}"${steps[s.key] ? ' checked' : ''}>
+      <span class="toggle-track"><span class="toggle-thumb"></span></span>
+      <span class="outreach-step-label">${s.label}</span>
+    </label>`).join('');
+
+  return `
+    <div class="card" style="animation-delay:${delay}ms;border-left-color:${signal.accent}">
+      <div class="card-top">
+        <div class="card-identity">
+          <div class="card-name-row">
+            <div class="dealer-name">${esc(name)}</div>
+            ${item.is_hot_lead ? '<span class="hot-badge">🔥 Hot Lead</span>' : ''}
+            ${isNew ? '<span class="new-badge">NEW</span>' : ''}
+          </div>
+          <div class="location">${PIN_ICON} ${esc(location)}</div>
+          ${detected ? `<div class="detected-time">${detected}</div>` : ''}
+        </div>
+        <div class="score-wrap">
+          ${scoreGauge(score)}
+          <button class="score-tip-btn" tabindex="-1" aria-label="Score explanation">?
+            <div class="score-tip">
+              <div class="score-tip-row"><strong>92</strong>Highly specific signal</div>
+              <div class="score-tip-row"><strong>83</strong>Moderately specific</div>
+              <div class="score-tip-row"><strong>75</strong>General signal</div>
+              <div class="score-tip-hr"></div>
+              <div class="score-tip-row">🔥&nbsp;Multiple signals detected</div>
+            </div>
+          </button>
+        </div>
+      </div>
+      <span class="badge" style="color:${signal.color};background:${signal.bg}">${signal.label}</span>
+      <div class="summary-wrap">
+        <span class="ai-badge">AI</span>
+        <div class="summary">${esc(summary)}</div>
+      </div>
+      <div class="pitch-box">
+        <div class="pitch-label">Suggested Pitch</div>
+        <div class="pitch-text">${esc(pitch)}</div>
+      </div>
+      <div class="card-footer">
+        ${srcLink}
+        <div class="card-footer-right">
+          <a href="${esc(getContactUrl(name, item.website || ''))}"
+            target="_blank" rel="noopener noreferrer" class="btn-find-contact">Find Contact</a>
+          <button class="btn-contact" data-id="${item.id}">Mark Contacted</button>
+        </div>
+      </div>
+      <div class="outreach-tracker">
+        <div class="outreach-tracker-header">
+          <span class="outreach-tracker-label">Campaign Sequence</span>
+          <span class="outreach-progress${allDone ? ' complete' : ''}" data-progress-id="${item.id}">${doneCount}/${OUTREACH_STEPS.length}</span>
+        </div>
+        <div class="outreach-steps-list">${stepsHtml}</div>
+      </div>
+    </div>`;
+}
+
+/* ── Render cards grouped into New Today / This Week ── */
 function renderCards(data) {
   if (data.length === 0) {
     resultsEl.innerHTML = `
@@ -1342,76 +1501,32 @@ function renderCards(data) {
     return;
   }
 
-  const cards = data.map((item, i) => {
-    const name     = item.dealership_name || 'Unnamed Dealership';
-    const location = [item.city, item.state].filter(Boolean).join(', ') || 'Location unavailable';
-    const signal   = getSignal(item);
-    const score    = item.confidence_score ?? item.fit_score ?? 0;
-    const summary  = item.ai_summary  || 'No summary available.';
-    const pitch    = item.pitch_angle || item.recommended_offer || 'No pitch available.';
-    const isNew    = item.status === 'new';
-    const delay    = Math.min(i, 8) * 75;
-    const detected = timeAgo(item.created_at);
+  const todayCutoff = Date.now() - 24 * 60 * 60 * 1000;
+  const todayItems  = data.filter(d => d.created_at && new Date(d.created_at).getTime() > todayCutoff);
+  const weekItems   = data.filter(d => !d.created_at || new Date(d.created_at).getTime() <= todayCutoff);
 
-    const steps     = item.outreach_steps || {};
-    const doneCount = OUTREACH_STEPS.filter(s => steps[s.key]).length;
-    const allDone   = doneCount === OUTREACH_STEPS.length;
+  const sectionHd = (label, count) =>
+    `<div class="section-hd"><span class="section-label">${label}</span><span class="section-count">${count}</span></div>`;
 
-    const srcLink = item.source_url && item.source_url.startsWith('http')
-      ? `<a href="${esc(item.source_url)}" target="_blank" rel="noopener noreferrer" class="source-link">View source article →</a>`
-      : '<span></span>';
+  const buildSection = (items, startIdx) =>
+    items.map((item, i) => buildCard(item, startIdx + i)).join('<div class="card-sep"></div>');
 
-    const stepsHtml = OUTREACH_STEPS.map(s => `
-      <label class="outreach-step">
-        <input type="checkbox" class="step-check" data-id="${item.id}" data-step="${s.key}"${steps[s.key] ? ' checked' : ''}>
-        <span class="toggle-track"><span class="toggle-thumb"></span></span>
-        <span class="outreach-step-label">${s.label}</span>
-      </label>`).join('');
+  let html = '';
 
-    return `
-      <div class="card" style="animation-delay:${delay}ms;border-left-color:${signal.accent}">
-        <div class="card-top">
-          <div class="card-identity">
-            <div class="card-name-row">
-              <div class="dealer-name">${esc(name)}</div>
-              ${item.is_hot_lead ? '<span class="hot-badge">🔥 Hot Lead</span>' : ''}
-              ${isNew ? '<span class="new-badge">NEW</span>' : ''}
-            </div>
-            <div class="location">${PIN_ICON} ${esc(location)}</div>
-            ${detected ? `<div class="detected-time">${detected}</div>` : ''}
-          </div>
-          ${scoreGauge(score)}
-        </div>
-        <span class="badge" style="color:${signal.color};background:${signal.bg}">${signal.label}</span>
-        <div class="summary-wrap">
-          <span class="ai-badge">AI</span>
-          <div class="summary">${esc(summary)}</div>
-        </div>
-        <div class="pitch-box">
-          <div class="pitch-label">Suggested Pitch</div>
-          <div class="pitch-text">${esc(pitch)}</div>
-        </div>
-        <div class="card-footer">
-          ${srcLink}
-          <div class="card-footer-right">
-            <a href="${esc(getContactUrl(name, item.website || ''))}"
-              target="_blank" rel="noopener noreferrer" class="btn-find-contact">Find Contact</a>
-            <button class="btn-contact" data-id="${item.id}">Mark Contacted</button>
-          </div>
-        </div>
-        <div class="outreach-tracker">
-          <div class="outreach-tracker-header">
-            <span class="outreach-tracker-label">Campaign Sequence</span>
-            <span class="outreach-progress${allDone ? ' complete' : ''}" data-progress-id="${item.id}">${doneCount}/${OUTREACH_STEPS.length}</span>
-          </div>
-          <div class="outreach-steps-list">${stepsHtml}</div>
-        </div>
-      </div>`;
-  });
+  if (todayItems.length) {
+    html += sectionHd('New Today', todayItems.length);
+    html += buildSection(todayItems, 0);
+  }
 
-  resultsEl.innerHTML = cards.join('<div class="card-sep"></div>');
+  if (weekItems.length) {
+    if (todayItems.length) html += '<div class="card-sep"></div>';
+    html += sectionHd('This Week', weekItems.length);
+    html += buildSection(weekItems, todayItems.length);
+  }
+
   totalShowing = data.length;
   updateMeta();
+  resultsEl.innerHTML = html;
   triggerGauges();
 }
 
