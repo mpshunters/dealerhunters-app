@@ -1097,6 +1097,10 @@
       <div class="stat-label">Contacted</div>
     </div>
     <div class="stat-card">
+      <div class="stat-value" id="stat-signals">—</div>
+      <div class="stat-label">⚡ Signals Detected</div>
+    </div>
+    <div class="stat-card">
       <div class="stat-value" id="stat-dealerships">—</div>
       <div class="stat-label">Dealerships in DB</div>
     </div>
@@ -1223,6 +1227,7 @@ const statOwner       = document.getElementById('stat-ownership');
 const statHiring      = document.getElementById('stat-hiring');
 const statScore       = document.getElementById('stat-score');
 const statContact     = document.getElementById('stat-contacted');
+const statSignals     = document.getElementById('stat-signals');
 const statDealerships = document.getElementById('stat-dealerships');
 const refreshStatus   = document.getElementById('refresh-status');
 
@@ -1506,16 +1511,21 @@ function buildCard(item, i) {
 /* ── Render cards grouped into New Today / This Week ── */
 function renderCards(data) {
   if (data.length === 0) {
+    const isHotFilter = activeFilter === 'Hot Leads';
     resultsEl.innerHTML = `
       <div class="empty-filter">
         <div class="empty-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <circle cx="11" cy="11" r="8" stroke="#9CA3AF" stroke-width="1.6"/>
-            <path d="M21 21l-4.35-4.35" stroke="#9CA3AF" stroke-width="1.6" stroke-linecap="round"/>
-          </svg>
+          ${isHotFilter
+            ? `<span style="font-size:28px;line-height:1">🔥</span>`
+            : `<svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <circle cx="11" cy="11" r="8" stroke="#9CA3AF" stroke-width="1.6"/>
+                <path d="M21 21l-4.35-4.35" stroke="#9CA3AF" stroke-width="1.6" stroke-linecap="round"/>
+               </svg>`}
         </div>
-        <h3>No opportunities match your filters</h3>
-        <p>Try adjusting your search or selecting a different signal type.</p>
+        <h3>${isHotFilter ? 'No hot leads yet' : 'No opportunities match your filters'}</h3>
+        <p>${isHotFilter
+          ? 'Hot leads appear when the same dealership triggers multiple signals. Check back after tomorrow\'s 6:17am digest.'
+          : 'Try adjusting your search or selecting a different signal type.'}</p>
       </div>`;
     totalShowing = 0;
     updateMeta();
@@ -1736,12 +1746,20 @@ async function loadOpportunities() {
   const [
     { data, error },
     dealerResult,
+    signalResult,
   ] = await Promise.all([
     client.from('opportunities').select('*').order('confidence_score', { ascending: false }),
     client.from('dealerships').select('id', { count: 'exact', head: true }),
+    client.from('signal_matches').select('*', { count: 'exact', head: true }),
   ]);
 
   refreshStatus.textContent = '';
+
+  if (signalResult.error) {
+    console.warn('Signal count unavailable:', signalResult.error.message);
+  } else if (signalResult.count != null) {
+    animateCount(statSignals, signalResult.count);
+  }
 
   if (dealerResult.error) {
     console.warn('Dealerships count unavailable:', dealerResult.error.message);

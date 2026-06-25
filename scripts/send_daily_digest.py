@@ -171,7 +171,7 @@ def build_html(opportunities):
     <td style="background:#ffffff;padding:22px 28px 0;border-left:1px solid #E8ECF4;border-right:1px solid #E8ECF4;">
       <div style="font-size:12px;color:#9CA3AF;margin-bottom:4px;">{today}</div>
       <div style="font-size:22px;font-weight:700;color:#1A1F36;">
-        {n} new {"opportunity" if n == 1 else "opportunities"} detected overnight
+        {n} dealer {"signal" if n == 1 else "signals"} detected in the last 24 hours
       </div>
     </td>
   </tr>
@@ -295,7 +295,7 @@ def build_empty_html():
 
 # ── Send ───────────────────────────────────────────────────────────────────
 if count > 0:
-    subject   = f"DealerHunters: {count} new {'opportunity' if count == 1 else 'opportunities'} — {datetime.utcnow().strftime('%b %d')}"
+    subject   = f"🎯 DealerHunters: {count} dealer {'signal' if count == 1 else 'signals'} detected — {datetime.utcnow().strftime('%b %d')}"
     html_body = build_html(opps)
 else:
     subject   = f"DealerHunters: No new signals today — {datetime.utcnow().strftime('%b %d')}"
