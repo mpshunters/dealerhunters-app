@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>DealerHunters</title>
+  <title>DealerHunters – Intelligence Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -13,31 +13,50 @@
 
     body {
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background: #F9FAFB;
+      background-color: #F0F2F7;
+      background-image: radial-gradient(rgba(0,0,0,0.055) 1px, transparent 1px);
+      background-size: 24px 24px;
       color: #1A1F36;
       min-height: 100vh;
     }
 
-    /* ── Header ── */
+    /* ── Header ───────────────────────────────────────────────── */
     .header {
       background: #111827;
-      padding: 18px 32px;
+      padding: 0 36px;
+      height: 72px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 2px solid #10B981;
+      position: relative;
+      overflow: hidden;
     }
+
+    /* Animated emerald sweep line */
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0;
+      height: 2px; width: 100%;
+      background: linear-gradient(90deg,
+        transparent 0%, #10B981 25%, #34D399 50%, #10B981 75%, transparent 100%);
+      transform: scaleX(0);
+      transform-origin: left;
+      animation: header-line 1.8s cubic-bezier(0.22, 1, 0.36, 1) 0.5s forwards;
+    }
+
+    @keyframes header-line { to { transform: scaleX(1); } }
 
     .header-left {
       display: flex;
       align-items: center;
-      gap: 13px;
+      gap: 14px;
     }
 
     .logo-wordmark { display: flex; flex-direction: column; gap: 3px; }
 
     .logo-name {
-      font-size: 20px;
+      font-size: 22px;
       font-weight: 800;
       letter-spacing: -0.5px;
       line-height: 1;
@@ -47,36 +66,166 @@
     .logo-name .hunters { color: #10B981; }
 
     .logo-tagline {
-      font-size: 11px;
-      color: rgba(255,255,255,0.42);
+      font-size: 10.5px;
+      color: rgba(255,255,255,0.35);
       font-weight: 400;
-      letter-spacing: 0.15px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .live-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.5);
+      padding: 3px 10px;
+      border: 1px solid rgba(16,185,129,0.25);
+      border-radius: 999px;
+      background: rgba(16,185,129,0.08);
+    }
+
+    .live-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #10B981;
+      animation: live-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes live-pulse {
+      0%, 100% { box-shadow: 0 0 4px #10B981; }
+      50%       { box-shadow: 0 0 12px #10B981, 0 0 20px rgba(16,185,129,0.4); }
     }
 
     .header-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
       font-size: 12px;
       color: rgba(255,255,255,0.38);
     }
 
     .header-meta strong {
       color: rgba(255,255,255,0.60);
+      font-weight: 600;
+    }
+
+    .refresh-status {
+      font-size: 11px;
+      color: rgba(255,255,255,0.32);
+      font-style: italic;
+    }
+
+    /* ── Settings gear ────────────────────────────────────────── */
+    .settings-wrap { position: relative; }
+
+    .settings-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.22);
+      border-radius: 7px;
+      padding: 5px 12px;
+      color: rgba(255,255,255,0.78);
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .settings-btn:hover {
+      color: #fff;
+      background: rgba(255,255,255,0.11);
+      border-color: rgba(255,255,255,0.38);
+    }
+
+    .settings-btn .gear-icon { font-size: 15px; line-height: 1; }
+
+    #platform-name-label {
+      font-size: 11px;
+      color: rgba(255,255,255,0.58);
       font-weight: 500;
     }
 
-    /* ── Filter bar ── */
+    .settings-dropdown {
+      position: absolute;
+      right: 0; top: calc(100% + 9px);
+      background: #1F2937;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      min-width: 215px;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+      z-index: 500;
+      opacity: 0;
+      transform: translateY(-6px);
+      pointer-events: none;
+      transition: opacity 0.15s ease, transform 0.15s ease;
+    }
+
+    .settings-dropdown.open {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .settings-dropdown-title {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.28);
+      padding: 12px 14px 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .platform-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: 13px;
+      color: rgba(255,255,255,0.58);
+      transition: background 0.12s ease, color 0.12s ease;
+    }
+
+    .platform-option:last-child { padding-bottom: 13px; }
+
+    .platform-option:hover {
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.9);
+    }
+
+    .platform-option input[type="radio"] {
+      accent-color: #10B981;
+      width: 14px; height: 14px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .platform-option.selected { color: #10B981; }
+
+    /* ── Filter bar ───────────────────────────────────────────── */
     .filter-bar-wrap {
       background: #ffffff;
       border-bottom: 1px solid #E8ECF4;
       position: sticky;
       top: 0;
       z-index: 100;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      box-shadow: 0 2px 14px rgba(0,0,0,0.07);
     }
 
     .filter-bar {
-      max-width: 900px;
+      max-width: 960px;
       margin: 0 auto;
-      padding: 11px 16px;
+      padding: 12px 16px;
       display: flex;
       align-items: center;
       gap: 10px;
@@ -86,7 +235,7 @@
     .filter-pills {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 7px;
       flex-wrap: wrap;
       flex: 1;
     }
@@ -95,26 +244,24 @@
       background: transparent;
       border: 1.5px solid #E5E7EB;
       color: #6B7280;
-      padding: 5px 13px;
+      padding: 7px 16px;
       border-radius: 999px;
-      font-size: 12.5px;
+      font-size: 13px;
       font-weight: 500;
       cursor: pointer;
       font-family: inherit;
-      transition: all 0.15s ease;
+      transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
       white-space: nowrap;
       line-height: 1.4;
     }
 
-    .filter-pill:hover {
-      border-color: #10B981;
-      color: #10B981;
-    }
+    .filter-pill:hover { border-color: #10B981; color: #10B981; }
 
     .filter-pill.active {
       background: #10B981;
       border-color: #10B981;
       color: #ffffff;
+      box-shadow: 0 0 0 3px rgba(16,185,129,0.18), 0 2px 8px rgba(16,185,129,0.3);
     }
 
     .filter-right {
@@ -128,8 +275,7 @@
 
     .search-wrap .search-icon {
       position: absolute;
-      left: 9px;
-      top: 50%;
+      left: 9px; top: 50%;
       transform: translateY(-50%);
       pointer-events: none;
     }
@@ -137,98 +283,144 @@
     .search-input {
       border: 1.5px solid #E5E7EB;
       border-radius: 8px;
-      padding: 6px 10px 6px 30px;
+      padding: 7px 52px 7px 30px;
       font-size: 13px;
       color: #1A1F36;
       outline: none;
       font-family: inherit;
       transition: border-color 0.15s ease, background 0.15s ease;
-      width: 200px;
+      width: 215px;
       background: #F9FAFB;
     }
 
-    .search-input:focus {
-      border-color: #10B981;
-      background: #ffffff;
-    }
-
+    .search-input:focus { border-color: #10B981; background: #ffffff; }
     .search-input::placeholder { color: #9CA3AF; }
+
+    .search-shortcut {
+      position: absolute;
+      right: 8px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 10px;
+      font-weight: 600;
+      color: #9CA3AF;
+      background: #F3F4F6;
+      border: 1px solid #E5E7EB;
+      border-radius: 4px;
+      padding: 1px 5px;
+      pointer-events: none;
+      letter-spacing: 0.2px;
+    }
 
     .results-meta {
       font-size: 12.5px;
       color: #9CA3AF;
       white-space: nowrap;
-      min-width: 120px;
+      min-width: 110px;
       text-align: right;
     }
 
     .results-meta strong { color: #374151; font-weight: 600; }
 
-    /* ── Main ── */
-    .main {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 24px 16px 64px;
-    }
+    /* ── Results fade transition ──────────────────────────────── */
+    #results { transition: opacity 0.18s ease, transform 0.18s ease; }
 
-    /* ── Stats grid ── */
+    /* ── Main ────────────────────────────────────────────────── */
+    .main { max-width: 960px; margin: 0 auto; padding: 24px 16px 0; }
+
+    /* ── Stats grid ──────────────────────────────────────────── */
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(6, 1fr);
       gap: 10px;
-      margin-bottom: 22px;
+      margin-bottom: 24px;
     }
 
-    @media (max-width: 800px) { .stats-grid { grid-template-columns: repeat(3, 1fr); } }
-    @media (max-width: 460px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 820px) { .stats-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 480px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
 
     .stat-card {
       background: #ffffff;
       border: 1px solid #E8ECF4;
+      border-top: 2px solid #10B981;
       border-radius: 10px;
       padding: 14px 16px 13px;
       box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+      transition: box-shadow 0.2s ease;
     }
+
+    .stat-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,0.09); }
 
     .stat-value {
       font-size: 26px;
       font-weight: 800;
       color: #111827;
       line-height: 1;
-      margin-bottom: 5px;
+      margin-bottom: 4px;
     }
 
     .stat-label {
-      font-size: 11px;
-      font-weight: 500;
+      font-size: 9.5px;
+      font-weight: 700;
       color: #9CA3AF;
-      letter-spacing: 0.2px;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+
+    .stat-trend {
+      font-size: 10px;
+      color: #10B981;
+      font-weight: 600;
+      margin-top: 5px;
     }
 
     .stat-card.green .stat-value { color: #10B981; }
     .stat-card.blue  .stat-value { color: #3B82F6; }
 
-    /* ── Skeleton ── */
+    .stat-card.glowing {
+      animation: score-glow 2.5s ease-in-out infinite;
+    }
+
+    @keyframes score-glow {
+      0%, 100% { box-shadow: 0 0 0 1px rgba(16,185,129,0.15), 0 4px 20px rgba(16,185,129,0.10); }
+      50%       { box-shadow: 0 0 0 1px rgba(16,185,129,0.30), 0 4px 32px rgba(16,185,129,0.22); }
+    }
+
+    .mini-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 20px;
+      margin-top: 7px;
+    }
+
+    .mini-bar {
+      flex: 1;
+      border-radius: 2px 2px 0 0;
+      min-height: 2px;
+      transition: height 0.6s ease;
+    }
+
+    /* ── Skeleton loader ─────────────────────────────────────── */
     @keyframes shimmer {
       0%   { background-position: -600px 0; }
       100% { background-position:  600px 0; }
     }
 
     .skel {
-      background: linear-gradient(90deg, #F3F4F6 25%, #E9EAEC 50%, #F3F4F6 75%);
+      background: linear-gradient(90deg, #ECFDF5 25%, #D1FAE5 50%, #ECFDF5 75%);
       background-size: 600px 100%;
-      animation: shimmer 1.5s ease-in-out infinite;
+      animation: shimmer 1.6s ease-in-out infinite;
       border-radius: 6px;
     }
 
     .skeleton-card {
       background: #ffffff;
       border: 1px solid #E8ECF4;
-      border-top: 3px solid #E8ECF4;
+      border-left: 4px solid #D1FAE5;
       border-radius: 12px;
-      padding: 20px 22px 18px;
-      margin-bottom: 14px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+      padding: 20px 22px 20px 26px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 14px rgba(0,0,0,0.04);
     }
 
     .skel-row {
@@ -238,7 +430,7 @@
       margin-bottom: 14px;
     }
 
-    /* ── Cards ── */
+    /* ── Cards ───────────────────────────────────────────────── */
     @keyframes cardIn {
       from { opacity: 0; transform: translateY(14px); }
       to   { opacity: 1; transform: translateY(0);    }
@@ -247,18 +439,24 @@
     .card {
       background: #ffffff;
       border: 1px solid #E8ECF4;
-      border-top: 3px solid #10B981;
+      border-left: 4px solid #10B981;
       border-radius: 12px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-      margin-bottom: 14px;
-      padding: 20px 22px 18px;
-      animation: cardIn 0.4s ease-out both;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.05);
+      margin-bottom: 16px;
+      padding: 20px 22px 18px 26px;
+      animation: cardIn 0.35s ease-out both;
       transition: box-shadow 0.2s ease, transform 0.2s ease;
     }
 
     .card:hover {
-      box-shadow: 0 8px 28px rgba(0,0,0,0.10);
+      box-shadow: 0 8px 36px rgba(0,0,0,0.10);
       transform: translateY(-2px);
+    }
+
+    .card-sep {
+      height: 1px;
+      background: linear-gradient(90deg, rgba(16,185,129,0.09), rgba(16,185,129,0.04), transparent);
+      margin: -6px 0 6px 26px;
     }
 
     .card-top {
@@ -274,7 +472,7 @@
     .card-name-row {
       display: flex;
       align-items: center;
-      gap: 7px;
+      gap: 8px;
       flex-wrap: wrap;
     }
 
@@ -303,7 +501,13 @@
       gap: 4px;
       color: #9CA3AF;
       font-size: 13px;
-      margin-top: 5px;
+      margin-top: 4px;
+    }
+
+    .detected-time {
+      font-size: 11px;
+      color: #C4C9D4;
+      margin-top: 3px;
     }
 
     .badge {
@@ -316,35 +520,58 @@
       letter-spacing: 0.2px;
     }
 
+    /* ── AI summary ──────────────────────────────────────────── */
+    .summary-wrap {
+      position: relative;
+      margin-bottom: 14px;
+    }
+
+    .ai-badge {
+      position: absolute;
+      top: 0; right: 0;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      color: #10B981;
+      background: rgba(16,185,129,0.08);
+      border: 1px solid rgba(16,185,129,0.22);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
     .summary {
       font-size: 14px;
       line-height: 1.65;
       color: #374151;
-      margin-bottom: 14px;
+      padding-right: 36px;
     }
 
+    /* ── Dark premium pitch box ──────────────────────────────── */
     .pitch-box {
       border-left: 3px solid #10B981;
-      background: #F0FDF9;
-      padding: 10px 14px;
+      background: #0F1F35;
+      padding: 12px 16px;
       border-radius: 0 8px 8px 0;
       margin-bottom: 16px;
     }
 
     .pitch-label {
-      font-size: 11px;
-      font-weight: 500;
-      color: #9CA3AF;
-      margin-bottom: 3px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+      color: #10B981;
+      margin-bottom: 7px;
     }
 
     .pitch-text {
       font-size: 13.5px;
       font-weight: 500;
-      color: #1A1F36;
-      line-height: 1.5;
+      color: #E5E7EB;
+      line-height: 1.55;
     }
 
+    /* ── Card footer ─────────────────────────────────────────── */
     .card-footer {
       display: flex;
       align-items: center;
@@ -380,12 +607,13 @@
       text-decoration: none;
       display: inline-block;
       line-height: 1;
-      transition: background 0.15s ease, color 0.15s ease;
+      transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
     }
 
     .btn-find-contact:hover {
       background: #10B981;
       color: #ffffff;
+      box-shadow: 0 0 14px rgba(16,185,129,0.38);
     }
 
     .btn-contact {
@@ -398,62 +626,15 @@
       font-weight: 500;
       cursor: pointer;
       font-family: inherit;
-      transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+      transition: border-color 0.15s ease, color 0.15s ease;
     }
 
     .btn-contact:hover:not(:disabled) {
-      border-color: #6B7280;
+      border-color: #9CA3AF;
       color: #374151;
     }
 
-    /* ── Empty filter state ── */
-    .empty-filter {
-      background: #ffffff;
-      border: 1px solid #E8ECF4;
-      border-radius: 12px;
-      padding: 56px 24px;
-      text-align: center;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.05);
-    }
-
-    .empty-icon {
-      width: 48px;
-      height: 48px;
-      margin: 0 auto 16px;
-      background: #F3F4F6;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .empty-filter h3 {
-      font-size: 16px;
-      font-weight: 600;
-      color: #374151;
-      margin-bottom: 6px;
-    }
-
-    .empty-filter p {
-      font-size: 14px;
-      color: #9CA3AF;
-    }
-
-    /* ── Error / no-data states ── */
-    .state-card {
-      background: #ffffff;
-      border: 1px solid #E8ECF4;
-      border-radius: 12px;
-      padding: 48px 24px;
-      text-align: center;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-      color: #6B7280;
-      font-size: 15px;
-    }
-
-    .state-card.error { color: #991B1B; }
-
-    /* ── Outreach tracker ── */
+    /* ── Outreach tracker ────────────────────────────────────── */
     .outreach-tracker {
       border-top: 1px solid #E8ECF4;
       margin-top: 14px;
@@ -464,11 +645,11 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
 
     .outreach-tracker-label {
-      font-size: 10px;
+      font-size: 9.5px;
       font-weight: 700;
       letter-spacing: 0.8px;
       text-transform: uppercase;
@@ -487,144 +668,221 @@
     .outreach-steps-list {
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 0;
     }
 
+    /* Emerald toggle switches */
     .outreach-step {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       padding: 5px 0;
       cursor: pointer;
       user-select: none;
     }
 
-    .outreach-step input[type="checkbox"] {
-      accent-color: #10B981;
-      width: 14px;
-      height: 14px;
+    .step-check { display: none; }
+
+    .toggle-track {
+      position: relative;
+      width: 30px; height: 17px;
+      background: #E5E7EB;
+      border-radius: 9px;
       flex-shrink: 0;
+      transition: background 0.2s ease;
       cursor: pointer;
     }
+
+    .toggle-thumb {
+      position: absolute;
+      top: 2.5px; left: 2.5px;
+      width: 12px; height: 12px;
+      background: #fff;
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+      transition: transform 0.2s ease;
+    }
+
+    .step-check:checked + .toggle-track { background: #10B981; }
+    .step-check:checked + .toggle-track .toggle-thumb { transform: translateX(13px); }
 
     .outreach-step-label {
       font-size: 13px;
       color: #374151;
       transition: color 0.15s ease;
-      line-height: 1.3;
     }
 
-    .outreach-step input:checked ~ .outreach-step-label {
+    .step-check:checked ~ .outreach-step-label {
       color: #9CA3AF;
       text-decoration: line-through;
       text-decoration-color: #D1D5DB;
     }
 
-    /* ── Settings gear ── */
-    .header-right {
+    /* ── Contacted success state ─────────────────────────────── */
+    .contacted-success {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 16px;
+      justify-content: center;
+      padding: 30px 16px;
+      gap: 10px;
     }
 
-    .settings-wrap { position: relative; }
-
-    .settings-btn {
+    .contacted-check {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      background: #ECFDF5;
+      border: 2px solid #10B981;
       display: flex;
       align-items: center;
-      gap: 6px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 6px;
-      padding: 4px 10px;
-      color: rgba(255,255,255,0.75);
+      justify-content: center;
+      font-size: 22px;
+      color: #10B981;
+      animation: check-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    @keyframes check-pop {
+      from { transform: scale(0.4); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+
+    .contacted-success-text {
+      font-size: 15px;
+      font-weight: 600;
+      color: #10B981;
+    }
+
+    .contacted-success-sub {
       font-size: 12px;
-      font-family: inherit;
-      cursor: pointer;
-      transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
-      white-space: nowrap;
+      color: #9CA3AF;
     }
 
-    .settings-btn:hover {
-      color: rgba(255,255,255,1);
-      background: rgba(255,255,255,0.1);
-      border-color: rgba(255,255,255,0.35);
+    /* ── Empty / error states ────────────────────────────────── */
+    .empty-filter {
+      background: #ffffff;
+      border: 1px solid #E8ECF4;
+      border-radius: 12px;
+      padding: 56px 24px;
+      text-align: center;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.05);
     }
 
-    .settings-btn .gear-icon { font-size: 14px; }
-
-    #platform-name-label {
-      font-size: 11px;
-      color: rgba(255,255,255,0.55);
-      font-weight: 500;
+    .empty-icon {
+      width: 48px; height: 48px;
+      margin: 0 auto 16px;
+      background: #F3F4F6;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    .settings-dropdown {
-      position: absolute;
-      right: 0;
-      top: calc(100% + 8px);
-      background: #1F2937;
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 10px;
-      min-width: 210px;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.45);
-      z-index: 500;
-      opacity: 0;
-      transform: translateY(-6px);
-      pointer-events: none;
-      transition: opacity 0.15s ease, transform 0.15s ease;
+    .empty-filter h3 { font-size: 16px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+    .empty-filter p  { font-size: 14px; color: #9CA3AF; }
+
+    .state-card {
+      background: #ffffff;
+      border: 1px solid #E8ECF4;
+      border-radius: 12px;
+      padding: 48px 24px;
+      text-align: center;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      color: #6B7280;
+      font-size: 15px;
     }
 
-    .settings-dropdown.open {
-      opacity: 1;
-      transform: translateY(0);
-      pointer-events: auto;
+    .state-card.error { color: #991B1B; }
+
+    /* ── Footer ──────────────────────────────────────────────── */
+    .dashboard-footer {
+      background: #0A0F1E;
+      margin-top: 72px;
     }
 
-    .settings-dropdown-title {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 1.2px;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.3);
-      padding: 12px 14px 10px;
-      border-bottom: 1px solid rgba(255,255,255,0.07);
+    .footer-inner {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 40px 16px 32px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 32px;
+      flex-wrap: wrap;
     }
 
-    .platform-option {
+    .footer-brand { display: flex; flex-direction: column; gap: 8px; }
+
+    .footer-logo-row {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 10px 14px;
-      cursor: pointer;
+    }
+
+    .footer-wordmark {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.4px;
+    }
+
+    .footer-wordmark .dealer  { color: #ffffff; }
+    .footer-wordmark .hunters { color: #10B981; }
+
+    .footer-tagline {
       font-size: 13px;
-      color: rgba(255,255,255,0.6);
-      transition: background 0.12s ease, color 0.12s ease;
+      color: rgba(255,255,255,0.35);
     }
 
-    .platform-option:last-child { padding-bottom: 12px; }
-
-    .platform-option:hover {
-      background: rgba(255,255,255,0.05);
-      color: rgba(255,255,255,0.9);
+    .footer-links {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      flex-wrap: wrap;
+      padding-top: 4px;
     }
 
-    .platform-option input[type="radio"] {
-      accent-color: #10B981;
-      width: 14px;
-      height: 14px;
-      flex-shrink: 0;
-      cursor: pointer;
+    .footer-link {
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.45);
+      text-decoration: none;
+      transition: color 0.15s ease;
     }
 
-    .platform-option.selected { color: #10B981; }
+    .footer-link:hover { color: #10B981; }
+
+    .footer-divider {
+      max-width: 960px;
+      margin: 0 auto;
+      border: none;
+      border-top: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .footer-bottom {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 20px 16px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .footer-copyright {
+      font-size: 12px;
+      color: rgba(255,255,255,0.28);
+    }
+
+    .footer-powered {
+      font-size: 11px;
+      color: rgba(255,255,255,0.16);
+    }
   </style>
 </head>
 <body>
 
+<!-- ── Header ── -->
 <header class="header">
   <div class="header-left">
-    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+    <svg width="44" height="44" viewBox="0 0 40 40" fill="none" aria-hidden="true">
       <circle cx="20" cy="20" r="18" stroke="#10B981" stroke-width="1.5"/>
       <line x1="20" y1="1"  x2="20" y2="9"  stroke="#10B981" stroke-width="1.5" stroke-linecap="round"/>
       <line x1="20" y1="31" x2="20" y2="39" stroke="#10B981" stroke-width="1.5" stroke-linecap="round"/>
@@ -644,7 +902,14 @@
     </div>
   </div>
   <div class="header-right">
-    <div class="header-meta">Last updated: <strong id="last-updated">—</strong></div>
+    <div class="live-indicator">
+      <div class="live-dot"></div>
+      Live
+    </div>
+    <div class="header-meta">
+      Last updated: <strong id="last-updated">—</strong>
+      <span class="refresh-status" id="refresh-status"></span>
+    </div>
     <div class="settings-wrap" id="settings-wrap">
       <button class="settings-btn" id="settings-btn" title="Contact platform settings">
         <span class="gear-icon">⚙</span>
@@ -669,6 +934,7 @@
   </div>
 </header>
 
+<!-- ── Filter bar ── -->
 <div class="filter-bar-wrap">
   <div class="filter-bar">
     <div class="filter-pills" id="filter-pills">
@@ -685,30 +951,36 @@
           <circle cx="9" cy="9" r="7" stroke="#9CA3AF" stroke-width="1.8"/>
           <path d="M16 16l-3.5-3.5" stroke="#9CA3AF" stroke-width="1.8" stroke-linecap="round"/>
         </svg>
-        <input type="text" class="search-input" id="search-input" placeholder="Search dealerships..." autocomplete="off" />
+        <input type="text" class="search-input" id="search-input"
+          placeholder="Search dealerships…" autocomplete="off" />
+        <span class="search-shortcut">⌘K</span>
       </div>
       <div class="results-meta" id="results-meta"></div>
     </div>
   </div>
 </div>
 
+<!-- ── Main ── -->
 <main class="main">
   <div class="stats-grid">
     <div class="stat-card">
       <div class="stat-value" id="stat-total">—</div>
       <div class="stat-label">Total Opportunities</div>
+      <div class="stat-trend" id="stat-trend-total"></div>
     </div>
     <div class="stat-card">
       <div class="stat-value" id="stat-ownership">—</div>
       <div class="stat-label">Ownership Changes</div>
+      <div class="stat-trend" id="stat-trend-ownership"></div>
     </div>
     <div class="stat-card">
       <div class="stat-value" id="stat-hiring">—</div>
       <div class="stat-label">Marketing Hires</div>
     </div>
-    <div class="stat-card green">
+    <div class="stat-card green" id="stat-score-card">
       <div class="stat-value" id="stat-score">—</div>
       <div class="stat-label">Avg Score</div>
+      <div class="mini-bars" id="mini-score-bars"></div>
     </div>
     <div class="stat-card blue">
       <div class="stat-value" id="stat-contacted">0</div>
@@ -723,23 +995,60 @@
   <div id="results"></div>
 </main>
 
+<!-- ── Footer ── -->
+<footer class="dashboard-footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="footer-logo-row">
+        <svg width="28" height="28" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+          <circle cx="20" cy="20" r="18" stroke="#10B981" stroke-width="1.6"/>
+          <line x1="20" y1="1"  x2="20" y2="9"  stroke="#10B981" stroke-width="1.6" stroke-linecap="round"/>
+          <line x1="20" y1="31" x2="20" y2="39" stroke="#10B981" stroke-width="1.6" stroke-linecap="round"/>
+          <line x1="1"  y1="20" x2="9"  y2="20" stroke="#10B981" stroke-width="1.6" stroke-linecap="round"/>
+          <line x1="31" y1="20" x2="39" y2="20" stroke="#10B981" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="20" cy="20" r="2" fill="#10B981"/>
+          <rect x="5" y="21" width="30" height="8" rx="1.5" stroke="#10B981" stroke-width="1.6"/>
+          <path d="M9 21 L13 13 H27 L32 21" stroke="#10B981" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle cx="12.5" cy="29" r="4" stroke="#10B981" stroke-width="1.6"/>
+          <circle cx="27.5" cy="29" r="4" stroke="#10B981" stroke-width="1.6"/>
+        </svg>
+        <span class="footer-wordmark">
+          <span class="dealer">Dealer</span><span class="hunters">Hunters</span>
+        </span>
+      </div>
+      <div class="footer-tagline">Dealer signals. Delivered daily.</div>
+    </div>
+    <nav class="footer-links" aria-label="Footer">
+      <a href="/dashboard" class="footer-link">Dashboard</a>
+      <a href="/#signals" class="footer-link">Signals</a>
+      <a href="/#pricing" class="footer-link">Pricing</a>
+      <a href="mailto:signals@mpshunters.com?subject=DealerHunters Inquiry" class="footer-link">Contact</a>
+    </nav>
+  </div>
+  <hr class="footer-divider" />
+  <div class="footer-bottom">
+    <div class="footer-copyright">© 2026 DealerHunters. Built on MPSHunters technology.</div>
+    <div class="footer-powered">Powered by True Measure Advisors, LLC</div>
+  </div>
+</footer>
+
 <script>
 const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/* ── Signal config ── */
+/* ── Signal config (added accent color per type) ── */
 const SIGNAL_CONFIG = {
-  'ownership_change':  { label: 'Ownership Change',  color: '#065F46', bg: '#ECFDF5' },
-  'hiring':            { label: 'Marketing Hire',    color: '#1E40AF', bg: '#EFF6FF' },
-  'new_rooftop':       { label: 'New Rooftop',       color: '#166534', bg: '#F0FDF4' },
-  'oem_event':         { label: 'OEM Event',         color: '#6B21A8', bg: '#FAF5FF' },
-  'weak_digital':      { label: 'Weak Digital',      color: '#92400E', bg: '#FFFBEB' },
-  'Ownership Change':  { label: 'Ownership Change',  color: '#065F46', bg: '#ECFDF5' },
-  'Marketing Hire':    { label: 'Marketing Hire',    color: '#1E40AF', bg: '#EFF6FF' },
-  'Leadership Change': { label: 'Leadership Change', color: '#6B21A8', bg: '#FAF5FF' },
-  'Expansion':         { label: 'Expansion',         color: '#166534', bg: '#F0FDF4' },
-  'Weak Digital':      { label: 'Weak Digital',      color: '#92400E', bg: '#FFFBEB' },
+  'ownership_change':  { label: 'Ownership Change',  color: '#065F46', bg: '#ECFDF5', accent: '#EF4444' },
+  'hiring':            { label: 'Marketing Hire',    color: '#1E40AF', bg: '#EFF6FF', accent: '#3B82F6' },
+  'new_rooftop':       { label: 'New Rooftop',       color: '#166534', bg: '#F0FDF4', accent: '#10B981' },
+  'oem_event':         { label: 'OEM Event',         color: '#6B21A8', bg: '#FAF5FF', accent: '#6366F1' },
+  'weak_digital':      { label: 'Weak Digital',      color: '#92400E', bg: '#FFFBEB', accent: '#F59E0B' },
+  'Ownership Change':  { label: 'Ownership Change',  color: '#065F46', bg: '#ECFDF5', accent: '#EF4444' },
+  'Marketing Hire':    { label: 'Marketing Hire',    color: '#1E40AF', bg: '#EFF6FF', accent: '#3B82F6' },
+  'Leadership Change': { label: 'Leadership Change', color: '#6B21A8', bg: '#FAF5FF', accent: '#8B5CF6' },
+  'Expansion':         { label: 'Expansion',         color: '#166534', bg: '#F0FDF4', accent: '#10B981' },
+  'Weak Digital':      { label: 'Weak Digital',      color: '#92400E', bg: '#FFFBEB', accent: '#F59E0B' },
 };
-const DEFAULT_SIGNAL = { label: 'Signal', color: '#344054', bg: '#F2F4F7' };
+const DEFAULT_SIGNAL = { label: 'Signal', color: '#344054', bg: '#F2F4F7', accent: '#9CA3AF' };
 
 const OUTREACH_STEPS = [
   { key: 'ip_ad',          label: 'IP ad running' },
@@ -791,14 +1100,15 @@ let totalActive    = 0;
 let totalShowing   = 0;
 
 /* ── DOM refs ── */
-const resultsEl   = document.getElementById('results');
-const metaEl      = document.getElementById('results-meta');
+const resultsEl       = document.getElementById('results');
+const metaEl          = document.getElementById('results-meta');
 const statTotal       = document.getElementById('stat-total');
 const statOwner       = document.getElementById('stat-ownership');
 const statHiring      = document.getElementById('stat-hiring');
 const statScore       = document.getElementById('stat-score');
 const statContact     = document.getElementById('stat-contacted');
 const statDealerships = document.getElementById('stat-dealerships');
+const refreshStatus   = document.getElementById('refresh-status');
 
 /* ── Utilities ── */
 function esc(s) {
@@ -822,6 +1132,17 @@ function formatDate(iso) {
   });
 }
 
+function timeAgo(iso) {
+  if (!iso) return '';
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1)  return 'Detected just now';
+  if (mins < 60) return `Detected ${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24)  return `Detected ${hrs}h ago`;
+  return `Detected ${Math.floor(hrs / 24)}d ago`;
+}
+
 function getFiltered() {
   return allData.filter(item => {
     if (item.status === 'contacted') return false;
@@ -832,8 +1153,21 @@ function getFiltered() {
 }
 
 function updateMeta() {
-  if (totalActive === 0) { metaEl.innerHTML = ''; return; }
+  if (!totalActive) { metaEl.innerHTML = ''; return; }
   metaEl.innerHTML = `<strong>${totalShowing}</strong> of <strong>${totalActive}</strong> opportunities`;
+}
+
+/* ── Filter fade ── */
+function renderFiltered(animate = true) {
+  const data = getFiltered();
+  if (!animate || !allData.length) { renderCards(data); return; }
+  resultsEl.style.opacity   = '0';
+  resultsEl.style.transform = 'translateY(6px)';
+  setTimeout(() => {
+    renderCards(data);
+    resultsEl.style.opacity   = '1';
+    resultsEl.style.transform = 'translateY(0)';
+  }, 140);
 }
 
 /* ── Count-up animation ── */
@@ -841,15 +1175,35 @@ function animateCount(el, target, duration = 700) {
   const start = performance.now();
   (function tick(now) {
     const p = Math.min((now - start) / duration, 1);
-    const eased = 1 - Math.pow(1 - p, 3);
-    el.textContent = Math.round(eased * target);
+    el.textContent = Math.round((1 - Math.pow(1 - p, 3)) * target);
     if (p < 1) requestAnimationFrame(tick);
   })(start);
 }
 
+/* ── Mini bar chart for score distribution ── */
+function renderScoreBars(data) {
+  const active  = data.filter(d => d.status !== 'contacted');
+  const buckets = [0, 0, 0, 0, 0]; // <20 | 20–39 | 40–59 | 60–79 | 80+
+  active.forEach(d => {
+    const s = Number(d.confidence_score ?? d.fit_score ?? 0);
+    if (s < 20)      buckets[0]++;
+    else if (s < 40) buckets[1]++;
+    else if (s < 60) buckets[2]++;
+    else if (s < 80) buckets[3]++;
+    else             buckets[4]++;
+  });
+  const max    = Math.max(...buckets, 1);
+  const colors = ['#D1D5DB', '#D1D5DB', '#F59E0B', '#10B981', '#10B981'];
+  return buckets.map((v, i) => {
+    const h = Math.max(Math.round((v / max) * 16), v > 0 ? 2 : 0);
+    return `<div class="mini-bar" style="height:${h}px;background:${colors[i]}"></div>`;
+  }).join('');
+}
+
 /* ── Stats ── */
 function updateStats(data) {
-  const active = data.filter(d => d.status !== 'contacted');
+  const active    = data.filter(d => d.status !== 'contacted');
+  const yesterday = new Date(Date.now() - 864e5);
 
   const ownerCount = active.filter(d => {
     const t = d.signal_type || d.opportunity_type || '';
@@ -862,32 +1216,51 @@ function updateStats(data) {
   }).length;
 
   const scores = active.map(d => Number(d.confidence_score ?? d.fit_score ?? 0)).filter(Boolean);
-  const avg = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+  const avg    = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
 
   contactedCount = data.filter(d => d.status === 'contacted').length;
   totalActive    = active.length;
 
-  animateCount(statTotal,   active.length);
+  const newToday = active.filter(d => d.created_at && new Date(d.created_at) > yesterday).length;
+  const newOwnerToday = active.filter(d => {
+    const t = d.signal_type || d.opportunity_type || '';
+    return (t === 'ownership_change' || t === 'Ownership Change')
+      && d.created_at && new Date(d.created_at) > yesterday;
+  }).length;
+
+  animateCount(statTotal,   totalActive);
   animateCount(statOwner,   ownerCount);
   animateCount(statHiring,  hiringCount);
   animateCount(statScore,   avg);
   animateCount(statContact, contactedCount);
+
+  const trendTotal = document.getElementById('stat-trend-total');
+  const trendOwner = document.getElementById('stat-trend-ownership');
+  if (trendTotal) trendTotal.textContent = newToday > 0      ? `↑ ${newToday} new today`      : '';
+  if (trendOwner) trendOwner.textContent = newOwnerToday > 0 ? `↑ ${newOwnerToday} new today` : '';
+
+  document.getElementById('mini-score-bars').innerHTML = renderScoreBars(data);
+
+  if (avg >= 80) document.getElementById('stat-score-card').classList.add('glowing');
 }
 
-/* ── Score gauge ── */
+/* ── Score gauge — 58px, colored glow ── */
 function scoreGauge(score) {
   const s      = Math.min(Math.max(Number(score) || 0, 0), 100);
-  const r      = 19;
+  const r      = 21;
   const circ   = +(2 * Math.PI * r).toFixed(2);
   const target = +(circ * (1 - s / 100)).toFixed(2);
   const stroke = s >= 70 ? '#10B981' : s >= 40 ? '#F59E0B' : '#D0D5DD';
-  return `<svg width="54" height="54" viewBox="0 0 54 54" style="flex-shrink:0">
-    <circle cx="27" cy="27" r="${r}" fill="none" stroke="#F2F4F7" stroke-width="3.5"/>
-    <circle class="gauge-progress" cx="27" cy="27" r="${r}" fill="none" stroke="${stroke}"
+  const glow   = s >= 70
+    ? 'filter:drop-shadow(0 0 6px rgba(16,185,129,0.55))'
+    : s >= 40 ? 'filter:drop-shadow(0 0 5px rgba(245,158,11,0.45))' : '';
+  return `<svg width="58" height="58" viewBox="0 0 58 58" style="flex-shrink:0;${glow}">
+    <circle cx="29" cy="29" r="${r}" fill="none" stroke="#F2F4F7" stroke-width="3.5"/>
+    <circle class="gauge-progress" cx="29" cy="29" r="${r}" fill="none" stroke="${stroke}"
       stroke-width="3.5" stroke-dasharray="${circ}" stroke-dashoffset="${circ}"
-      data-target="${target}" stroke-linecap="round" transform="rotate(-90 27 27)"
-      style="transition:stroke-dashoffset .6s ease-out;"/>
-    <text x="27" y="32" text-anchor="middle" fill="#1A1F36"
+      data-target="${target}" stroke-linecap="round" transform="rotate(-90 29 29)"
+      style="transition:stroke-dashoffset .65s ease-out;"/>
+    <text x="29" y="34" text-anchor="middle" fill="#1A1F36"
       font-family="Inter,system-ui,sans-serif" font-size="14" font-weight="700">${s}</text>
   </svg>`;
 }
@@ -912,7 +1285,7 @@ function renderSkeletons() {
           ${row('65%', 18, 'margin-bottom:8px')}
           ${row('38%', 13)}
         </div>
-        ${row('54px', 54, 'border-radius:50%;flex-shrink:0')}
+        ${row('58px', 58, 'border-radius:50%;flex-shrink:0')}
       </div>
       ${row('110px', 22, 'border-radius:999px;margin-bottom:14px')}
       ${row('100%', 14, 'margin-bottom:7px')}
@@ -942,7 +1315,7 @@ function renderCards(data) {
     return;
   }
 
-  resultsEl.innerHTML = data.map((item, i) => {
+  const cards = data.map((item, i) => {
     const name     = item.dealership_name || 'Unnamed Dealership';
     const location = [item.city, item.state].filter(Boolean).join(', ') || 'Location unavailable';
     const signal   = getSignal(item);
@@ -950,23 +1323,26 @@ function renderCards(data) {
     const summary  = item.ai_summary  || 'No summary available.';
     const pitch    = item.pitch_angle || item.recommended_offer || 'No pitch available.';
     const isNew    = item.status === 'new';
-    const delay    = Math.min(i, 8) * 80;
+    const delay    = Math.min(i, 8) * 75;
+    const detected = timeAgo(item.created_at);
+
+    const steps     = item.outreach_steps || {};
+    const doneCount = OUTREACH_STEPS.filter(s => steps[s.key]).length;
+    const allDone   = doneCount === OUTREACH_STEPS.length;
 
     const srcLink = item.source_url && item.source_url.startsWith('http')
       ? `<a href="${esc(item.source_url)}" target="_blank" rel="noopener noreferrer" class="source-link">View source article →</a>`
       : '<span></span>';
 
-    const steps    = item.outreach_steps || {};
-    const doneCount = OUTREACH_STEPS.filter(s => steps[s.key]).length;
-    const allDone  = doneCount === OUTREACH_STEPS.length;
     const stepsHtml = OUTREACH_STEPS.map(s => `
       <label class="outreach-step">
         <input type="checkbox" class="step-check" data-id="${item.id}" data-step="${s.key}"${steps[s.key] ? ' checked' : ''}>
+        <span class="toggle-track"><span class="toggle-thumb"></span></span>
         <span class="outreach-step-label">${s.label}</span>
       </label>`).join('');
 
     return `
-      <div class="card" style="animation-delay:${delay}ms">
+      <div class="card" style="animation-delay:${delay}ms;border-left-color:${signal.accent}">
         <div class="card-top">
           <div class="card-identity">
             <div class="card-name-row">
@@ -974,13 +1350,17 @@ function renderCards(data) {
               ${isNew ? '<span class="new-badge">NEW</span>' : ''}
             </div>
             <div class="location">${PIN_ICON} ${esc(location)}</div>
+            ${detected ? `<div class="detected-time">${detected}</div>` : ''}
           </div>
           ${scoreGauge(score)}
         </div>
         <span class="badge" style="color:${signal.color};background:${signal.bg}">${signal.label}</span>
-        <div class="summary">${esc(summary)}</div>
+        <div class="summary-wrap">
+          <span class="ai-badge">AI</span>
+          <div class="summary">${esc(summary)}</div>
+        </div>
         <div class="pitch-box">
-          <div class="pitch-label">Suggested pitch</div>
+          <div class="pitch-label">Suggested Pitch</div>
           <div class="pitch-text">${esc(pitch)}</div>
         </div>
         <div class="card-footer">
@@ -999,17 +1379,18 @@ function renderCards(data) {
           <div class="outreach-steps-list">${stepsHtml}</div>
         </div>
       </div>`;
-  }).join('');
+  });
 
+  resultsEl.innerHTML = cards.join('<div class="card-sep"></div>');
   totalShowing = data.length;
   updateMeta();
   triggerGauges();
 }
 
-/* ── Mark Contacted ── */
+/* ── Mark Contacted — success flip then collapse ── */
 async function markContacted(id, card, btn) {
   btn.textContent = 'Saving…';
-  btn.disabled = true;
+  btn.disabled    = true;
   card.style.pointerEvents = 'none';
 
   const { error } = await client
@@ -1020,7 +1401,7 @@ async function markContacted(id, card, btn) {
   if (error) {
     console.error('Mark contacted error:', error);
     btn.textContent = 'Mark Contacted';
-    btn.disabled = false;
+    btn.disabled    = false;
     card.style.pointerEvents = '';
     return;
   }
@@ -1028,44 +1409,52 @@ async function markContacted(id, card, btn) {
   const item = allData.find(d => String(d.id) === String(id));
   if (item) item.status = 'contacted';
 
-  // Green flash
-  card.style.outline       = '3px solid rgba(16,185,129,0.4)';
-  card.style.outlineOffset = '0px';
-
-  await sleep(170);
-
-  // Capture current height then transition to 0
-  const h = card.offsetHeight;
+  /* Lock height → swap to success state */
+  const h = card.scrollHeight;
   card.style.maxHeight = h + 'px';
   card.style.overflow  = 'hidden';
-  card.offsetHeight; // force reflow
+  card.style.transition = 'background 0.3s ease, border-left-color 0.3s ease';
+  card.style.background      = 'rgba(240,253,244,0.7)';
+  card.style.borderLeftColor = '#10B981';
+
+  card.innerHTML = `
+    <div class="contacted-success">
+      <div class="contacted-check">✓</div>
+      <div class="contacted-success-text">Added to pipeline</div>
+      <div class="contacted-success-sub">Marked as contacted</div>
+    </div>`;
+
+  await sleep(1500);
 
   card.style.transition = [
     'opacity .28s ease',
-    'transform .28s ease',
-    'max-height .42s ease .08s',
-    'margin-bottom .42s ease .08s',
-    'padding-top .42s ease .08s',
-    'padding-bottom .42s ease .08s',
-    'outline .2s ease',
+    'max-height .42s ease .06s',
+    'min-height .42s ease .06s',
+    'margin-bottom .42s ease .06s',
+    'padding .42s ease .06s',
   ].join(', ');
 
   card.style.opacity       = '0';
-  card.style.transform     = 'translateY(-8px)';
   card.style.maxHeight     = '0';
+  card.style.minHeight     = '0';
   card.style.marginBottom  = '0';
   card.style.paddingTop    = '0';
   card.style.paddingBottom = '0';
-  card.style.outline       = '0px solid transparent';
 
-  await sleep(530);
+  await sleep(520);
   card.remove();
+
+  /* Clean up orphaned separators */
+  resultsEl.querySelectorAll('.card-sep').forEach(sep => {
+    if (!sep.nextElementSibling || sep.nextElementSibling.classList.contains('card-sep')
+        || !sep.previousElementSibling) sep.remove();
+  });
 
   contactedCount++;
   totalActive  = Math.max(0, totalActive  - 1);
   totalShowing = Math.max(0, totalShowing - 1);
-  statContact.textContent = contactedCount;
-  statTotal.textContent   = totalActive;
+  animateCount(statContact, contactedCount);
+  statTotal.textContent = totalActive;
   updateMeta();
 }
 
@@ -1076,12 +1465,22 @@ document.getElementById('filter-pills').addEventListener('click', e => {
   document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
   pill.classList.add('active');
   activeFilter = pill.dataset.filter;
-  renderCards(getFiltered());
+  renderFiltered();
 });
 
 document.getElementById('search-input').addEventListener('input', e => {
   searchQuery = e.target.value.trim().toLowerCase();
-  renderCards(getFiltered());
+  renderFiltered();
+});
+
+/* ⌘K / Ctrl+K → focus search */
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault();
+    const inp = document.getElementById('search-input');
+    inp.focus();
+    inp.select();
+  }
 });
 
 resultsEl.addEventListener('click', e => {
@@ -1103,12 +1502,11 @@ resultsEl.addEventListener('change', async e => {
   if (!item.outreach_steps) item.outreach_steps = {};
   item.outreach_steps[step] = checked;
 
-  const doneCount = OUTREACH_STEPS.filter(s => item.outreach_steps[s.key]).length;
-  const allDone   = doneCount === OUTREACH_STEPS.length;
+  const doneCount  = OUTREACH_STEPS.filter(s => item.outreach_steps[s.key]).length;
   const progressEl = document.querySelector(`.outreach-progress[data-progress-id="${id}"]`);
   if (progressEl) {
     progressEl.textContent = `${doneCount}/${OUTREACH_STEPS.length}`;
-    progressEl.classList.toggle('complete', allDone);
+    progressEl.classList.toggle('complete', doneCount === OUTREACH_STEPS.length);
   }
 
   const { error } = await client
@@ -1118,7 +1516,7 @@ resultsEl.addEventListener('change', async e => {
 
   if (error) {
     console.error('Failed to save outreach step:', error);
-    checkbox.checked = !checked;
+    checkbox.checked          = !checked;
     item.outreach_steps[step] = !checked;
     const revert = OUTREACH_STEPS.filter(s => item.outreach_steps[s.key]).length;
     if (progressEl) {
@@ -1130,21 +1528,19 @@ resultsEl.addEventListener('change', async e => {
 
 /* ── Settings panel ── */
 (function initSettings() {
-  const wrap    = document.getElementById('settings-wrap');
-  const btn     = document.getElementById('settings-btn');
-  const dropdown = document.getElementById('settings-dropdown');
+  const wrap      = document.getElementById('settings-wrap');
+  const btn       = document.getElementById('settings-btn');
+  const dropdown  = document.getElementById('settings-dropdown');
   const nameLabel = document.getElementById('platform-name-label');
 
-  // Sync radio + labels to stored value
   function applyPlatform(val) {
     contactPlatform = val;
     localStorage.setItem('contactPlatform', val);
     nameLabel.textContent = PLATFORM_LABELS[val] || val;
-
     dropdown.querySelectorAll('.platform-option').forEach(opt => {
-      const selected = opt.dataset.platform === val;
-      opt.classList.toggle('selected', selected);
-      opt.querySelector('input').checked = selected;
+      const sel = opt.dataset.platform === val;
+      opt.classList.toggle('selected', sel);
+      opt.querySelector('input').checked = sel;
     });
   }
 
@@ -1159,8 +1555,7 @@ resultsEl.addEventListener('change', async e => {
     radio.addEventListener('change', () => {
       applyPlatform(radio.value);
       dropdown.classList.remove('open');
-      // Re-render cards so Find Contact URLs update immediately
-      if (allData.length) renderCards(getFiltered());
+      if (allData.length) renderFiltered(false);
     });
   });
 
@@ -1172,6 +1567,7 @@ resultsEl.addEventListener('change', async e => {
 /* ── Bootstrap ── */
 async function loadOpportunities() {
   renderSkeletons();
+  refreshStatus.textContent = 'Refreshing…';
 
   const [
     { data, error },
@@ -1180,6 +1576,8 @@ async function loadOpportunities() {
     client.from('opportunities').select('*').order('confidence_score', { ascending: false }),
     client.from('dealerships').select('*', { count: 'exact', head: true }),
   ]);
+
+  refreshStatus.textContent = '';
 
   if (dealerCount != null) animateCount(statDealerships, dealerCount);
 
