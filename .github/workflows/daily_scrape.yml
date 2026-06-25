@@ -59,7 +59,6 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          META_ADS_API_TOKEN: ${{ secrets.META_ADS_API_TOKEN }}
         run: python scripts/meta_ads_checker.py
 
       - name: Check Google presence for weak digital signals

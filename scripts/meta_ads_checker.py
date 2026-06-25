@@ -71,8 +71,9 @@ def check_active_ads(page, dealership_name: str) -> bool | None:
 since = (datetime.now(timezone.utc) - timedelta(days=LOOKBACK)).isoformat()
 
 recent = supabase.table("opportunities") \
-    .select("dealership_name, city, state") \
+    .select("dealership_name, city, state, confidence_score") \
     .gte("created_at", since) \
+    .gte("confidence_score", 80) \
     .neq("opportunity_type", "weak_digital") \
     .execute()
 
@@ -84,7 +85,7 @@ for row in recent.data:
         seen.add(name)
         dealerships.append(row)
 
-print(f"Found {len(dealerships)} unique dealerships from the last {LOOKBACK} days\n")
+print(f"Found {len(dealerships)} high-confidence dealerships (score ≥ 80) from the last {LOOKBACK} days\n")
 
 if not dealerships:
     print("Nothing to check — exiting.")
@@ -129,7 +130,7 @@ with sync_playwright() as p:
             continue
 
         ads_found = check_active_ads(page, name)
-        time.sleep(2)
+        time.sleep(3)
 
         if ads_found is None:
             print("  Inconclusive (page loaded but no clear signal) — skipping")
