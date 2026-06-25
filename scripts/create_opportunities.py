@@ -1,7 +1,10 @@
+from dotenv import load_dotenv
 from supabase import create_client
 from openai import OpenAI
 import json
 import os
+
+load_dotenv()
 
 print("DealerHunters opportunity creation starting...")
 
@@ -49,12 +52,19 @@ def extract_dealer_info(raw_text):
             ],
             response_format={"type": "json_object"},
         )
-        result = json.loads(response.choices[0].message.content)
-        return {
+        raw_response = response.choices[0].message.content
+        print(f"[DEBUG] Raw API response: {raw_response}")
+
+        result = json.loads(raw_response)
+        print(f"[DEBUG] Parsed dict: {result}")
+
+        dealer = {
             "dealership_name": result.get("dealership_name") or "Unnamed Dealership",
             "city":            result.get("city"),
             "state":           result.get("state"),
         }
+        print(f"[DEBUG] Returning dealer: {dealer}")
+        return dealer
     except Exception as e:
         print(f"Dealer extraction failed ({e}), using fallback")
         return {"dealership_name": "Unnamed Dealership", "city": None, "state": None}
@@ -112,7 +122,7 @@ for match in matches.data:
         source.get("source_name", "unknown source"),
     )
 
-    supabase.table("opportunities").insert({
+    insert_payload = {
         "signal_id":        match["id"],
         "dealership_name":  dealer["dealership_name"],
         "city":             dealer["city"],
@@ -121,7 +131,9 @@ for match in matches.data:
         "fit_score":        match["fit_score"],
         "ai_summary":       ai_summary,
         "pitch_angle":      pitch_angle,
-    }).execute()
+    }
+    print(f"[DEBUG] Insert payload: {insert_payload}")
+    supabase.table("opportunities").insert(insert_payload).execute()
 
     supabase.table("signal_matches").update({"processed": True}).eq("id", match["id"]).execute()
 
