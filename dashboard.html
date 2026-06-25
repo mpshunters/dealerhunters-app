@@ -174,12 +174,12 @@
     /* ── Stats grid ── */
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(6, 1fr);
       gap: 10px;
       margin-bottom: 22px;
     }
 
-    @media (max-width: 700px) { .stats-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 800px) { .stats-grid { grid-template-columns: repeat(3, 1fr); } }
     @media (max-width: 460px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
 
     .stat-card {
@@ -524,6 +524,10 @@
       <div class="stat-value" id="stat-contacted">0</div>
       <div class="stat-label">Contacted</div>
     </div>
+    <div class="stat-card">
+      <div class="stat-value" id="stat-dealerships">—</div>
+      <div class="stat-label">Dealerships in DB</div>
+    </div>
   </div>
 
   <div id="results"></div>
@@ -560,11 +564,12 @@ let totalShowing   = 0;
 /* ── DOM refs ── */
 const resultsEl   = document.getElementById('results');
 const metaEl      = document.getElementById('results-meta');
-const statTotal   = document.getElementById('stat-total');
-const statOwner   = document.getElementById('stat-ownership');
-const statHiring  = document.getElementById('stat-hiring');
-const statScore   = document.getElementById('stat-score');
-const statContact = document.getElementById('stat-contacted');
+const statTotal       = document.getElementById('stat-total');
+const statOwner       = document.getElementById('stat-ownership');
+const statHiring      = document.getElementById('stat-hiring');
+const statScore       = document.getElementById('stat-score');
+const statContact     = document.getElementById('stat-contacted');
+const statDealerships = document.getElementById('stat-dealerships');
 
 /* ── Utilities ── */
 function esc(s) {
@@ -844,10 +849,15 @@ resultsEl.addEventListener('click', e => {
 async function loadOpportunities() {
   renderSkeletons();
 
-  const { data, error } = await client
-    .from('opportunities')
-    .select('*')
-    .order('confidence_score', { ascending: false });
+  const [
+    { data, error },
+    { count: dealerCount },
+  ] = await Promise.all([
+    client.from('opportunities').select('*').order('confidence_score', { ascending: false }),
+    client.from('dealerships').select('*', { count: 'exact', head: true }),
+  ]);
+
+  if (dealerCount != null) animateCount(statDealerships, dealerCount);
 
   if (error) {
     resultsEl.innerHTML = `<div class="state-card error">

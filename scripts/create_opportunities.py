@@ -85,6 +85,21 @@ def generate_ai_content(raw_text, signal_type, source_name):
         )
 
 
+def find_matching_dealership(name):
+    if not name or name == "Unnamed Dealership":
+        return None
+    try:
+        result = supabase.table("dealerships") \
+            .select("dealership_name, city, state, phone, website, franchise") \
+            .ilike("dealership_name", f"%{name}%") \
+            .limit(1) \
+            .execute()
+        return result.data[0] if result.data else None
+    except Exception as e:
+        print(f"Dealership lookup failed ({e})")
+        return None
+
+
 matches = supabase.table("signal_matches") \
     .select("*") \
     .or_("processed.is.false,processed.is.null") \
@@ -115,7 +130,9 @@ for match in matches.data:
         source.get("source_name", "unknown source"),
     )
 
-    supabase.table("opportunities").insert({
+    matched = find_matching_dealership(dealer["dealership_name"])
+
+    record = {
         "signal_id":        match["id"],
         "dealership_name":  dealer["dealership_name"],
         "city":             dealer["city"],
@@ -124,11 +141,22 @@ for match in matches.data:
         "fit_score":        match["fit_score"],
         "ai_summary":       ai_summary,
         "pitch_angle":      pitch_angle,
-    }).execute()
+    }
+
+    if matched:
+        record["city"]      = matched["city"]     or dealer["city"]
+        record["state"]     = matched["state"]    or dealer["state"]
+        record["phone"]     = matched.get("phone")
+        record["website"]   = matched.get("website")
+        record["franchise"] = matched.get("franchise")
+        print(f"  Matched dealership record: {matched['dealership_name']}")
+
+    supabase.table("opportunities").insert(record).execute()
 
     supabase.table("signal_matches").update({"processed": True}).eq("id", match["id"]).execute()
 
     created += 1
-    print(f"Created: {dealer['dealership_name']} | {dealer['city']}, {dealer['state']} | {match['signal_type']}")
+    match_note = " [DB match]" if matched else ""
+    print(f"Created: {dealer['dealership_name']} | {dealer['city']}, {dealer['state']} | {match['signal_type']}{match_note}")
 
 print(f"Opportunity creation complete. {created} created.")
