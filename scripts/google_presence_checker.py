@@ -14,13 +14,12 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# Thresholds for weak Google presence
+# Thresholds for weak Google presence (photo_count excluded — Places API caps at 10)
 RATING_THRESHOLD  = 4.0
 REVIEWS_THRESHOLD = 50
-PHOTOS_THRESHOLD  = 10
 
 dealers = supabase.table("dealerships") \
-    .select("dealership_name, city, state, google_rating, google_reviews, photo_count") \
+    .select("dealership_name, city, state, google_rating, google_reviews") \
     .execute()
 
 print(f"Evaluating {len(dealers.data)} dealerships for weak Google presence\n")
@@ -34,12 +33,11 @@ for dealer in dealers.data:
     if not name:
         continue
 
-    rating      = dealer.get("google_rating")
-    reviews     = dealer.get("google_reviews")
-    photo_count = dealer.get("photo_count")
+    rating  = dealer.get("google_rating")
+    reviews = dealer.get("google_reviews")
 
     # Skip if no Google data at all
-    if rating is None and reviews is None and photo_count is None:
+    if rating is None and reviews is None:
         skipped_no_data += 1
         continue
 
@@ -49,8 +47,6 @@ for dealer in dealers.data:
         reasons.append(f"Google rating {rating}/5 (below {RATING_THRESHOLD})")
     if reviews is not None and reviews < REVIEWS_THRESHOLD:
         reasons.append(f"only {reviews} Google reviews (below {REVIEWS_THRESHOLD})")
-    if photo_count is not None and photo_count < PHOTOS_THRESHOLD:
-        reasons.append(f"only {photo_count} Google photos (below {PHOTOS_THRESHOLD})")
 
     if not reasons:
         continue
