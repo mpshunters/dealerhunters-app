@@ -453,6 +453,73 @@
 
     .state-card.error { color: #991B1B; }
 
+    /* ── Outreach tracker ── */
+    .outreach-tracker {
+      border-top: 1px solid #E8ECF4;
+      margin-top: 14px;
+      padding-top: 14px;
+    }
+
+    .outreach-tracker-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .outreach-tracker-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: #9CA3AF;
+    }
+
+    .outreach-progress {
+      font-size: 11px;
+      font-weight: 600;
+      color: #9CA3AF;
+      transition: color 0.2s ease;
+    }
+
+    .outreach-progress.complete { color: #10B981; }
+
+    .outreach-steps-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .outreach-step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 0;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .outreach-step input[type="checkbox"] {
+      accent-color: #10B981;
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .outreach-step-label {
+      font-size: 13px;
+      color: #374151;
+      transition: color 0.15s ease;
+      line-height: 1.3;
+    }
+
+    .outreach-step input:checked ~ .outreach-step-label {
+      color: #9CA3AF;
+      text-decoration: line-through;
+      text-decoration-color: #D1D5DB;
+    }
+
     /* ── Settings gear ── */
     .header-right {
       display: flex;
@@ -671,6 +738,14 @@ const SIGNAL_CONFIG = {
 };
 const DEFAULT_SIGNAL = { label: 'Signal', color: '#344054', bg: '#F2F4F7' };
 
+const OUTREACH_STEPS = [
+  { key: 'ip_ad',          label: 'IP ad running' },
+  { key: 'direct_mail',    label: 'Direct mail sent' },
+  { key: 'linkedin',       label: 'LinkedIn connected' },
+  { key: 'email_sequence', label: 'Email sequence started' },
+  { key: 'phone_call',     label: 'Phone call made' },
+];
+
 const PIN_ICON = `<svg width="10" height="13" viewBox="0 0 12 15" fill="none">
   <path d="M6 0C3.51 0 1.5 2.01 1.5 4.5c0 3.375 4.5 9 4.5 9s4.5-5.625 4.5-9C10.5 2.01 8.49 0 6 0zm0 6.375A1.875 1.875 0 1 1 6 2.625a1.875 1.875 0 0 1 0 3.75z" fill="#9CA3AF"/>
 </svg>`;
@@ -878,6 +953,15 @@ function renderCards(data) {
       ? `<a href="${esc(item.source_url)}" target="_blank" rel="noopener noreferrer" class="source-link">View source article →</a>`
       : '<span></span>';
 
+    const steps    = item.outreach_steps || {};
+    const doneCount = OUTREACH_STEPS.filter(s => steps[s.key]).length;
+    const allDone  = doneCount === OUTREACH_STEPS.length;
+    const stepsHtml = OUTREACH_STEPS.map(s => `
+      <label class="outreach-step">
+        <input type="checkbox" class="step-check" data-id="${item.id}" data-step="${s.key}"${steps[s.key] ? ' checked' : ''}>
+        <span class="outreach-step-label">${s.label}</span>
+      </label>`).join('');
+
     return `
       <div class="card" style="animation-delay:${delay}ms">
         <div class="card-top">
@@ -903,6 +987,13 @@ function renderCards(data) {
               target="_blank" rel="noopener noreferrer" class="btn-find-contact">Find Contact</a>
             <button class="btn-contact" data-id="${item.id}">Mark Contacted</button>
           </div>
+        </div>
+        <div class="outreach-tracker">
+          <div class="outreach-tracker-header">
+            <span class="outreach-tracker-label">Campaign Sequence</span>
+            <span class="outreach-progress${allDone ? ' complete' : ''}" data-progress-id="${item.id}">${doneCount}/${OUTREACH_STEPS.length}</span>
+          </div>
+          <div class="outreach-steps-list">${stepsHtml}</div>
         </div>
       </div>`;
   }).join('');
@@ -994,6 +1085,44 @@ resultsEl.addEventListener('click', e => {
   const btn = e.target.closest('.btn-contact');
   if (!btn || btn.disabled) return;
   markContacted(btn.dataset.id, btn.closest('.card'), btn);
+});
+
+resultsEl.addEventListener('change', async e => {
+  const checkbox = e.target.closest('.step-check');
+  if (!checkbox) return;
+
+  const id      = checkbox.dataset.id;
+  const step    = checkbox.dataset.step;
+  const checked = checkbox.checked;
+
+  const item = allData.find(d => String(d.id) === String(id));
+  if (!item) return;
+  if (!item.outreach_steps) item.outreach_steps = {};
+  item.outreach_steps[step] = checked;
+
+  const doneCount = OUTREACH_STEPS.filter(s => item.outreach_steps[s.key]).length;
+  const allDone   = doneCount === OUTREACH_STEPS.length;
+  const progressEl = document.querySelector(`.outreach-progress[data-progress-id="${id}"]`);
+  if (progressEl) {
+    progressEl.textContent = `${doneCount}/${OUTREACH_STEPS.length}`;
+    progressEl.classList.toggle('complete', allDone);
+  }
+
+  const { error } = await client
+    .from('opportunities')
+    .update({ outreach_steps: item.outreach_steps })
+    .eq('id', id);
+
+  if (error) {
+    console.error('Failed to save outreach step:', error);
+    checkbox.checked = !checked;
+    item.outreach_steps[step] = !checked;
+    const revert = OUTREACH_STEPS.filter(s => item.outreach_steps[s.key]).length;
+    if (progressEl) {
+      progressEl.textContent = `${revert}/${OUTREACH_STEPS.length}`;
+      progressEl.classList.toggle('complete', revert === OUTREACH_STEPS.length);
+    }
+  }
 });
 
 /* ── Settings panel ── */
