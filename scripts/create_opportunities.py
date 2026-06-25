@@ -156,14 +156,15 @@ for match in matches.data:
         record["phone"]     = matched.get("phone")
         record["website"]   = matched.get("website")
         record["franchise"] = matched.get("franchise")
-        print(f"  Matched dealership record: {matched['dealership_name']}")
+        print(f"  [DB match] Found location: {record['city']}, {record['state']}")
+    else:
+        print(f"  [No DB match] Using extracted location: {dealer['city']}, {dealer['state']}")
 
     supabase.table("opportunities").insert(record).execute()
 
     supabase.table("signal_matches").update({"processed": True}).eq("id", match["id"]).execute()
 
     created += 1
-    match_note = " [DB match]" if matched else ""
-    print(f"Created: {dealer['dealership_name']} | {dealer['city']}, {dealer['state']} | {match['signal_type']}{match_note}")
+    print(f"Created: {dealer['dealership_name']} | {record['city']}, {record['state']} | {match['signal_type']}")
 
 print(f"Opportunity creation complete. {created} created.")
