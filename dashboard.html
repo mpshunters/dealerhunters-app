@@ -452,6 +452,105 @@
     }
 
     .state-card.error { color: #991B1B; }
+
+    /* ── Settings gear ── */
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .settings-wrap { position: relative; }
+
+    .settings-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 7px;
+      padding: 5px 10px;
+      color: rgba(255,255,255,0.45);
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .settings-btn:hover {
+      color: rgba(255,255,255,0.85);
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(255,255,255,0.2);
+    }
+
+    .settings-btn .gear-icon { font-size: 13px; }
+
+    #platform-name-label {
+      font-size: 11px;
+      color: rgba(255,255,255,0.32);
+      font-weight: 400;
+    }
+
+    .settings-dropdown {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 8px);
+      background: #1F2937;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      min-width: 210px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+      z-index: 500;
+      opacity: 0;
+      transform: translateY(-6px);
+      pointer-events: none;
+      transition: opacity 0.15s ease, transform 0.15s ease;
+    }
+
+    .settings-dropdown.open {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .settings-dropdown-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
+      padding: 12px 14px 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .platform-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: 13px;
+      color: rgba(255,255,255,0.6);
+      transition: background 0.12s ease, color 0.12s ease;
+    }
+
+    .platform-option:last-child { padding-bottom: 12px; }
+
+    .platform-option:hover {
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.9);
+    }
+
+    .platform-option input[type="radio"] {
+      accent-color: #10B981;
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .platform-option.selected { color: #10B981; }
   </style>
 </head>
 <body>
@@ -477,7 +576,30 @@
       <div class="logo-tagline">Dealer signals. Delivered daily.</div>
     </div>
   </div>
-  <div class="header-meta">Last updated: <strong id="last-updated">—</strong></div>
+  <div class="header-right">
+    <div class="header-meta">Last updated: <strong id="last-updated">—</strong></div>
+    <div class="settings-wrap" id="settings-wrap">
+      <button class="settings-btn" id="settings-btn" title="Contact platform settings">
+        <span class="gear-icon">⚙</span>
+        <span id="platform-name-label">Apollo.io</span>
+      </button>
+      <div class="settings-dropdown" id="settings-dropdown">
+        <div class="settings-dropdown-title">Contact Platform</div>
+        <label class="platform-option" data-platform="apollo">
+          <input type="radio" name="contactPlatform" value="apollo" /> Apollo.io
+        </label>
+        <label class="platform-option" data-platform="zoominfo">
+          <input type="radio" name="contactPlatform" value="zoominfo" /> ZoomInfo
+        </label>
+        <label class="platform-option" data-platform="linkedin">
+          <input type="radio" name="contactPlatform" value="linkedin" /> LinkedIn Sales Navigator
+        </label>
+        <label class="platform-option" data-platform="hunter">
+          <input type="radio" name="contactPlatform" value="hunter" /> Hunter.io
+        </label>
+      </div>
+    </div>
+  </div>
 </header>
 
 <div class="filter-bar-wrap">
@@ -552,6 +674,35 @@ const DEFAULT_SIGNAL = { label: 'Signal', color: '#344054', bg: '#F2F4F7' };
 const PIN_ICON = `<svg width="10" height="13" viewBox="0 0 12 15" fill="none">
   <path d="M6 0C3.51 0 1.5 2.01 1.5 4.5c0 3.375 4.5 9 4.5 9s4.5-5.625 4.5-9C10.5 2.01 8.49 0 6 0zm0 6.375A1.875 1.875 0 1 1 6 2.625a1.875 1.875 0 0 1 0 3.75z" fill="#9CA3AF"/>
 </svg>`;
+
+/* ── Contact platform ── */
+const PLATFORM_LABELS = {
+  apollo:   'Apollo.io',
+  zoominfo: 'ZoomInfo',
+  linkedin: 'LinkedIn Sales Nav',
+  hunter:   'Hunter.io',
+};
+
+let contactPlatform = localStorage.getItem('contactPlatform') || 'apollo';
+
+function getContactUrl(name, website) {
+  const n = encodeURIComponent(name);
+  switch (contactPlatform) {
+    case 'zoominfo':
+      return `https://app.zoominfo.com/insights/search/company?companyName=${n}`;
+    case 'linkedin':
+      return `https://www.linkedin.com/sales/search/people?keywords=${n}&titleIncluded=General%20Manager`;
+    case 'hunter':
+      if (website) {
+        const domain = website.replace(/^https?:\/\/(www\.)?/, '').replace(/\/.*$/, '');
+        return `https://hunter.io/search/${encodeURIComponent(domain)}`;
+      }
+      return `https://hunter.io/search/${n}`;
+    case 'apollo':
+    default:
+      return `https://app.apollo.io/#/people?organizationName=${n}&personTitles[]=General Manager&personTitles[]=Marketing Director`;
+  }
+}
 
 /* ── State ── */
 let allData        = [];
@@ -748,7 +899,7 @@ function renderCards(data) {
         <div class="card-footer">
           ${srcLink}
           <div class="card-footer-right">
-            <a href="https://app.apollo.io/#/people?organizationName=${encodeURIComponent(name)}&personTitles[]=General Manager&personTitles[]=Marketing Director"
+            <a href="${esc(getContactUrl(name, item.website || ''))}"
               target="_blank" rel="noopener noreferrer" class="btn-find-contact">Find Contact</a>
             <button class="btn-contact" data-id="${item.id}">Mark Contacted</button>
           </div>
@@ -844,6 +995,47 @@ resultsEl.addEventListener('click', e => {
   if (!btn || btn.disabled) return;
   markContacted(btn.dataset.id, btn.closest('.card'), btn);
 });
+
+/* ── Settings panel ── */
+(function initSettings() {
+  const wrap    = document.getElementById('settings-wrap');
+  const btn     = document.getElementById('settings-btn');
+  const dropdown = document.getElementById('settings-dropdown');
+  const nameLabel = document.getElementById('platform-name-label');
+
+  // Sync radio + labels to stored value
+  function applyPlatform(val) {
+    contactPlatform = val;
+    localStorage.setItem('contactPlatform', val);
+    nameLabel.textContent = PLATFORM_LABELS[val] || val;
+
+    dropdown.querySelectorAll('.platform-option').forEach(opt => {
+      const selected = opt.dataset.platform === val;
+      opt.classList.toggle('selected', selected);
+      opt.querySelector('input').checked = selected;
+    });
+  }
+
+  applyPlatform(contactPlatform);
+
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    dropdown.classList.toggle('open');
+  });
+
+  dropdown.querySelectorAll('input[type="radio"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      applyPlatform(radio.value);
+      dropdown.classList.remove('open');
+      // Re-render cards so Find Contact URLs update immediately
+      if (allData.length) renderCards(getFiltered());
+    });
+  });
+
+  document.addEventListener('click', e => {
+    if (!wrap.contains(e.target)) dropdown.classList.remove('open');
+  });
+})();
 
 /* ── Bootstrap ── */
 async function loadOpportunities() {
