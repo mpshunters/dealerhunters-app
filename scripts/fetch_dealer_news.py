@@ -86,9 +86,15 @@ for source in sources.data:
     source_url  = source["source_url"]
 
     print(f"\nScraping {source_name}...")
+    verify_ssl = True
 
     try:
-        resp = requests.get(source_url, timeout=20, headers=HEADERS)
+        try:
+            resp = requests.get(source_url, timeout=20, headers=HEADERS)
+        except requests.exceptions.SSLError:
+            print(f"  SSL error — retrying with verify=False")
+            verify_ssl = False
+            resp = requests.get(source_url, timeout=20, headers=HEADERS, verify=False)
         supabase.table("source_registry").update({
             "last_status_code": resp.status_code,
             "health_status": "healthy" if resp.status_code == 200 else "warning"
@@ -122,7 +128,7 @@ for source in sources.data:
             continue
 
         try:
-            article_resp = requests.get(article_url, timeout=20, headers=HEADERS)
+            article_resp = requests.get(article_url, timeout=20, headers=HEADERS, verify=verify_ssl)
             if article_resp.status_code != 200:
                 continue
 
