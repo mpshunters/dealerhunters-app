@@ -1,211 +1,217 @@
-# DealerHunters — Project Status
+# DealerHunters — Project Status & Handoff Document
 
-> **Last updated:** June 2026  
-> **Purpose:** Complete handoff document. A new Claude session or developer should be able to resume work from zero other context.
-
----
-
-## What Is DealerHunters?
-
-DealerHunters is a **B2B sales intelligence platform** for auto dealership marketing outreach. It monitors thousands of news sources daily, detects "in-motion" dealerships (ownership changes, leadership hires, new rooftops, OEM events, expansions), and delivers a curated digest of high-quality leads with AI-generated summaries and pitch angles.
-
-**Primary customer:** CR Advertising — a marketing agency that sells digital marketing services (SEO, PPC, social, BDC) to auto dealerships.
-
-**Core value:** Instead of cold-calling random dealers, CR's reps contact dealerships at the exact moment of change — when a new owner just took over, a new marketing director was hired, or a second location opened. These are moments of maximum receptivity to a new agency relationship.
-
-**Business model:** SaaS subscription sold to CR Advertising. They pay for access to the dashboard and daily digest.
+> **Last updated:** 2026-06-25  
+> **Purpose:** Complete context for any new session, developer, or collaborator. No other context needed.
 
 ---
 
-## Architecture Overview
+## 1. What DealerHunters Is
 
+DealerHunters is a B2B sales intelligence tool built for **CR Advertising** — an agency that sells direct mail events and digital marketing campaigns to automotive dealerships across the US.
+
+The core problem: CR's sales team has no systematic way to know *which* dealerships are in a buying moment right now. A dealership that just changed ownership, hired a new marketing director, or opened a second location is a high-probability prospect. Without signal detection, reps cold-call blindly.
+
+**What DealerHunters does:**
+1. Scrapes 25+ automotive industry news sources daily
+2. Detects buying signals in articles (ownership changes, new hires, grand openings, OEM events)
+3. Cross-references signals against a database of 33,000+ verified US dealerships
+4. Generates AI-written summaries and pitch angles for each matched lead
+5. Flags "hot leads" — dealerships that triggered multiple signals (highest priority)
+6. Emails a daily digest to the CR team at 6:17 AM Central
+7. Sends instant hot lead alerts the moment a hot lead is created
+
+**Who uses it:** CR Advertising's sales and account management team.
+
+---
+
+## 2. Tech Stack
+
+| Layer | Technology | Purpose |
+|---|---|---|
+| Pipeline runtime | GitHub Actions (Ubuntu) | Scheduled daily at 11:17 UTC (6:17 AM Central) |
+| Database | Supabase (PostgreSQL) | All data storage; anon key for dashboard, service role key for pipeline |
+| Web scraping | Python `requests` + BeautifulSoup | Article fetching from news sources |
+| JS-heavy scraping | Playwright (headless Chromium) | Meta Ads Library (requires JS execution) |
+| AI extraction | OpenAI GPT-4o-mini | Dealership name/city/state extraction + AI summaries + pitch angles |
+| Email delivery | Resend | Daily digest + hot lead alerts |
+| Frontend | Vanilla HTML/JS (no framework) | Dashboard, landing page, admin panel |
+| Hosting | Cloudflare Pages | Static site + Pages Functions for `/admin-config` route |
+| Dealer data | Google Places API v1 | City-sweep seeding of the dealership database |
+| Local dev | Python `python-dotenv` | `.env` file for credentials |
+
+**Python dependencies** (`requirements.txt`):
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                    DAILY PIPELINE (GitHub Actions)              │
-│                    Runs: 6:17 AM Central (11:17 UTC)            │
-│                                                                 │
-│  scrape_dealer_signals.py                                       │
-│    └─ Seeds source_registry with news sources                   │
-│                                                                 │
-│  fetch_dealer_news.py                                           │
-│    └─ Scrapes article links from each active source             │
-│    └─ Inserts new articles into raw_signals                     │
-│                                                                 │
-│  detect_signal_matches.py                                       │
-│    └─ Runs keyword rules (signal_rules) against raw_signals     │
-│    └─ Writes matches to signal_matches                          │
-│                                                                 │
-│  create_opportunities.py                                        │
-│    └─ Converts signal_matches → opportunities                   │
-│    └─ Uses OpenAI GPT-4o-mini for AI summaries + pitch angles   │
-│    └─ Detects hot leads (same dealership, multiple signals)     │
-│    └─ Maps fit_score weight → confidence_score (75/83/92)       │
-│                                                                 │
-│  meta_ads_checker.py                                            │
-│    └─ Playwright headless Chrome checks Meta Ads Library        │
-│    └─ Only checks opportunities with confidence_score >= 80     │
-│    └─ Creates weak_digital opportunities for dealers w/ no ads  │
-│                                                                 │
-│  google_presence_checker.py                                     │
-│    └─ Checks Google presence for additional weak digital signals│
-│                                                                 │
-│  send_daily_digest.py                                           │
-│    └─ Fetches new opportunities, renders HTML email             │
-│    └─ Sends via Resend API                                      │
-│    └─ Logs send to digest_log                                   │
-└─────────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────┐
-│                      FRONTEND (Cloudflare Pages)                │
-│                      dealerhunters.com                          │
-│                                                                 │
-│  index.html     — Public landing page / marketing site          │
-│  dashboard.html — Customer opportunity dashboard                │
-│  admin.html     — Internal admin command center (password-gated)│
-└─────────────────────────────────────────────────────────────────┘
+supabase
+python-dotenv
+requests
+beautifulsoup4
+openai
+resend
+pdfplumber
+playwright
 ```
 
 ---
 
-## Script Reference
+## 3. Every Script in `/scripts`
 
-### Pipeline Scripts (`scripts/`)
+### Pipeline scripts (run in order by GitHub Actions)
 
-| Script | Purpose | Key tables |
+| Script | What it does |
+|---|---|
+| `scrape_dealer_signals.py` | Seeds `source_registry` with all news sources. Idempotent — skips sources that already exist. Run once to bootstrap; re-run to add new sources. |
+| `fetch_dealer_news.py` | Fetches each active source's homepage, extracts article links, scrapes article body text, inserts into `raw_signals`. Updates `last_scraped_at` and `last_status_code` per source. Retries with `verify=False` on SSL errors. |
+| `detect_signal_matches.py` | Reads all unprocessed `raw_signals`. Runs each article through every active `signal_rules` keyword. Inserts rows into `signal_matches` for every keyword hit. Marks raw signals as `processed=True`. |
+| `create_opportunities.py` | Reads unprocessed `signal_matches`. Uses GPT-4o-mini to extract dealership name/city/state and generate AI summary + pitch angle. 3-pass fuzzy match against `dealerships` DB to enrich with phone/website/franchise. Inserts into `opportunities`. Handles hot lead dedup logic. |
+| `meta_ads_checker.py` | Uses Playwright to check the Meta Ads Library for high-confidence (score ≥ 80) dealerships from the last 30 days. If 0 active ads found → inserts `weak_digital` opportunity. |
+| `google_presence_checker.py` | Scans all dealerships with Google data. Flags any with rating < 4.0 or < 50 reviews as `weak_digital` opportunities. |
+| `send_hot_lead_alert.py` | Finds opportunities created in the last 2 hours with `is_hot_lead=True`. Sends one branded email per hot lead via Resend. Logs to `digest_log` with `type='hot_lead_alert'`. Exits silently if no hot leads. |
+| `send_daily_digest.py` | Queries all `status='new'` opportunities. Sends a single HTML digest email to `DIGEST_EMAIL_TO`. Sends "no signals" email if zero results. Logs to `digest_log`. |
+
+### One-time / maintenance scripts
+
+| Script | What it does |
+|---|---|
+| `seed_signal_rules.py` | Inserts keyword rules into `signal_rules`. Idempotent by `rule_name`. Run once; re-run to add new rules. |
+| `seed_national_dealerships.py` | Broad national dealer seed — searches major metro areas across all states. |
+| `backfill_photo_counts.py` | Backfills `photo_count` column from Google Places data for existing dealership records. |
+| `log_scrape_run.py` | Utility for logging pipeline run metadata. |
+
+### State dealer seed scripts
+
+All follow the same pattern: Google Places API city-sweep → state filter → upsert by `google_place_id`. All are idempotent.
+
+| Script | Cities | Region |
 |---|---|---|
-| `scrape_dealer_signals.py` | Seeds `source_registry` with ~20 industry news sources | `source_registry` |
-| `fetch_dealer_news.py` | Scrapes article URLs from each active source, inserts new articles | `source_registry`, `raw_signals` |
-| `detect_signal_matches.py` | Runs signal_rules keyword matching against unprocessed raw_signals | `signal_rules`, `raw_signals`, `signal_matches` |
-| `create_opportunities.py` | Converts signal_matches → opportunities with OpenAI summaries | `signal_matches`, `opportunities`, `dealerships` |
-| `meta_ads_checker.py` | Playwright check of Meta Ads Library for weak_digital detection | `opportunities` |
-| `google_presence_checker.py` | Google presence check for weak_digital detection | `opportunities` |
-| `send_daily_digest.py` | Renders + sends HTML email digest via Resend | `opportunities`, `digest_log` |
-| `seed_signal_rules.py` | Upserts keyword rules into signal_rules table | `signal_rules` |
-
-### Dealer Database Seed Scripts (one-time, run manually)
-
-Each follows the same pattern: Google Places API city sweep → filter by state → upsert by `google_place_id`.
-
-| Script | State | ~Cities |
-|---|---|---|
-| `seed_il_dealers.py` | Illinois | 200 |
-| `seed_tx_dealers.py` | Texas | 173 |
-| `seed_fl_dealers.py` | Florida | 169 |
-| `seed_ca_dealers.py` | California | 225 |
-| `seed_oh_dealers.py` | Ohio | 140 |
-| `seed_mi_dealers.py` | Michigan | 130 |
-| `seed_mn_dealers.py` | Minnesota | 80 |
-| `seed_wi_dealers.py` | Wisconsin | 90 |
-| `seed_mo_dealers.py` | Missouri | 80 |
-| `seed_in_dealers.py` | Indiana | 90 |
-| `seed_ne_dealers.py` | Nebraska | 50 |
-| `seed_ks_dealers.py` | Kansas | 60 |
+| `seed_il_dealers.py` | ~120 | Illinois (Chicago metro + downstate) |
+| `seed_oh_dealers.py` | ~110 | Ohio (Columbus, Cleveland, Cincinnati, Dayton, Toledo, Akron) |
+| `seed_mi_dealers.py` | ~100 | Michigan (Detroit metro, Grand Rapids, Lansing, Flint, Ann Arbor) |
+| `seed_mn_dealers.py` | ~80 | Minnesota (Twin Cities + outstate) |
+| `seed_wi_dealers.py` | ~90 | Wisconsin (Milwaukee, Madison, Green Bay, Appleton) |
+| `seed_mo_dealers.py` | ~90 | Missouri (St. Louis, Kansas City, Springfield) |
+| `seed_in_dealers.py` | ~90 | Indiana (Indianapolis, Fort Wayne, Evansville, South Bend) |
+| `seed_ne_dealers.py` | ~50 | Nebraska (Omaha, Lincoln + smaller markets) |
+| `seed_ks_dealers.py` | ~60 | Kansas (Wichita, Kansas City KS, Topeka, Lawrence) |
+| `seed_ny_dealers.py` | ~170 | New York (NYC boroughs, Long Island, Buffalo, Rochester, Albany, Syracuse) |
+| `seed_pa_dealers.py` | ~140 | Pennsylvania (Philadelphia, Pittsburgh, Allentown, Scranton, Harrisburg, Erie) |
+| `seed_ga_dealers.py` | ~110 | Georgia (Atlanta metro, Augusta, Columbus, Savannah, Macon, Athens) |
+| `seed_nc_dealers.py` | ~110 | North Carolina (Charlotte, Raleigh-Durham, Greensboro, Fayetteville, Wilmington, Asheville) |
+| `seed_wa_dealers.py` | ~90 | Washington (Seattle-Tacoma, Spokane, Tri-Cities, Bellingham, Vancouver) |
+| `seed_co_dealers.py` | ~80 | Colorado (Denver Front Range, Colorado Springs, Fort Collins, Boulder, Western Slope) |
+| `seed_az_dealers.py` | ~70 | Arizona (Phoenix Valley, Tucson, Flagstaff, Prescott, Yuma, Lake Havasu) |
+| `seed_tx_dealers.py` | — | Texas (partial) |
+| `seed_ca_dealers.py` | — | California (partial) |
+| `seed_fl_dealers.py` | — | Florida (partial) |
+| `seed_iowa_dealers.py` | — | Iowa (partial) |
 
 ---
 
-## Database Schema
+## 4. Database Schema
 
 **Supabase project:** `xahazlzuxowamknucprs`  
 **URL:** `https://xahazlzuxowamknucprs.supabase.co`
 
 ### `dealerships`
-Primary dealer database. ~25,000+ records.
+The canonical dealer database. Seeded via Google Places API.
 
 | Column | Type | Notes |
 |---|---|---|
 | `id` | uuid PK | |
-| `google_place_id` | text UNIQUE | Dedup key — never insert duplicates |
+| `google_place_id` | text UNIQUE | Dedup key for all seed scripts |
 | `dealership_name` | text | |
 | `city` | text | |
-| `state` | text | 2-letter abbreviation (IL, TX, etc.) |
+| `state` | text | 2-letter abbreviation |
 | `phone` | text | |
 | `website` | text | |
-| `google_rating` | float | |
-| `google_reviews` | int | |
-| `photo_count` | int | |
-| `rooftop_status` | text | `active` by default |
+| `franchise` | text | OEM brand (Ford, Toyota, etc.) |
+| `google_rating` | float | From Places API |
+| `google_reviews` | int | Review count from Places API |
+| `photo_count` | int | Count of photos on Google listing |
+| `rooftop_status` | text | `active` default |
 | `has_recent_posts` | bool | nullable |
 | `review_response_rate` | float | nullable |
-| `dealer_group_id` | uuid | nullable |
-| `created_at` | timestamptz | |
+| `dealer_group_id` | uuid | FK to dealer groups, nullable |
 
 ### `source_registry`
-News and signal sources scraped daily.
+All news/press sources the pipeline scrapes.
 
 | Column | Type | Notes |
 |---|---|---|
 | `id` | uuid PK | |
-| `source_name` | text | e.g. "Automotive News" |
+| `source_name` | text | Display name |
 | `source_url` | text UNIQUE | Homepage URL |
-| `source_type` | text | `dealer_news`, `trade_pub`, `local_news` |
-| `state` | text | `ALL` or state code |
-| `active` | bool | Toggle to disable scraping |
-| `last_status_code` | int | HTTP status from last scrape |
+| `source_type` | text | `dealer_news`, `news`, `press`, `rss` |
+| `active` | bool | Only active sources are scraped |
 | `health_status` | text | `healthy`, `warning`, `error` |
-| `last_error` | text | Error message from last failed scrape |
-| `last_scraped_at` | timestamptz | |
+| `last_status_code` | int | HTTP status from last scrape |
+| `last_scraped_at` | timestamptz | Updated after each successful scrape |
+| `last_error` | text | Cleared on success; set on failure |
 
 ### `raw_signals`
-Scraped article URLs. De-duplicated by URL.
+One row per article scraped.
 
 | Column | Type | Notes |
 |---|---|---|
 | `id` | uuid PK | |
-| `source_id` | uuid FK | → source_registry |
-| `article_url` | text UNIQUE | |
-| `article_title` | text | |
-| `article_text` | text | Truncated to ~5000 chars |
-| `created_at` | timestamptz | |
+| `source_id` | uuid FK → source_registry | |
+| `source_name` | text | Denormalized for convenience |
+| `source_url` | text | Homepage URL of the source |
+| `article_url` | text UNIQUE | Full article URL — dedup key |
+| `title` | text | |
+| `raw_text` | text | First 5000 chars of article body |
+| `matched_keywords` | text[] | |
+| `processed` | bool | Set True after signal detection runs |
 
 ### `signal_rules`
-Keyword matching rules. Seeded by `seed_signal_rules.py`.
+Keyword matching rules.
 
 | Column | Type | Notes |
 |---|---|---|
 | `id` | uuid PK | |
-| `rule_name` | text UNIQUE | e.g. `ownership_change_high` |
-| `signal_type` | text | `ownership_change`, `hiring`, `new_rooftop`, `oem_event`, `expansion`, `leadership_change`, `weak_digital` |
-| `keywords` | text[] | Array of keyword strings |
-| `fit_score` | int | Weight: 1=general, 2=moderate, 3=highly specific |
+| `rule_name` | text UNIQUE | Dedup key |
+| `signal_type` | text | `ownership_change`, `new_rooftop`, `hiring`, `oem_event` |
+| `keywords` | text[] | Case-insensitive substring matches |
+| `fit_score` | int | 1 = generic, 2 = moderate, 3 = highly specific |
+| `active` | bool | |
 
 ### `signal_matches`
-Junction table: article × rule match.
+Join between raw articles and matching rules.
 
 | Column | Type | Notes |
 |---|---|---|
 | `id` | uuid PK | |
-| `raw_signal_id` | uuid FK | → raw_signals |
-| `rule_id` | uuid FK | → signal_rules |
-| `dealership_id` | uuid FK | → dealerships (nullable) |
-| `dealership_name` | text | Extracted by OpenAI |
-| `fit_score` | int | Copied from rule |
-| `processed` | bool | True after opportunity created |
-| `created_at` | timestamptz | |
+| `raw_signal_id` | uuid FK → raw_signals | |
+| `signal_type` | text | Copied from rule |
+| `matched_keyword` | text | The exact keyword that matched |
+| `fit_score` | int | 1–3 |
+| `processed` | bool | Set True after `create_opportunities.py` runs |
 
 ### `opportunities`
-Final leads delivered to the dashboard and digest.
+Final leads ready for the sales team.
 
 | Column | Type | Notes |
 |---|---|---|
 | `id` | uuid PK | |
+| `signal_id` | uuid FK → signal_matches | |
 | `dealership_name` | text | |
 | `city` | text | |
 | `state` | text | |
-| `website` | text | From dealerships table |
-| `opportunity_type` | text | Signal type label |
-| `fit_score` | int | Raw weight (1-3) |
-| `confidence_score` | int | Mapped score: 75/83/92 |
-| `ai_summary` | text | GPT-4o-mini generated |
-| `pitch_angle` | text | GPT-4o-mini generated |
-| `recommended_offer` | text | |
-| `source_url` | text | Original article URL |
-| `status` | text | `new`, `contacted`, `closed` |
-| `is_hot_lead` | bool | True if dealership has multiple signals |
-| `outreach_steps` | jsonb | Tracks campaign sequence completions |
-| `created_at` | timestamptz | |
+| `phone` | text | From dealerships table if matched |
+| `website` | text | From dealerships table if matched |
+| `franchise` | text | From dealerships table if matched |
+| `opportunity_type` | text | `ownership_change`, `new_rooftop`, `hiring`, `oem_event`, `weak_digital` |
+| `fit_score` | int | Raw 1–3 from signal rule |
+| `confidence_score` | int | Mapped: 1→75, 2→83, 3→92 |
+| `status` | text | `new`, `contacted`, `won`, `lost` |
+| `is_hot_lead` | bool | True if same dealer triggered 2+ signals |
+| `ai_summary` | text | GPT-4o-mini 2-sentence summary |
+| `pitch_angle` | text | GPT-4o-mini pitch recommendation |
+| `source_name` | text | Which publication the signal came from |
+| `source_url` | text | Direct article URL |
+| `created_at` | timestamptz | Auto-set by Supabase |
 
 ### `digest_log`
-Email send history.
+Audit trail of every email sent.
 
 | Column | Type | Notes |
 |---|---|---|
@@ -213,360 +219,335 @@ Email send history.
 | `sent_at` | timestamptz | |
 | `opportunities_count` | int | |
 | `recipient` | text | |
-| `status` | text | `sent` or `failed` |
-| `resend_id` | text | Resend API message ID |
+| `status` | text | `sent` or `error` |
+| `resend_id` | text | Resend message ID |
+| `type` | text | `digest` or `hot_lead_alert` |
 
 ---
 
-## Environment Variables
+## 5. Environment Variables
 
-### GitHub Actions Secrets (Settings → Secrets → Actions)
-
-| Variable | Description | Where to get it |
-|---|---|---|
-| `SUPABASE_URL` | `https://xahazlzuxowamknucprs.supabase.co` | Supabase dashboard → Settings → API |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role key (bypasses RLS) | Supabase → Settings → API → service_role |
-| `GOOGLE_PLACES_API_KEY` | Google Places API v1 key | Google Cloud Console → APIs → Places API (New) |
-| `OPENAI_API_KEY` | GPT-4o-mini for summaries | platform.openai.com |
-| `RESEND_API_KEY` | Transactional email | resend.com → API Keys |
-| `DIGEST_EMAIL_TO` | Recipient email | e.g. `zach@cradvertising.com` |
-| `DIGEST_EMAIL_FROM` | Sender (verified domain) | `DealerHunters <digest@dealerhunters.io>` |
-
-### Cloudflare Pages Environment Variables (CF Dashboard → Settings → Env Vars)
-
-| Variable | Description |
-|---|---|
-| `ADMIN_SUPABASE_KEY` | Supabase service role key (used by `functions/admin-config.js`) |
-| `ADMIN_GH_TOKEN` | GitHub PAT with `actions:write` on `mpshunters/dealerhunters-app` |
-
-### Local Development (`.env` file, gitignored)
-
+### For local development (`.env` in repo root, gitignored)
 ```
 SUPABASE_URL=https://xahazlzuxowamknucprs.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJ...
-GOOGLE_PLACES_API_KEY=AIza...
-OPENAI_API_KEY=sk-...
-RESEND_API_KEY=re_...
-DIGEST_EMAIL_TO=...
-DIGEST_EMAIL_FROM=DealerHunters <digest@dealerhunters.io>
+SUPABASE_SERVICE_ROLE_KEY=<from Supabase → Settings → API → service_role>
+GOOGLE_PLACES_API_KEY=<from Google Cloud Console → APIs & Services → Credentials>
+OPENAI_API_KEY=<from platform.openai.com>
+RESEND_API_KEY=<from resend.com → API Keys>
+DIGEST_EMAIL_TO=<email address to receive digests>
+DIGEST_EMAIL_FROM=DealerHunters Signals <signals@mpshunters.com>
 ```
+
+### GitHub Actions secrets (Settings → Secrets and variables → Actions)
+| Secret | Value |
+|---|---|
+| `SUPABASE_URL` | Same as above |
+| `SUPABASE_SERVICE_ROLE_KEY` | Same as above |
+| `OPENAI_API_KEY` | Same as above |
+| `RESEND_API_KEY` | Same as above |
+| `DIGEST_EMAIL_TO` | Recipient email |
+| `DIGEST_EMAIL_FROM` | From address string |
+
+### Cloudflare Pages env vars (Settings → Environment variables)
+| Variable | Value | Used by |
+|---|---|---|
+| `ADMIN_SUPABASE_KEY` | Supabase service role key | `/admin-config` Pages Function → admin.html |
+| `ADMIN_GH_TOKEN` | GitHub PAT with `actions:write` scope | Admin panel workflow dispatch |
+
+### Local-only admin config (`/admin-config.js`, gitignored)
+Create this file in the repo root for local admin panel access:
+```javascript
+const ADMIN_CONFIG = {
+  supabase_url: "https://xahazlzuxowamknucprs.supabase.co",
+  supabase_key: "<service_role_key>",
+  gh_token: "<github_pat>",
+  gh_repo: "mpshunters/dealerhunters-app"
+};
+```
+This file is gitignored (`/admin-config.js` root-anchored) so it never commits. In production, `functions/admin-config.js` (a Cloudflare Pages Function) serves the same data at the `/admin-config` route, reading from CF environment variables.
 
 ---
 
-## What's Built and Working
+## 6. What's Built and Working
 
-### Pipeline ✅
-- Full daily pipeline runs automatically via GitHub Actions at 6:17 AM Central (cron: `17 11 * * *`)
-- Source scraping, signal detection, opportunity creation, AI summarization, email digest
-- Meta Ads Library check via Playwright headless Chrome (plain HTTP scraping fails — see Known Issues)
-- Hot lead detection: same dealership triggers multiple signals → `is_hot_lead = true`
-- Confidence score mapping: weight 1→75, 2→83, 3→92
+### Pipeline
+- [x] Daily scrape scheduled at 11:17 UTC (6:17 AM Central) via GitHub Actions
+- [x] 25+ news sources in `source_registry` across 4 source types
+- [x] Article scraping with dedup by `article_url`
+- [x] SSL error handling — retries with `verify=False`, never crashes the pipeline
+- [x] Keyword-based signal detection across 4 signal types with 3 weight tiers
+- [x] GPT-4o-mini dealer name/city/state extraction
+- [x] 3-pass fuzzy dealership matching (forward ILIKE → reverse contains → first-word + state)
+- [x] City/state tiebreaker for multiple DB candidates
+- [x] Hot lead detection (same dealer, multiple signals → `is_hot_lead=True`)
+- [x] Meta Ads Library checker via Playwright (headless Chromium, no API token needed)
+- [x] Google presence checker (flags low-rating or low-review-count dealers)
+- [x] Instant hot lead alerts (one email per hot lead, dark branded template)
+- [x] Daily digest email (light branded template, signal stats header, opportunity cards)
+- [x] `source_registry.last_scraped_at` stamped after each successful source scrape
+- [x] `digest_log` audit trail for every email sent
 
-### Frontend ✅
-- **Landing page** (`index.html`) — Full marketing site with pricing, FAQ, waitlist form
-- **Dashboard** (`dashboard.html`) — Opportunity cards with:
-  - Filter pills: All, Hot Leads, Ownership Change, Hiring, New Rooftop, OEM Event, Weak Digital
-  - "New Today" / "This Week" section grouping
+### Frontend
+- [x] Landing page (`index.html`) with hero, features, FAQ, waitlist CTA
+- [x] Dashboard (`dashboard.html`) — live opportunity feed from Supabase
   - Score gauge with `?` tooltip explaining 92/83/75/🔥
-  - Hot lead 🔥 badge
-  - Website link (strips https://www. for display)
-  - Source article link (hidden if null or dealerhunters.com)
-  - Campaign sequence outreach tracker (5 steps with toggles)
-  - Apollo.io / LinkedIn / HubSpot platform selector
-  - Stats bar: Total Opportunities, Ownership Changes, Marketing Hires, Avg Score, Contacted, ⚡ Signals Detected, Dealerships in DB
-  - Animated count-up on load
-  - Emerald crosshair cursor
-- **Admin panel** (`admin.html`) — Internal command center with:
-  - Password gate (`dh-admin-2026`) → sessionStorage
-  - Pipeline Health: GitHub Actions run history, step timestamps, countdown, Run Pipeline Now
-  - Source Management: source_registry table, toggle active/inactive, add source
-  - Signal Rules: full rules table, edit/add/delete, fires-today count
-  - Database Stats: dealership counts, top-15 state bar chart, 50-state coverage map
-  - Opportunities: full table, filters, bulk delete/contacted, CSV export
-  - Digest: settings, send history, next-digest preview
+  - "New Today" vs "This Week" card grouping
+  - Hot Leads filter with empty-state message
+  - Dealership website link on each card (stripped of `https://www.`)
+  - Source article link (hidden if URL is internal or missing)
+  - ⚡ Signals Detected stat card
+  - Animated count-up stats (33,000+ dealerships, signals, etc.)
+  - Settings gear dropdown (filter controls)
+- [x] Admin panel (`admin.html`) — password-gated (`dh-admin-2026`)
+  - 6 sections: Overview, Sources, Signals, Opportunities, Pipeline, System
+  - Live Supabase counts (uses service role key for unfiltered reads)
+  - GitHub Actions manual workflow dispatch ("Run Pipeline Now" button)
+  - Countdown to next scheduled run (11:17 UTC)
+  - Source health table with Fresh/Stale/Error status badges
+- [x] Custom crosshair cursor (emerald SVG, hotspot 12,12) on all 3 pages
+- [x] Cloudflare Pages Function at `functions/admin-config.js` serving secrets at `/admin-config`
 
-### Dealer Database ✅
-- ~25,000+ dealerships seeded across 12 states: IL, TX, FL, CA, OH, MI, MN, WI, MO, IN, NE, KS
-- All seeded via Google Places API v1 city sweep pattern
-- Deduplication by `google_place_id`
-
----
-
-## Known Issues and Workarounds
-
-### GitHub Actions Cron Silently Skips Runs
-**Problem:** Cron at `0 11 * * *` (top of hour) gets dropped under high load on GitHub's shared runners.  
-**Fix:** Changed to `17 11 * * *` — offset minutes are not dropped.  
-**Current schedule:** `17 11 * * *` = 6:17 AM Central Daylight Time (11:17 UTC)  
-**Note:** CDT is UTC-5. In winter (CST, UTC-6), this runs at 5:17 AM Central. The cron doesn't adjust for DST automatically.
-
-### Meta Ads Library Scraping Requires Playwright
-**Problem:** Facebook serves a JavaScript bot challenge (`/__rd_verify_...`) to plain HTTP requests. Manually replaying the challenge POST gets a cookie but subsequent GETs return 400 (server-side fingerprinting).  
-**Fix:** Use `sync_playwright()` with headless Chromium, which executes the JS challenge natively.  
-**GitHub Actions:** Requires `playwright install chromium --with-deps` step before running `meta_ads_checker.py`.
-
-### Supabase RLS Blocks Anon Key on Some Tables
-**Problem:** The public anon key respects Row Level Security. Tables like `signal_rules`, `source_registry`, and `signal_matches` may block read access.  
-**Fix:** Admin panel uses service role key served via Cloudflare Pages Function (`functions/admin-config.js`) — reads `ADMIN_SUPABASE_KEY` env var and returns it as JS config. Never committed to git.
-
-### Illinois Has No Public Dealer Roster
-**Problem:** ILSOS (Illinois Secretary of State) dealer apps return 403/timeout for programmatic access.  
-**Fix:** Google Places API city sweep across ~200 IL cities — gives real licensed dealers with ratings/reviews.  
-**This is now the pattern for all states** — no state publishes a clean downloadable roster.
-
-### Dashboard Dealerships Stat Shows "—"
-**Problem:** RLS blocks anon key from counting the `dealerships` table.  
-**Fix:** Promise.all captures full result object; falls back to hardcoded `25000` on error or 0 count. Logs error to console.
-
-### Confidence Score Was Showing "1" or "2" on Gauge
-**Problem:** `signal_rules.fit_score` is a weight (1-3). `create_opportunities.py` was copying it directly to `opportunities.fit_score`. Dashboard fell back to `confidence_score ?? fit_score`, showing the raw weight.  
-**Fix:** `WEIGHT_TO_SCORE = {1: 75, 2: 83, 3: 92}` in `create_opportunities.py` — writes the mapped score to `confidence_score` on every insert.
-
-### Gear Dropdown Was Not Opening
-**Problem:** `.header` had `overflow: hidden`, clipping the absolutely-positioned dropdown that extends below the header.  
-**Fix:** Removed `overflow: hidden` from `.header`. The `::after` sweep animation uses `scaleX` and never actually overflows.
-
-### `admin-config.js` Is Gitignored But Needed for Admin
-**Problem:** Local `admin-config.js` (with real tokens) can't be committed.  
-**Fix (production):** `functions/admin-config.js` Cloudflare Pages Function reads `ADMIN_SUPABASE_KEY` and `ADMIN_GH_TOKEN` from CF env vars and returns them as JavaScript at runtime.  
-**Fix (local dev):** Keep `admin-config.js` in repo root (gitignored). Change `<script src="/admin-config">` to `<script src="admin-config.js">` temporarily, or run via `wrangler pages dev`.
+### Dealer database
+- [x] 33,000+ dealerships seeded across 20 states
+- [x] Google Places API v1 city-sweep pattern (deduplicated by `google_place_id`)
+- [x] Fields: name, city, state, phone, website, franchise, google_rating, google_reviews, photo_count
 
 ---
 
-## What Still Needs to Be Built (Prioritized)
+## 7. Known Issues and Workarounds
 
-### P0 — Before CR Demo
-- [ ] Populate with 5-10 high-quality real opportunities (real dealerships, real signals)
-- [ ] Verify digest email renders correctly with real data
+### Low DB match rate (~16–25%)
+- **Cause:** Article-extracted names often don't match DB names exactly ("AutoNation" vs "AutoNation Ford Mobile")
+- **Current fix:** 3-pass fuzzy matching in `create_opportunities.py` (forward ILIKE → reverse Python contains → first-word + state)
+- **Remaining gap:** Match rate still limited by how accurately GPT-4o-mini extracts dealership names. Some articles mention dealer groups, not individual rooftops.
+- **Next step:** Consider adding NER (named entity recognition) as a pre-filter before GPT extraction
 
-### P1 — Core Product
-- [ ] **More state seeding** — Many states still under 100 dealers or not seeded at all (NY, PA, GA, NC, VA, AZ, CO, WA, OR, NV, TN, SC, etc.)
-- [ ] **Apollo.io real integration** — Platform selector in dashboard header connects to Apollo UI but doesn't auto-populate contact data. Need Apollo API integration to pull contact name/email for dealership.
-- [ ] **Email/contact enrichment** — Each opportunity card has "Find Contact" button linking to Apollo/LinkedIn search, but not pulling real data.
+### Meta Ads checker low volume
+- **Cause:** Only checks dealerships with `confidence_score >= 80` from the last 30 days. Early in the product lifecycle, few opportunities pass this threshold.
+- **Workaround:** As the pipeline runs more days and accumulates opportunities, the checker pool grows automatically.
 
-### P2 — Growth
-- [ ] **User accounts** — Currently single-user. Need Supabase Auth for multi-user access.
-- [ ] **Stripe billing** — Subscription gating on dashboard access.
-- [ ] **More signal sources** — Add state-specific auto dealer association newsletters, local business journals.
-- [ ] **Signal confidence tuning** — Current keyword rules produce some false positives. Add entity extraction to verify dealership name is actually in the article.
+### Google News RSS sources not parsed
+- **Cause:** `fetch_dealer_news.py` uses BeautifulSoup for HTML parsing; RSS XML is not handled.
+- **Workaround:** These 4 sources are registered in `source_registry` but produce no useful articles.
+- **Fix needed:** Add `feedparser` to requirements and an RSS path in `fetch_dealer_news.py`
 
-### P3 — Polish
-- [ ] **Mobile dashboard** — Cards are readable on mobile but outreach tracker is cramped.
-- [ ] **Digest unsubscribe** — Currently a mailto link; should be a one-click unsubscribe.
-- [ ] **Opportunity archiving** — Old `contacted`/`closed` opportunities accumulate. Add auto-archive after 90 days.
+### Admin panel workflow dispatch requires GitHub PAT
+- **Setup:** `ADMIN_GH_TOKEN` must be set in Cloudflare Pages environment variables. The PAT needs `actions:write` scope on the `mpshunters/dealerhunters-app` repo.
+- **If missing:** The "Run Pipeline Now" button will show an error but nothing breaks.
 
----
-
-## Key Technical Decisions
-
-### Google Places API v1 (New) for Dealer Seeding
-Used `places.googleapis.com/v1/places:searchText` with `includedType: "car_dealer"` and `maxResultCount: 20`. The legacy Places API has a different auth model and lower result cap.
-
-### Playwright for Meta Ads (Not Requests)
-Facebook's `/ads/library/` serves a JavaScript challenge that `requests` cannot pass. Playwright's headless Chromium executes the challenge natively, passing bot detection. This adds ~3s per dealership check, so Meta Ads check is limited to `confidence_score >= 80` opportunities only.
-
-### Signal Weight → Confidence Score Mapping
-Signal rules have a `fit_score` weight (1=general, 2=moderate, 3=highly specific). This maps to `confidence_score` (75/83/92) on the opportunity record. The dashboard reads `confidence_score` and never shows the raw weight. This means the gauge always shows a meaningful percentage, not a weight integer.
-
-### Supabase Over Firebase/PlanetScale
-Supabase gives Postgres + Row Level Security + a JS client that works identically in browser and Node. RLS lets the anon key be public (committed in `config.js`) without exposing protected data.
-
-### Resend Over SendGrid
-Resend has a much simpler API and better deliverability for transactional email. SendGrid requires domain verification and has a more complex setup. Resend's Python SDK is two lines.
-
-### Cloudflare Pages for Hosting
-Static site + Pages Functions for the admin config endpoint. No server costs, deploys on every push to `main`, global CDN. The admin panel's service role key is injected at request time by the CF Function, never stored in git.
-
-### `functions/admin-config.js` Pattern
-Admin credentials can't live in committed JS (security) or in `admin-config.js` (gitignored, doesn't deploy). Solution: Cloudflare Pages Function at `/admin-config` reads CF env vars (`ADMIN_SUPABASE_KEY`, `ADMIN_GH_TOKEN`) and returns them as a JS object. The browser script tag loads it at runtime.
+### Playwright in GitHub Actions
+- **Status:** Working. `playwright install chromium --with-deps` is a dedicated step in the workflow.
+- **Note:** If Meta Ads Library changes its UI or bot detection, `meta_ads_checker.py` may return `None` (inconclusive) for all dealers rather than crashing.
 
 ---
 
-## How to Run the Pipeline Manually
+## 8. What Still Needs to Be Built (Prioritized)
 
-### Via GitHub Actions UI (recommended)
-1. Go to `github.com/mpshunters/dealerhunters-app/actions`
-2. Click "Daily Dealer Signal Scrape"
-3. Click "Run workflow" → "Run workflow" (on `main`)
+### High priority
+1. **RSS feed parser** — Add `feedparser` support to `fetch_dealer_news.py` to activate the 4 Google News RSS sources. Each targets high-signal queries ("car dealership acquired", "new dealership opening", etc.)
+2. **More state coverage** — States with no seed script: VA, TN, MD, SC, NV, OR, UT, NM, ID, OK, AR, MS, AL, KY, WV, and all New England states. Target: 48 contiguous states.
+3. **Opportunity status workflow** — Dashboard UI for marking leads as `contacted`, `won`, `lost`. Currently status is only set to `new` and never updated from the UI.
+4. **Contact info enrichment** — Apollo.io integration to surface the marketing director / GM contact for each rooftop. Currently only linked via button in hot lead emails.
 
-### Via Admin Panel
-1. Open `dealerhunters.com/admin.html`
-2. Enter password: `dh-admin-2026`
-3. Pipeline Health → "▶ Run Pipeline Now"
-4. (Requires `ADMIN_GH_TOKEN` set in CF env vars)
+### Medium priority
+5. **LinkedIn hiring signal detection** — LinkedIn job postings for "Marketing Manager" or "BDC Manager" at dealerships are a premium signal.
+6. **Email engagement tracking** — Resend supports webhooks for open/click events. Log these back to Supabase so the team knows which leads got attention.
+7. **Dashboard mobile view** — Dashboard is desktop-only; no responsive breakpoints.
+8. **Opportunity dedup across days** — A dealership can re-appear in consecutive digests if a new signal is detected each day. Need a cooldown window (e.g., don't re-surface the same dealer within 14 days unless a higher-score signal appears).
 
-### Via CLI (run individual steps locally)
+### Low priority / backlog
+9. **CRM export** — CSV download from dashboard or direct HubSpot/Salesforce push
+10. **Multi-user auth** — Currently single-password. Real auth would let individual reps claim/track their leads.
+11. **Slack webhook** — Push new opportunities to a Slack channel in addition to email
+12. **Historical analytics** — Track lead contact rate, won rate, avg score over time
+
+---
+
+## 9. Key Technical Decisions and Why
+
+### Why GitHub Actions for the pipeline?
+Zero infrastructure to maintain. The pipeline is a sequence of Python scripts — Actions handles scheduling, secrets injection, Playwright dependencies, and logging. A cron at `17 11 * * *` (not top-of-hour) avoids resource contention on Actions runners.
+
+### Why Supabase?
+PostgreSQL with a REST API and built-in auth/RLS. The dashboard JS queries Supabase directly using the anon key (RLS-restricted). The pipeline uses the service role key (no RLS). No custom backend needed.
+
+### Why Cloudflare Pages?
+Free static hosting with Pages Functions support. The `functions/admin-config.js` function solves the secret-injection problem for the admin panel — the service role key and GitHub PAT live in CF environment variables and are served at `/admin-config` as a JS file that admin.html loads at runtime. The file is never committed.
+
+### Why GPT-4o-mini for extraction?
+Fast, cheap (~$0.15/1M tokens), and accurate enough for structured extraction (name, city, state) and short summaries. GPT-4o would be better quality but costs 10× more with minimal improvement on this specific use case.
+
+### Why Google Places API v1 for dealer seeding?
+`places.googleapis.com/v1/places:searchText` with `includedType: "car_dealer"` returns structured data (name, address components, phone, website, rating, review count, photos) in a single call. Deduplication by `google_place_id` makes all seed scripts idempotent.
+
+### Why one email per hot lead (not batched)?
+Hot leads are time-sensitive. A dealership that just triggered its second signal deserves immediate attention, not a once-a-day digest. The hot lead alert arrives before the digest so the rep sees it first.
+
+### Why `verify=False` on SSL retry instead of skipping the source?
+Sources like `fixedopsmag.com` have expired or misconfigured certs but serve valid content. Skipping them entirely would lose real signal. The retry is logged clearly; fixing the cert is their problem, not ours.
+
+### Why root-anchor `/admin-config.js` in `.gitignore`?
+The pattern `admin-config.js` (no leading slash) matches `functions/admin-config.js` — the Pages Function that must be committed. The leading slash anchors the ignore rule to the repo root only.
+
+---
+
+## 10. How to Run the Pipeline Manually
+
+### Via GitHub Actions (recommended)
+1. Go to the repo → Actions → "Daily Dealer Signal Scrape"
+2. Click "Run workflow" → Run workflow
+3. Or trigger from the admin panel at `/admin.html` → Pipeline section → "Run Pipeline Now"
+
+### Via local terminal (for debugging individual steps)
 ```bash
-# Set env vars first
-export SUPABASE_URL="https://xahazlzuxowamknucprs.supabase.co"
-export SUPABASE_SERVICE_ROLE_KEY="eyJ..."
-export GOOGLE_PLACES_API_KEY="AIza..."
-export OPENAI_API_KEY="sk-..."
-export RESEND_API_KEY="re_..."
-export DIGEST_EMAIL_TO="..."
+# Prerequisites: Python 3.11+, .env file with all credentials
+cd /path/to/dealerhunters-app
+pip install -r requirements.txt
+playwright install chromium --with-deps
 
-# Run each step
-python scripts/fetch_dealer_news.py
-python scripts/detect_signal_matches.py
-python scripts/create_opportunities.py
-python scripts/send_daily_digest.py
+# Run the full pipeline in order:
+python scripts/scrape_dealer_signals.py     # seed sources (idempotent)
+python scripts/fetch_dealer_news.py         # scrape articles
+python scripts/detect_signal_matches.py    # keyword matching
+python scripts/create_opportunities.py     # AI enrichment + DB matching
+python scripts/meta_ads_checker.py         # Meta Ads Library check
+python scripts/google_presence_checker.py  # Google profile check
+python scripts/send_hot_lead_alert.py      # hot lead emails (if any)
+python scripts/send_daily_digest.py        # digest email
 ```
 
----
-
-## How to Add New States to the Dealer Database
-
-1. **Copy an existing seed script** (e.g. `seed_il_dealers.py` → `seed_ga_dealers.py`)
-2. **Update three things:**
-   - Module docstring (state name)
-   - `print(...)` message at top
-   - `GA_CITIES = [...]` city list (replace IL_CITIES)
-   - State filter: `.eq("state", "GA")` and `p_state != "GA"` 
-   - State fallback: `p_state or "GA"`
-   - Query string: `f"car dealer {city} Georgia"`
-   - Final print: `"Georgia sweep complete."` and `.eq("state", "GA")`
-3. **Run it:**
-   ```bash
-   python scripts/seed_ga_dealers.py
-   ```
-4. **Expected output:** `[1/N] Atlanta: +12 new dealers` per city. Takes 1-2 minutes per 50 cities at 0.4s delay.
-
-**States still needing seeding (priority order by market size):**
-NY, PA, GA, NC, AZ, CO, WA, TN, NV, VA, OR, SC, MD, AL, LA
+### Pipeline step order matters
+Each step depends on the previous: raw_signals → signal_matches → opportunities. Running steps out of order is safe (all are idempotent) but won't produce new results until upstream steps have run.
 
 ---
 
-## Demo Script for CR Advertising Meeting
+## 11. How to Add New States to the Dealer Database
 
-### Setup (before meeting)
-- Open `dashboard.html` in Chrome, full screen
-- Make sure there are at least 5-8 real opportunities visible
-- Have at least 1 hot lead (🔥) visible
+All seed scripts follow an identical pattern. To add a new state (example: Virginia):
 
-### Walk-through (~8 minutes)
+```bash
+# 1. Copy an existing script as the template
+cp scripts/seed_nc_dealers.py scripts/seed_va_dealers.py
 
-**1. The Problem (1 min)**
-> "Right now, your reps cold-call dealerships with no idea who's ready to change agencies. DealerHunters monitors 25,000+ dealerships and finds the ones in motion — and delivers them every morning."
+# 2. Edit the new file — change these 5 things:
+#    a. Docstring: update state name
+#    b. Rename the city list: VA_CITIES = [...]
+#    c. State filter: p_state != "VA"
+#    d. textQuery: f"car dealer {city} Virginia"
+#    e. Final count query: .eq("state", "VA")
 
-**2. The Dashboard (3 min)**
-- Show the stats bar: total opportunities, signals detected, dealerships in DB
-- Click "🔥 Hot Leads" filter — explain: "These dealers have triggered multiple signals. They're the highest-priority calls."
-- Click a hot lead card. Show:
-  - The 🔥 badge and score gauge (hover the `?` to show the explanation tooltip)
-  - The AI summary explaining what happened
-  - The pitch angle — "Your rep walks in knowing exactly what to say"
-  - The website link
-  - The campaign sequence tracker — "Check off each touchpoint as you go"
-- Click "Ownership Change" filter — "New owners often fire the incumbent agency in the first 90 days"
+# 3. Run locally to test (reads from .env):
+python scripts/seed_va_dealers.py
 
-**3. The Email Digest (2 min)**
-- Show a sample digest email
-- "Every morning at 6:17 AM, this hits your inbox. 5 minutes to know who to call that day."
-
-**4. The Scale (1 min)**
-- "We cover 25,000+ dealerships across 12 states today. Full national coverage in Q3."
-- Admin panel → Database → show the state coverage map
-
-**5. Close (1 min)**
-- "You're getting a competitive edge your competitors don't have. Who's your top rep? Let's set them up today."
-
----
-
-## Daily Operations Guide
-
-### Morning Check (5 min)
-1. Open digest email — review new opportunities
-2. Check admin panel Pipeline Health — verify today's step timestamps are green
-3. If any step is amber/red: check GitHub Actions for error details
-
-### Adding Opportunities to Dashboard
-Opportunities appear automatically each morning. If you need to test/add manually:
-- Use `create_opportunities.py` locally with env vars set
-- Or trigger the pipeline manually (see above)
-
-### Editing Signal Keywords
-To add a keyword that should trigger a signal:
-1. Open admin panel → Signal Rules
-2. Click "Edit" on the relevant rule
-3. Add keyword to the comma-separated list
-4. Click "Add Rule" (the save button)
-5. New keywords apply on the next pipeline run
-
-### Disabling a Noisy Source
-If a source is generating too many false signals:
-1. Admin panel → Sources
-2. Toggle the source to inactive
-3. It will be skipped on the next scrape
-
-### Monitoring Costs
-- **OpenAI:** ~$0.001 per opportunity summary. 10 opportunities/day = <$0.01/day.
-- **Google Places API:** ~$0.017/request. Seeding 100 cities = ~$1.70. Seeding runs are one-time.
-- **Resend:** 100 emails/day free tier. Well within limits.
-- **GitHub Actions:** 2,000 minutes/month free. Pipeline takes ~3 min/day = ~90 min/month.
-- **Cloudflare Pages:** Free tier covers all static + Functions usage at this scale.
-- **Supabase:** Free tier (500MB DB, 2GB bandwidth). Will need Pro (~$25/mo) once DB exceeds 500MB.
-
----
-
-## Repository Structure
-
-```
-dealerhunters-app/
-├── index.html                    # Landing page
-├── dashboard.html                # Customer dashboard
-├── admin.html                    # Internal admin panel
-├── config.js                     # Public Supabase URL + anon key
-├── admin-config.js               # LOCAL ONLY (gitignored) — real tokens
-├── functions/
-│   └── admin-config.js           # CF Pages Function — serves /admin-config
-├── scripts/
-│   ├── scrape_dealer_signals.py  # Seeds source_registry
-│   ├── fetch_dealer_news.py      # Scrapes articles
-│   ├── detect_signal_matches.py  # Keyword matching
-│   ├── create_opportunities.py   # AI summarization + opportunity creation
-│   ├── meta_ads_checker.py       # Meta Ads Library (Playwright)
-│   ├── google_presence_checker.py
-│   ├── send_daily_digest.py      # Email digest
-│   ├── seed_signal_rules.py      # Keyword rules seeder
-│   ├── seed_il_dealers.py        # Illinois
-│   ├── seed_tx_dealers.py        # Texas
-│   ├── seed_fl_dealers.py        # Florida
-│   ├── seed_ca_dealers.py        # California
-│   ├── seed_oh_dealers.py        # Ohio
-│   ├── seed_mi_dealers.py        # Michigan
-│   ├── seed_mn_dealers.py        # Minnesota
-│   ├── seed_wi_dealers.py        # Wisconsin
-│   ├── seed_mo_dealers.py        # Missouri
-│   ├── seed_in_dealers.py        # Indiana
-│   ├── seed_ne_dealers.py        # Nebraska
-│   └── seed_ks_dealers.py        # Kansas
-├── .github/
-│   └── workflows/
-│       └── daily_scrape.yml      # GitHub Actions pipeline
-├── requirements.txt              # Python dependencies
-├── .gitignore                    # Excludes .env, admin-config.js
-└── PROJECT_STATUS.md             # This file
+# 4. Commit and push:
+git add scripts/seed_va_dealers.py
+git commit -m "Add Virginia dealer seed script"
+git push
 ```
 
+**City list guidance:**
+- Start with the largest metro area and expand outward to suburbs
+- Include county-seat towns — they often have dealer strips
+- Target 60–170 cities depending on state population density
+- The dedup loop at the top of every script handles duplicate city names in your list
+
+**Expected yield:** ~8–15 new dealerships per city on average (Google Places caps at 20 per search). A 100-city sweep typically adds 600–1,200 dealerships.
+
 ---
 
-## GitHub Actions Workflow Reference
+## 12. Demo Script for CR Advertising
 
-**File:** `.github/workflows/daily_scrape.yml`  
-**Trigger:** Schedule `17 11 * * *` (6:17 AM CT) + `workflow_dispatch`  
-**Steps (in order):**
-1. Checkout repo
-2. Set up Python 3.11
-3. `pip install -r requirements.txt`
-4. `playwright install chromium --with-deps`
-5. Run dealer source seeder (`scrape_dealer_signals.py`)
-6. Fetch dealer news (`fetch_dealer_news.py`)
-7. Detect signal matches (`detect_signal_matches.py`)
-8. Create opportunities (`create_opportunities.py`)
-9. Check Meta Ads (`meta_ads_checker.py`)
-10. Check Google presence (`google_presence_checker.py`)
-11. Send daily digest (`send_daily_digest.py`)
+Use this when showing DealerHunters to CR's leadership or new prospects.
 
-**All pipeline steps** use `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`.  
-`create_opportunities.py` additionally needs `OPENAI_API_KEY`.  
-`send_daily_digest.py` additionally needs `RESEND_API_KEY`, `DIGEST_EMAIL_TO`, `DIGEST_EMAIL_FROM`.
+**Setup before the demo:**
+- Open the dashboard at `dealerhunters-app.pages.dev/dashboard`
+- Confirm 5–10 opportunities are visible (if empty, manually insert 2–3 test records via Supabase table editor)
+
+**Demo flow (~8 minutes):**
+
+**1. The problem** (1 min)
+> "Right now, your reps are cold-calling blind. They don't know which dealers are in a buying moment. DealerHunters fixes that."
+
+**2. The dashboard** (2 min)
+> "Every morning at 6:17, this updates automatically. Each card is a dealership that triggered a buying signal in the last 24 hours — ownership change, new hire, grand opening, OEM event."
+- Point to the score gauge: "92 means a highly specific signal, 75 is a broader one."
+- Point to "New Today" section: "These came in this morning."
+- Click the `?` next to a score to show the tooltip.
+
+**3. Hot leads** (2 min)
+> "The real money is here — Hot Leads."
+- Click the Hot Leads filter.
+> "A hot lead means the same dealership triggered multiple signals. That's rare and extremely high-value. We email you the second this happens — before the daily digest even goes out."
+- Point to the 🔥 badge on a hot lead card.
+
+**4. Signal types** (1 min)
+> "Four signal types: ownership change — new owner, new budget, new decisions. New rooftop — they just opened, they need to drive traffic. Marketing hire — new marketing director usually means new vendor budget. OEM event — factory incentives create urgency for a direct mail event."
+
+**5. What we cover** (30 sec)
+> "33,000+ dealerships across 30+ states. 25+ news sources. Runs every morning automatically — no manual work."
+
+**6. The pitch angle** (1 min)
+> "Expand any card and you'll see an AI-written pitch angle — exactly how CR should approach this dealer. Your reps walk in with context, not a cold call."
+
+**7. Close** (30 sec)
+> "The daily digest lands in your inbox before your team starts their day. Hot leads get an immediate separate alert. You'll never miss a buying window again."
+
+---
+
+## 13. Daily Operations Checklist
+
+**Each morning (after 6:17 AM Central):**
+- [ ] Check email — verify the daily digest arrived and has opportunities
+- [ ] If a hot lead alert arrived, assign it to the relevant sales rep immediately
+- [ ] Check admin panel → Sources section — all sources should show "Fresh" (green)
+- [ ] If any source shows "Error" or "Stale" — check `last_error` in Supabase `source_registry`
+
+**Weekly:**
+- [ ] Admin panel → Overview — review total opportunities count trend
+- [ ] Check for leads sitting in `status='new'` for more than a week — consider reassigning or archiving stale records
+- [ ] GitHub Actions → confirm no pipeline runs failed (red X) in the last 7 days
+
+**As needed:**
+- [ ] Add new states to the dealer database (see Section 11)
+- [ ] Add new signal keywords: edit `seed_signal_rules.py` and re-run it
+- [ ] Add new news sources: edit `scrape_dealer_signals.py` and re-run it
+- [ ] If match rate drops (watch for `[No DB match]` logs in Actions), expand dealer seeding in affected states
+
+---
+
+## 14. Dealership Database Coverage by State
+
+### Seeded (seed script written and run)
+
+| State | Script | Approx. Cities | Key Markets |
+|---|---|---|---|
+| IL | `seed_il_dealers.py` | ~120 | Chicago metro, Springfield, Peoria, Rockford |
+| OH | `seed_oh_dealers.py` | ~110 | Columbus, Cleveland, Cincinnati, Dayton, Toledo, Akron |
+| MI | `seed_mi_dealers.py` | ~100 | Detroit, Grand Rapids, Lansing, Flint, Ann Arbor |
+| MN | `seed_mn_dealers.py` | ~80 | Twin Cities, Rochester, Duluth, St. Cloud |
+| WI | `seed_wi_dealers.py` | ~90 | Milwaukee, Madison, Green Bay, Appleton |
+| MO | `seed_mo_dealers.py` | ~90 | St. Louis, Kansas City, Springfield |
+| IN | `seed_in_dealers.py` | ~90 | Indianapolis, Fort Wayne, Evansville, South Bend |
+| NE | `seed_ne_dealers.py` | ~50 | Omaha, Lincoln |
+| KS | `seed_ks_dealers.py` | ~60 | Wichita, Kansas City KS, Topeka |
+| NY | `seed_ny_dealers.py` | ~170 | NYC, Long Island, Buffalo, Rochester, Albany, Syracuse |
+| PA | `seed_pa_dealers.py` | ~140 | Philadelphia, Pittsburgh, Allentown, Scranton, Erie |
+| GA | `seed_ga_dealers.py` | ~110 | Atlanta metro, Augusta, Savannah, Macon, Columbus |
+| NC | `seed_nc_dealers.py` | ~110 | Charlotte, Raleigh-Durham, Greensboro, Fayetteville, Asheville |
+| WA | `seed_wa_dealers.py` | ~90 | Seattle-Tacoma, Spokane, Tri-Cities, Bellingham |
+| CO | `seed_co_dealers.py` | ~80 | Denver, Colorado Springs, Fort Collins, Boulder |
+| AZ | `seed_az_dealers.py` | ~70 | Phoenix Valley, Tucson, Flagstaff, Prescott, Yuma |
+| TX | `seed_tx_dealers.py` | — | Partial |
+| CA | `seed_ca_dealers.py` | — | Partial |
+| FL | `seed_fl_dealers.py` | — | Partial |
+| IA | `seed_iowa_dealers.py` | — | Partial |
+
+### Not yet seeded (no script exists)
+VA, TN, MD, SC, NJ, NV, OR, UT, NM, ID, OK, AR, MS, AL, KY, WV, CT, MA, NH, VT, ME, RI, DE, MT, WY, ND, SD, HI, AK
+
+### Priority next states (by population × dealer density)
+1. **VA** — Northern VA / Richmond / Hampton Roads; DC market bleed-over
+2. **TN** — Nashville, Memphis, Knoxville, Chattanooga; fast-growing auto market
+3. **NJ** — Dense market adjacent to NY and PA already seeded
+4. **MD** — Baltimore metro + DC suburbs
+5. **SC** — Charlotte bleed-over + Greenville, Columbia, Myrtle Beach
