@@ -1764,11 +1764,11 @@ async function loadOpportunities() {
 
   if (dealerResult.error) {
     console.warn('Dealerships count unavailable:', dealerResult.error.message);
-    animateCount(statDealerships, 25000);
+    animateCount(statDealerships, 33000);
   } else if (dealerResult.count != null && dealerResult.count > 0) {
     animateCount(statDealerships, dealerResult.count);
   } else {
-    animateCount(statDealerships, 25000);
+    animateCount(statDealerships, 33000);
   }
 
   if (error) {
