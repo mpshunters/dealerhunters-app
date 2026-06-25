@@ -160,6 +160,26 @@ for match in matches.data:
     else:
         print(f"  [No DB match] Using extracted location: {dealer['city']}, {dealer['state']}")
 
+    # Deduplication: only one 'new' opportunity per dealership (keep highest score)
+    existing = supabase.table("opportunities") \
+        .select("id, fit_score") \
+        .eq("dealership_name", dealer["dealership_name"]) \
+        .eq("status", "new") \
+        .execute()
+
+    if existing.data:
+        existing_score = existing.data[0].get("fit_score") or 0
+        new_score      = record.get("fit_score") or 0
+        if new_score > existing_score:
+            # Replace the lower-scoring record with this one
+            old_id = existing.data[0]["id"]
+            supabase.table("opportunities").delete().eq("id", old_id).execute()
+            print(f"  [Dedup] Replacing lower score ({existing_score} → {new_score}) for {dealer['dealership_name']}")
+        else:
+            print(f"  [Dedup] Skipped — existing record has equal or higher score ({existing_score}) for {dealer['dealership_name']}")
+            supabase.table("signal_matches").update({"processed": True}).eq("id", match["id"]).execute()
+            continue
+
     supabase.table("opportunities").insert(record).execute()
 
     supabase.table("signal_matches").update({"processed": True}).eq("id", match["id"]).execute()
