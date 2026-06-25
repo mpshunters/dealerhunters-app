@@ -34,11 +34,7 @@
       gap: 13px;
     }
 
-    .logo-wordmark {
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-    }
+    .logo-wordmark { display: flex; flex-direction: column; gap: 3px; }
 
     .logo-name {
       font-size: 20px;
@@ -60,57 +56,209 @@
     .header-meta {
       font-size: 12px;
       color: rgba(255,255,255,0.38);
-      font-weight: 400;
     }
 
     .header-meta strong {
-      color: rgba(255,255,255,0.6);
+      color: rgba(255,255,255,0.60);
       font-weight: 500;
     }
+
+    /* ── Filter bar ── */
+    .filter-bar-wrap {
+      background: #ffffff;
+      border-bottom: 1px solid #E8ECF4;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .filter-bar {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 11px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .filter-pills {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      flex: 1;
+    }
+
+    .filter-pill {
+      background: transparent;
+      border: 1.5px solid #E5E7EB;
+      color: #6B7280;
+      padding: 5px 13px;
+      border-radius: 999px;
+      font-size: 12.5px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+      line-height: 1.4;
+    }
+
+    .filter-pill:hover {
+      border-color: #10B981;
+      color: #10B981;
+    }
+
+    .filter-pill.active {
+      background: #10B981;
+      border-color: #10B981;
+      color: #ffffff;
+    }
+
+    .filter-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .search-wrap { position: relative; }
+
+    .search-wrap .search-icon {
+      position: absolute;
+      left: 9px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+
+    .search-input {
+      border: 1.5px solid #E5E7EB;
+      border-radius: 8px;
+      padding: 6px 10px 6px 30px;
+      font-size: 13px;
+      color: #1A1F36;
+      outline: none;
+      font-family: inherit;
+      transition: border-color 0.15s ease, background 0.15s ease;
+      width: 200px;
+      background: #F9FAFB;
+    }
+
+    .search-input:focus {
+      border-color: #10B981;
+      background: #ffffff;
+    }
+
+    .search-input::placeholder { color: #9CA3AF; }
+
+    .results-meta {
+      font-size: 12.5px;
+      color: #9CA3AF;
+      white-space: nowrap;
+      min-width: 120px;
+      text-align: right;
+    }
+
+    .results-meta strong { color: #374151; font-weight: 600; }
 
     /* ── Main ── */
     .main {
       max-width: 900px;
       margin: 0 auto;
-      padding: 28px 16px 64px;
+      padding: 24px 16px 64px;
     }
 
-    /* ── Stats bar ── */
-    .stats-bar {
+    /* ── Stats grid ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+
+    @media (max-width: 700px) { .stats-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 460px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .stat-card {
       background: #ffffff;
       border: 1px solid #E8ECF4;
       border-radius: 10px;
-      padding: 14px 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 14px;
-      color: #6B7280;
+      padding: 14px 16px 13px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
     }
 
-    .stats-count {
-      font-size: 22px;
+    .stat-value {
+      font-size: 26px;
       font-weight: 800;
       color: #111827;
+      line-height: 1;
+      margin-bottom: 5px;
     }
 
-    /* ── Card ── */
+    .stat-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: #9CA3AF;
+      letter-spacing: 0.2px;
+    }
+
+    .stat-card.green .stat-value { color: #10B981; }
+    .stat-card.blue  .stat-value { color: #3B82F6; }
+
+    /* ── Skeleton ── */
+    @keyframes shimmer {
+      0%   { background-position: -600px 0; }
+      100% { background-position:  600px 0; }
+    }
+
+    .skel {
+      background: linear-gradient(90deg, #F3F4F6 25%, #E9EAEC 50%, #F3F4F6 75%);
+      background-size: 600px 100%;
+      animation: shimmer 1.5s ease-in-out infinite;
+      border-radius: 6px;
+    }
+
+    .skeleton-card {
+      background: #ffffff;
+      border: 1px solid #E8ECF4;
+      border-top: 3px solid #E8ECF4;
+      border-radius: 12px;
+      padding: 20px 22px 18px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    }
+
+    .skel-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+
+    /* ── Cards ── */
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0);    }
+    }
+
     .card {
       background: #ffffff;
       border: 1px solid #E8ECF4;
-      border-top-width: 3px;
-      border-top-color: #10B981;
+      border-top: 3px solid #10B981;
       border-radius: 12px;
       box-shadow: 0 2px 12px rgba(0,0,0,0.06);
       margin-bottom: 14px;
       padding: 20px 22px 18px;
-      transition: box-shadow 0.2s ease;
+      animation: cardIn 0.4s ease-out both;
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
     }
 
     .card:hover {
-      box-shadow: 0 6px 24px rgba(0,0,0,0.10);
+      box-shadow: 0 8px 28px rgba(0,0,0,0.10);
+      transform: translateY(-2px);
     }
 
     .card-top {
@@ -123,11 +271,30 @@
 
     .card-identity { flex: 1; min-width: 0; }
 
+    .card-name-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+
     .dealer-name {
       font-size: 18px;
       font-weight: 700;
       color: #1A1F36;
       line-height: 1.25;
+    }
+
+    .new-badge {
+      display: inline-block;
+      background: #ECFDF5;
+      color: #059669;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 999px;
+      letter-spacing: 0.4px;
+      flex-shrink: 0;
     }
 
     .location {
@@ -139,7 +306,6 @@
       margin-top: 5px;
     }
 
-    /* ── Badge ── */
     .badge {
       display: inline-block;
       font-size: 11px;
@@ -150,7 +316,6 @@
       letter-spacing: 0.2px;
     }
 
-    /* ── Summary ── */
     .summary {
       font-size: 14px;
       line-height: 1.65;
@@ -158,7 +323,6 @@
       margin-bottom: 14px;
     }
 
-    /* ── Pitch box ── */
     .pitch-box {
       border-left: 3px solid #10B981;
       background: #F0FDF9;
@@ -181,11 +345,21 @@
       line-height: 1.5;
     }
 
-    /* ── Card footer ── */
     .card-footer {
       display: flex;
-      justify-content: flex-end;
+      align-items: center;
+      justify-content: space-between;
     }
+
+    .source-link {
+      font-size: 12px;
+      color: #9CA3AF;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.15s ease;
+    }
+
+    .source-link:hover { color: #10B981; }
 
     .btn-contact {
       background: transparent;
@@ -205,14 +379,40 @@
       color: #374151;
     }
 
-    .btn-contact.is-contacted {
-      background: #10B981;
-      color: #ffffff;
-      border-color: #10B981;
-      cursor: default;
+    /* ── Empty filter state ── */
+    .empty-filter {
+      background: #ffffff;
+      border: 1px solid #E8ECF4;
+      border-radius: 12px;
+      padding: 56px 24px;
+      text-align: center;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.05);
     }
 
-    /* ── Empty / error states ── */
+    .empty-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 16px;
+      background: #F3F4F6;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .empty-filter h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 6px;
+    }
+
+    .empty-filter p {
+      font-size: 14px;
+      color: #9CA3AF;
+    }
+
+    /* ── Error / no-data states ── */
     .state-card {
       background: #ffffff;
       border: 1px solid #E8ECF4;
@@ -231,29 +431,18 @@
 
 <header class="header">
   <div class="header-left">
-    <!-- SUV silhouette + scope crosshair -->
     <svg width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-      <!-- Scope outer ring -->
       <circle cx="20" cy="20" r="18" stroke="#10B981" stroke-width="1.5"/>
-      <!-- Crosshair tick marks (gap style — stop before the car) -->
       <line x1="20" y1="1"  x2="20" y2="9"  stroke="#10B981" stroke-width="1.5" stroke-linecap="round"/>
       <line x1="20" y1="31" x2="20" y2="39" stroke="#10B981" stroke-width="1.5" stroke-linecap="round"/>
       <line x1="1"  y1="20" x2="9"  y2="20" stroke="#10B981" stroke-width="1.5" stroke-linecap="round"/>
       <line x1="31" y1="20" x2="39" y2="20" stroke="#10B981" stroke-width="1.5" stroke-linecap="round"/>
-      <!-- Center dot -->
       <circle cx="20" cy="20" r="2" fill="#10B981"/>
-      <!-- SUV silhouette (outline, 2-line style) -->
-      <!-- Body -->
       <rect x="5" y="21" width="30" height="8" rx="1.5" stroke="#10B981" stroke-width="1.5"/>
-      <!-- Roof / cab profile -->
-      <path d="M9 21 L13 13 H27 L32 21" stroke="#10B981" stroke-width="1.5"
-        stroke-linejoin="round" stroke-linecap="round"/>
-      <!-- Front wheel -->
+      <path d="M9 21 L13 13 H27 L32 21" stroke="#10B981" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
       <circle cx="12.5" cy="29" r="4" stroke="#10B981" stroke-width="1.5"/>
-      <!-- Rear wheel -->
       <circle cx="27.5" cy="29" r="4" stroke="#10B981" stroke-width="1.5"/>
     </svg>
-
     <div class="logo-wordmark">
       <div class="logo-name">
         <span class="dealer">Dealer</span><span class="hunters">Hunters</span>
@@ -261,67 +450,286 @@
       <div class="logo-tagline">Intelligent lead signals for automotive advertising</div>
     </div>
   </div>
-
   <div class="header-meta">Last updated: <strong id="last-updated">—</strong></div>
 </header>
 
-<main class="main">
-  <div class="stats-bar">
-    <span class="stats-count" id="total">—</span>
-    <span>active opportunities</span>
+<div class="filter-bar-wrap">
+  <div class="filter-bar">
+    <div class="filter-pills" id="filter-pills">
+      <button class="filter-pill active" data-filter="All">All</button>
+      <button class="filter-pill" data-filter="Ownership Change">Ownership Change</button>
+      <button class="filter-pill" data-filter="Marketing Hire">Marketing Hire</button>
+      <button class="filter-pill" data-filter="Leadership Change">Leadership Change</button>
+      <button class="filter-pill" data-filter="Expansion">Expansion</button>
+    </div>
+    <div class="filter-right">
+      <div class="search-wrap">
+        <svg class="search-icon" width="14" height="14" viewBox="0 0 20 20" fill="none">
+          <circle cx="9" cy="9" r="7" stroke="#9CA3AF" stroke-width="1.8"/>
+          <path d="M16 16l-3.5-3.5" stroke="#9CA3AF" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <input type="text" class="search-input" id="search-input" placeholder="Search dealerships..." autocomplete="off" />
+      </div>
+      <div class="results-meta" id="results-meta"></div>
+    </div>
   </div>
+</div>
+
+<main class="main">
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-value" id="stat-total">—</div>
+      <div class="stat-label">Total Opportunities</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="stat-ownership">—</div>
+      <div class="stat-label">Ownership Changes</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="stat-hiring">—</div>
+      <div class="stat-label">Marketing Hires</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-value" id="stat-score">—</div>
+      <div class="stat-label">Avg Score</div>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-value" id="stat-contacted">0</div>
+      <div class="stat-label">Contacted</div>
+    </div>
+  </div>
+
   <div id="results"></div>
 </main>
 
 <script>
 const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+/* ── Signal config ── */
 const SIGNAL_CONFIG = {
   'ownership_change':  { label: 'Ownership Change',  color: '#065F46', bg: '#ECFDF5' },
   'hiring':            { label: 'Marketing Hire',    color: '#1E40AF', bg: '#EFF6FF' },
   'new_rooftop':       { label: 'New Rooftop',       color: '#166534', bg: '#F0FDF4' },
   'oem_event':         { label: 'OEM Event',         color: '#6B21A8', bg: '#FAF5FF' },
-  // Legacy Title Case (seeded records)
   'Ownership Change':  { label: 'Ownership Change',  color: '#065F46', bg: '#ECFDF5' },
   'Marketing Hire':    { label: 'Marketing Hire',    color: '#1E40AF', bg: '#EFF6FF' },
   'Leadership Change': { label: 'Leadership Change', color: '#6B21A8', bg: '#FAF5FF' },
   'Expansion':         { label: 'Expansion',         color: '#166534', bg: '#F0FDF4' },
 };
-
 const DEFAULT_SIGNAL = { label: 'Signal', color: '#344054', bg: '#F2F4F7' };
 
 const PIN_ICON = `<svg width="10" height="13" viewBox="0 0 12 15" fill="none">
   <path d="M6 0C3.51 0 1.5 2.01 1.5 4.5c0 3.375 4.5 9 4.5 9s4.5-5.625 4.5-9C10.5 2.01 8.49 0 6 0zm0 6.375A1.875 1.875 0 1 1 6 2.625a1.875 1.875 0 0 1 0 3.75z" fill="#9CA3AF"/>
 </svg>`;
 
-function scoreGauge(rawScore) {
-  const score  = Math.min(Math.max(Number(rawScore) || 0, 0), 100);
-  const r      = 19;
-  const circ   = +(2 * Math.PI * r).toFixed(2);
-  const offset = +(circ * (1 - score / 100)).toFixed(2);
-  const stroke = score >= 70 ? '#10B981' : score >= 40 ? '#F59E0B' : '#D0D5DD';
+/* ── State ── */
+let allData        = [];
+let activeFilter   = 'All';
+let searchQuery    = '';
+let contactedCount = 0;
+let totalActive    = 0;
+let totalShowing   = 0;
 
-  return `<svg width="54" height="54" viewBox="0 0 54 54" style="flex-shrink:0">
-    <circle cx="27" cy="27" r="${r}" fill="none" stroke="#F2F4F7" stroke-width="3.5"/>
-    <circle cx="27" cy="27" r="${r}" fill="none" stroke="${stroke}" stroke-width="3.5"
-      stroke-dasharray="${circ}" stroke-dashoffset="${offset}"
-      stroke-linecap="round" transform="rotate(-90 27 27)"/>
-    <text x="27" y="32" text-anchor="middle"
-      font-family="Inter,system-ui,sans-serif" font-size="14" font-weight="700"
-      fill="#1A1F36">${score}</text>
-  </svg>`;
+/* ── DOM refs ── */
+const resultsEl   = document.getElementById('results');
+const metaEl      = document.getElementById('results-meta');
+const statTotal   = document.getElementById('stat-total');
+const statOwner   = document.getElementById('stat-ownership');
+const statHiring  = document.getElementById('stat-hiring');
+const statScore   = document.getElementById('stat-score');
+const statContact = document.getElementById('stat-contacted');
+
+/* ── Utilities ── */
+function esc(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function getSignal(item) {
+  return SIGNAL_CONFIG[item.signal_type || item.opportunity_type || ''] || DEFAULT_SIGNAL;
 }
 
 function formatDate(iso) {
   if (!iso) return '—';
   return new Date(iso).toLocaleDateString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric'
+    month: 'short', day: 'numeric', year: 'numeric',
   });
 }
 
+function getFiltered() {
+  return allData.filter(item => {
+    if (item.status === 'contacted') return false;
+    if (activeFilter !== 'All' && getSignal(item).label !== activeFilter) return false;
+    if (searchQuery && !(item.dealership_name || '').toLowerCase().includes(searchQuery)) return false;
+    return true;
+  });
+}
+
+function updateMeta() {
+  if (totalActive === 0) { metaEl.innerHTML = ''; return; }
+  metaEl.innerHTML = `<strong>${totalShowing}</strong> of <strong>${totalActive}</strong> opportunities`;
+}
+
+/* ── Count-up animation ── */
+function animateCount(el, target, duration = 700) {
+  const start = performance.now();
+  (function tick(now) {
+    const p = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(eased * target);
+    if (p < 1) requestAnimationFrame(tick);
+  })(start);
+}
+
+/* ── Stats ── */
+function updateStats(data) {
+  const active = data.filter(d => d.status !== 'contacted');
+
+  const ownerCount = active.filter(d => {
+    const t = d.signal_type || d.opportunity_type || '';
+    return t === 'ownership_change' || t === 'Ownership Change';
+  }).length;
+
+  const hiringCount = active.filter(d => {
+    const t = d.signal_type || d.opportunity_type || '';
+    return t === 'hiring' || t === 'Marketing Hire';
+  }).length;
+
+  const scores = active.map(d => Number(d.confidence_score ?? d.fit_score ?? 0)).filter(Boolean);
+  const avg = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+
+  contactedCount = data.filter(d => d.status === 'contacted').length;
+  totalActive    = active.length;
+
+  animateCount(statTotal,   active.length);
+  animateCount(statOwner,   ownerCount);
+  animateCount(statHiring,  hiringCount);
+  animateCount(statScore,   avg);
+  animateCount(statContact, contactedCount);
+}
+
+/* ── Score gauge ── */
+function scoreGauge(score) {
+  const s      = Math.min(Math.max(Number(score) || 0, 0), 100);
+  const r      = 19;
+  const circ   = +(2 * Math.PI * r).toFixed(2);
+  const target = +(circ * (1 - s / 100)).toFixed(2);
+  const stroke = s >= 70 ? '#10B981' : s >= 40 ? '#F59E0B' : '#D0D5DD';
+  return `<svg width="54" height="54" viewBox="0 0 54 54" style="flex-shrink:0">
+    <circle cx="27" cy="27" r="${r}" fill="none" stroke="#F2F4F7" stroke-width="3.5"/>
+    <circle class="gauge-progress" cx="27" cy="27" r="${r}" fill="none" stroke="${stroke}"
+      stroke-width="3.5" stroke-dasharray="${circ}" stroke-dashoffset="${circ}"
+      data-target="${target}" stroke-linecap="round" transform="rotate(-90 27 27)"
+      style="transition:stroke-dashoffset .6s ease-out;"/>
+    <text x="27" y="32" text-anchor="middle" fill="#1A1F36"
+      font-family="Inter,system-ui,sans-serif" font-size="14" font-weight="700">${s}</text>
+  </svg>`;
+}
+
+function triggerGauges() {
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    resultsEl.querySelectorAll('.gauge-progress').forEach(el => {
+      el.style.strokeDashoffset = el.dataset.target;
+    });
+  }));
+}
+
+/* ── Skeleton loader ── */
+function renderSkeletons() {
+  const row = (w, h, extra = '') =>
+    `<div class="skel" style="width:${w};height:${h}px;${extra}"></div>`;
+
+  resultsEl.innerHTML = Array.from({ length: 3 }, () => `
+    <div class="skeleton-card">
+      <div class="skel-row">
+        <div style="flex:1">
+          ${row('65%', 18, 'margin-bottom:8px')}
+          ${row('38%', 13)}
+        </div>
+        ${row('54px', 54, 'border-radius:50%;flex-shrink:0')}
+      </div>
+      ${row('110px', 22, 'border-radius:999px;margin-bottom:14px')}
+      ${row('100%', 14, 'margin-bottom:7px')}
+      ${row('88%',  14, 'margin-bottom:7px')}
+      ${row('70%',  14, 'margin-bottom:16px')}
+      ${row('100%', 52, 'border-radius:8px;margin-bottom:18px')}
+      <div style="display:flex;justify-content:flex-end">${row('130px', 34, 'border-radius:8px')}</div>
+    </div>`).join('');
+}
+
+/* ── Render cards ── */
+function renderCards(data) {
+  if (data.length === 0) {
+    resultsEl.innerHTML = `
+      <div class="empty-filter">
+        <div class="empty-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <circle cx="11" cy="11" r="8" stroke="#9CA3AF" stroke-width="1.6"/>
+            <path d="M21 21l-4.35-4.35" stroke="#9CA3AF" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3>No opportunities match your filters</h3>
+        <p>Try adjusting your search or selecting a different signal type.</p>
+      </div>`;
+    totalShowing = 0;
+    updateMeta();
+    return;
+  }
+
+  resultsEl.innerHTML = data.map((item, i) => {
+    const name     = item.dealership_name || 'Unnamed Dealership';
+    const location = [item.city, item.state].filter(Boolean).join(', ') || 'Location unavailable';
+    const signal   = getSignal(item);
+    const score    = item.confidence_score ?? item.fit_score ?? 0;
+    const summary  = item.ai_summary  || 'No summary available.';
+    const pitch    = item.pitch_angle || item.recommended_offer || 'No pitch available.';
+    const isNew    = item.status === 'new';
+    const delay    = Math.min(i, 8) * 80;
+
+    const srcLink = item.source_url && item.source_url.startsWith('http')
+      ? `<a href="${esc(item.source_url)}" target="_blank" rel="noopener noreferrer" class="source-link">View source article →</a>`
+      : '<span></span>';
+
+    return `
+      <div class="card" style="animation-delay:${delay}ms">
+        <div class="card-top">
+          <div class="card-identity">
+            <div class="card-name-row">
+              <div class="dealer-name">${esc(name)}</div>
+              ${isNew ? '<span class="new-badge">NEW</span>' : ''}
+            </div>
+            <div class="location">${PIN_ICON} ${esc(location)}</div>
+          </div>
+          ${scoreGauge(score)}
+        </div>
+        <span class="badge" style="color:${signal.color};background:${signal.bg}">${signal.label}</span>
+        <div class="summary">${esc(summary)}</div>
+        <div class="pitch-box">
+          <div class="pitch-label">Suggested pitch</div>
+          <div class="pitch-text">${esc(pitch)}</div>
+        </div>
+        <div class="card-footer">
+          ${srcLink}
+          <button class="btn-contact" data-id="${item.id}">Mark Contacted</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  totalShowing = data.length;
+  updateMeta();
+  triggerGauges();
+}
+
+/* ── Mark Contacted ── */
 async function markContacted(id, card, btn) {
   btn.textContent = 'Saving…';
   btn.disabled = true;
+  card.style.pointerEvents = 'none';
 
   const { error } = await client
     .from('opportunities')
@@ -332,17 +740,78 @@ async function markContacted(id, card, btn) {
     console.error('Mark contacted error:', error);
     btn.textContent = 'Mark Contacted';
     btn.disabled = false;
+    card.style.pointerEvents = '';
     return;
   }
 
-  btn.textContent = '✓ Contacted';
-  btn.classList.add('is-contacted');
+  const item = allData.find(d => String(d.id) === String(id));
+  if (item) item.status = 'contacted';
+
+  // Green flash
+  card.style.outline       = '3px solid rgba(16,185,129,0.4)';
+  card.style.outlineOffset = '0px';
+
+  await sleep(170);
+
+  // Capture current height then transition to 0
+  const h = card.offsetHeight;
+  card.style.maxHeight = h + 'px';
+  card.style.overflow  = 'hidden';
+  card.offsetHeight; // force reflow
+
+  card.style.transition = [
+    'opacity .28s ease',
+    'transform .28s ease',
+    'max-height .42s ease .08s',
+    'margin-bottom .42s ease .08s',
+    'padding-top .42s ease .08s',
+    'padding-bottom .42s ease .08s',
+    'outline .2s ease',
+  ].join(', ');
+
+  card.style.opacity       = '0';
+  card.style.transform     = 'translateY(-8px)';
+  card.style.maxHeight     = '0';
+  card.style.marginBottom  = '0';
+  card.style.paddingTop    = '0';
+  card.style.paddingBottom = '0';
+  card.style.outline       = '0px solid transparent';
+
+  await sleep(530);
+  card.remove();
+
+  contactedCount++;
+  totalActive  = Math.max(0, totalActive  - 1);
+  totalShowing = Math.max(0, totalShowing - 1);
+  statContact.textContent = contactedCount;
+  statTotal.textContent   = totalActive;
+  updateMeta();
 }
 
+/* ── Event wiring ── */
+document.getElementById('filter-pills').addEventListener('click', e => {
+  const pill = e.target.closest('.filter-pill');
+  if (!pill) return;
+  document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+  pill.classList.add('active');
+  activeFilter = pill.dataset.filter;
+  renderCards(getFiltered());
+});
+
+document.getElementById('search-input').addEventListener('input', e => {
+  searchQuery = e.target.value.trim().toLowerCase();
+  renderCards(getFiltered());
+});
+
+resultsEl.addEventListener('click', e => {
+  const btn = e.target.closest('.btn-contact');
+  if (!btn || btn.disabled) return;
+  markContacted(btn.dataset.id, btn.closest('.card'), btn);
+});
+
+/* ── Bootstrap ── */
 async function loadOpportunities() {
-  const results   = document.getElementById('results');
-  const totalEl   = document.getElementById('total');
-  const updatedEl = document.getElementById('last-updated');
+  renderSkeletons();
 
   const { data, error } = await client
     .from('opportunities')
@@ -350,79 +819,27 @@ async function loadOpportunities() {
     .order('confidence_score', { ascending: false });
 
   if (error) {
-    totalEl.textContent = '—';
-    results.innerHTML = `<div class="state-card error">
+    resultsEl.innerHTML = `<div class="state-card error">
       <strong>Could not load opportunities.</strong><br><br>${error.message}
     </div>`;
     return;
   }
 
   if (!data || data.length === 0) {
-    totalEl.textContent = '0';
-    results.innerHTML = `<div class="state-card">
+    resultsEl.innerHTML = `<div class="state-card">
       No opportunities yet. The pipeline populates this automatically each day.
     </div>`;
     return;
   }
 
-  totalEl.textContent = data.length;
+  allData = data;
+  updateStats(data);
 
   const latest = data.reduce((a, b) =>
     new Date(a.created_at) > new Date(b.created_at) ? a : b, data[0]);
-  updatedEl.textContent = formatDate(latest.created_at);
+  document.getElementById('last-updated').textContent = formatDate(latest.created_at);
 
-  results.innerHTML = '';
-
-  data.forEach(item => {
-    const name      = item.dealership_name || 'Unnamed Dealership';
-    const city      = item.city  || '';
-    const state     = item.state || '';
-    const location  = [city, state].filter(Boolean).join(', ') || 'Location unavailable';
-    const rawType   = item.signal_type || item.opportunity_type || '';
-    const signal    = SIGNAL_CONFIG[rawType] || DEFAULT_SIGNAL;
-    const summary   = item.ai_summary  || 'No summary available.';
-    const pitch     = item.pitch_angle || item.recommended_offer || 'No pitch available.';
-    const score     = item.confidence_score ?? item.fit_score ?? 0;
-    const contacted = item.status === 'contacted';
-
-    const card = document.createElement('div');
-    card.className = 'card';
-
-    card.innerHTML = `
-      <div class="card-top">
-        <div class="card-identity">
-          <div class="dealer-name">${name}</div>
-          <div class="location">${PIN_ICON} ${location}</div>
-        </div>
-        ${scoreGauge(score)}
-      </div>
-
-      <span class="badge" style="color:${signal.color}; background:${signal.bg}">
-        ${signal.label}
-      </span>
-
-      <div class="summary">${summary}</div>
-
-      <div class="pitch-box">
-        <div class="pitch-label">Suggested pitch</div>
-        <div class="pitch-text">${pitch}</div>
-      </div>
-
-      <div class="card-footer">
-        <button class="btn-contact${contacted ? ' is-contacted' : ''}"
-          data-id="${item.id}" ${contacted ? 'disabled' : ''}>
-          ${contacted ? '✓ Contacted' : 'Mark Contacted'}
-        </button>
-      </div>
-    `;
-
-    if (!contacted) {
-      card.querySelector('.btn-contact')
-        .addEventListener('click', e => markContacted(item.id, card, e.currentTarget));
-    }
-
-    results.appendChild(card);
-  });
+  renderCards(getFiltered());
 }
 
 loadOpportunities();
