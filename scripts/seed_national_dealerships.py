@@ -47,6 +47,7 @@ FIELD_MASK = ",".join([
     "places.websiteUri",
     "places.rating",
     "places.userRatingCount",
+    "places.photos",
 ])
 
 
@@ -105,6 +106,9 @@ for state_idx, state_name in enumerate(STATES, 1):
                         "website":         place.get("websiteUri"),
                         "google_rating":   place.get("rating"),
                         "google_reviews":  place.get("userRatingCount"),
+                        "photo_count":     len(place.get("photos", [])),
+                        "has_recent_posts":     None,
+                        "review_response_rate": None,
                         "dealer_group_id": None,
                         "rooftop_status":  "active",
                     }

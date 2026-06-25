@@ -17,11 +17,13 @@ if not SUPABASE_URL or not SUPABASE_KEY:
     raise Exception("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY")
 
 if not META_TOKEN:
-    raise Exception(
-        "Missing META_ADS_API_TOKEN — get a free token at "
-        "https://developers.facebook.com (create an app, then generate a "
-        "User Access Token with ads_read permission)"
+    print(
+        "META_ADS_API_TOKEN not set — skipping Meta Ad Library check.\n"
+        "To enable: create a free app at developers.facebook.com and generate\n"
+        "a User Access Token with ads_read permission, then add it as\n"
+        "META_ADS_API_TOKEN in your GitHub Actions secrets."
     )
+    exit(0)
 
 supabase    = create_client(SUPABASE_URL, SUPABASE_KEY)
 META_URL    = "https://graph.facebook.com/v21.0/ads_archive"
