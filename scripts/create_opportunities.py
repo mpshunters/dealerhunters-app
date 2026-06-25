@@ -41,6 +41,9 @@ PITCH_FALLBACK = {
     "oem_event":        "Factory event campaign",
 }
 
+# Maps signal rule weight (1-3) to a human-readable confidence score (75-95)
+WEIGHT_TO_SCORE = {1: 75, 2: 83, 3: 92}
+
 
 def extract_dealer_info(raw_text):
     try:
@@ -145,6 +148,8 @@ for match in matches.data:
         "state":            dealer["state"],
         "opportunity_type": match["signal_type"],
         "fit_score":        match["fit_score"],
+        "confidence_score": WEIGHT_TO_SCORE.get(match["fit_score"], 75),
+        "status":           "new",
         "ai_summary":       ai_summary,
         "pitch_angle":      pitch_angle,
         "source_name":      source.get("source_name"),
@@ -160,26 +165,34 @@ for match in matches.data:
     else:
         print(f"  [No DB match] Using extracted location: {dealer['city']}, {dealer['state']}")
 
-    # Deduplication: only one 'new' opportunity per dealership (keep highest score)
+    # Dedup + hot lead: only one 'new' opportunity per dealership (keep highest score).
+    # A second signal for the same dealer marks both records as is_hot_lead=True.
     existing = supabase.table("opportunities") \
         .select("id, fit_score") \
         .eq("dealership_name", dealer["dealership_name"]) \
         .eq("status", "new") \
         .execute()
 
+    is_hot_lead = False
+
     if existing.data:
+        is_hot_lead    = True
+        existing_id    = existing.data[0]["id"]
         existing_score = existing.data[0].get("fit_score") or 0
         new_score      = record.get("fit_score") or 0
+
         if new_score > existing_score:
-            # Replace the lower-scoring record with this one
-            old_id = existing.data[0]["id"]
-            supabase.table("opportunities").delete().eq("id", old_id).execute()
-            print(f"  [Dedup] Replacing lower score ({existing_score} → {new_score}) for {dealer['dealership_name']}")
+            # Delete the weaker record; new insert below carries the hot flag
+            supabase.table("opportunities").delete().eq("id", existing_id).execute()
+            print(f"  [Dedup] Replacing lower score ({existing_score}→{new_score}) for {dealer['dealership_name']} 🔥 hot lead")
         else:
-            print(f"  [Dedup] Skipped — existing record has equal or higher score ({existing_score}) for {dealer['dealership_name']}")
+            # Existing wins — mark it hot and skip inserting this one
+            supabase.table("opportunities").update({"is_hot_lead": True}).eq("id", existing_id).execute()
+            print(f"  [Dedup] Skipped lower score ({new_score}≤{existing_score}), marked existing as hot lead for {dealer['dealership_name']}")
             supabase.table("signal_matches").update({"processed": True}).eq("id", match["id"]).execute()
             continue
 
+    record["is_hot_lead"] = is_hot_lead
     supabase.table("opportunities").insert(record).execute()
 
     supabase.table("signal_matches").update({"processed": True}).eq("id", match["id"]).execute()

@@ -495,6 +495,24 @@
       flex-shrink: 0;
     }
 
+    .hot-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      background: #FFF7ED;
+      color: #C2410C;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 999px;
+      letter-spacing: 0.3px;
+      flex-shrink: 0;
+      border: 1px solid #FDBA74;
+    }
+
+    .filter-pill.hot-pill { border-color: #FB923C; color: #C2410C; }
+    .filter-pill.hot-pill.active { background: #FFF7ED; border-color: #C2410C; color: #C2410C; }
+
     .location {
       display: flex;
       align-items: center;
@@ -944,6 +962,7 @@
       <button class="filter-pill" data-filter="Leadership Change">Leadership Change</button>
       <button class="filter-pill" data-filter="Expansion">Expansion</button>
       <button class="filter-pill" data-filter="Weak Digital">Weak Digital</button>
+      <button class="filter-pill hot-pill" data-filter="Hot Leads">🔥 Hot Leads</button>
     </div>
     <div class="filter-right">
       <div class="search-wrap">
@@ -1146,6 +1165,7 @@ function timeAgo(iso) {
 function getFiltered() {
   return allData.filter(item => {
     if (item.status === 'contacted') return false;
+    if (activeFilter === 'Hot Leads') return !!item.is_hot_lead;
     if (activeFilter !== 'All' && getSignal(item).label !== activeFilter) return false;
     if (searchQuery && !(item.dealership_name || '').toLowerCase().includes(searchQuery)) return false;
     return true;
@@ -1347,6 +1367,7 @@ function renderCards(data) {
           <div class="card-identity">
             <div class="card-name-row">
               <div class="dealer-name">${esc(name)}</div>
+              ${item.is_hot_lead ? '<span class="hot-badge">🔥 Hot Lead</span>' : ''}
               ${isNew ? '<span class="new-badge">NEW</span>' : ''}
             </div>
             <div class="location">${PIN_ICON} ${esc(location)}</div>

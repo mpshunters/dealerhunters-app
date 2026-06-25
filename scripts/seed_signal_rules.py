@@ -1,5 +1,8 @@
+from dotenv import load_dotenv
 from supabase import create_client
 import os
+
+load_dotenv()
 
 print("DealerHunters signal rule seeding starting...")
 
@@ -80,6 +83,54 @@ rules = [
         "rule_name": "oem_event_mid",
         "signal_type": "oem_event",
         "keywords": ["buyback", "holiday event"],
+        "fit_score": 2,
+        "active": True,
+    },
+
+    # ── New keywords ──────────────────────────────────────────────────────────
+
+    # ownership_change
+    {
+        "rule_name": "ownership_change_high_v2",
+        "signal_type": "ownership_change",
+        "keywords": ["changes hands", "new ownership", "new principal"],
+        "fit_score": 3,
+        "active": True,
+    },
+    {
+        "rule_name": "ownership_change_mid_v2",
+        "signal_type": "ownership_change",
+        "keywords": ["family sold", "dealer group acquires", "announces acquisition", "purchased by", "sold its"],
+        "fit_score": 2,
+        "active": True,
+    },
+
+    # hiring
+    {
+        "rule_name": "hiring_high_v2",
+        "signal_type": "hiring",
+        "keywords": ["sales manager", "finance manager", "general sales manager",
+                     "fixed ops director", "service director", "parts manager"],
+        "fit_score": 3,
+        "active": True,
+    },
+
+    # oem_event
+    {
+        "rule_name": "oem_event_mid_v2",
+        "signal_type": "oem_event",
+        "keywords": ["year-end clearance", "model year end", "summer sales event",
+                     "presidents day sale", "black friday", "end of year event"],
+        "fit_score": 2,
+        "active": True,
+    },
+
+    # new_rooftop / expansion
+    {
+        "rule_name": "new_rooftop_mid_v2",
+        "signal_type": "new_rooftop",
+        "keywords": ["second location", "third location", "new facility",
+                     "ground breaking", "ribbon cutting", "new store"],
         "fit_score": 2,
         "active": True,
     },
