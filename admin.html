@@ -11,12 +11,17 @@
   <!-- config.js provides SUPABASE_URL and SUPABASE_ANON_KEY -->
   <script src="config.js"></script>
   <!--
-    Create admin-config.js (do NOT commit it — add to .gitignore):
-      const ADMIN_SERVICE_KEY = 'your-supabase-service-role-key';
-      const ADMIN_GH_TOKEN    = 'ghp_your-github-pat-with-actions-write';
-    Without these, write operations and pipeline trigger will not work.
+    Fill in admin-config.js (gitignored — never committed):
+      const ADMIN_CONFIG = {
+        supabase_url: "https://xahazlzuxowamknucprs.supabase.co",
+        supabase_key: "your-service-role-key",   // bypasses RLS
+        gh_token:     "ghp_your-github-pat",      // actions:write scope
+        gh_repo:      "mpshunters/dealerhunters-app"
+      };
+    Without supabase_key, falls back to anon key (RLS may block some tables).
+    Without gh_token, Run Pipeline and Send Digest buttons are disabled.
   -->
-  <script src="admin-config.js" onerror="console.warn('admin-config.js not found — write ops disabled')"></script>
+  <script src="admin-config.js" onerror="console.warn('admin-config.js not found — GH actions disabled')"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -869,17 +874,18 @@
 
 <script>
 /* ══════════════════════════════════════════════════════════════════
-   CONFIG
-   Fill in admin-config.js (not committed) with:
-     const ADMIN_SERVICE_KEY = 'your-supabase-service-role-key';
-     const ADMIN_GH_TOKEN    = 'ghp_your-github-pat-with-actions-write';
+   CONFIG — loaded from admin-config.js (gitignored)
+   const ADMIN_CONFIG = { gh_token: "ghp_...", gh_repo: "owner/repo" };
 ══════════════════════════════════════════════════════════════════ */
-const SUPABASE_ADMIN_KEY = (typeof ADMIN_SERVICE_KEY !== 'undefined' && ADMIN_SERVICE_KEY)
-  ? ADMIN_SERVICE_KEY
+const _cfg = (typeof ADMIN_CONFIG !== 'undefined') ? ADMIN_CONFIG : {};
+
+const SUPABASE_ADMIN_URL = _cfg.supabase_url || SUPABASE_URL;
+const SUPABASE_ADMIN_KEY = (_cfg.supabase_key && _cfg.supabase_key !== 'YOUR_SERVICE_ROLE_KEY_HERE')
+  ? _cfg.supabase_key
   : SUPABASE_ANON_KEY;
 
-const GH_TOKEN = (typeof ADMIN_GH_TOKEN !== 'undefined') ? ADMIN_GH_TOKEN : '';
-const GH_REPO  = 'mpshunters/dealerhunters-app';
+const GH_TOKEN = _cfg.gh_token && _cfg.gh_token !== 'YOUR_GITHUB_PAT_HERE' ? _cfg.gh_token : '';
+const GH_REPO  = _cfg.gh_repo  || 'mpshunters/dealerhunters-app';
 const GH_WORKFLOW = 'daily_scrape.yml';
 
 const ADMIN_PASSWORD = 'dh-admin-2026';
@@ -920,7 +926,7 @@ document.getElementById('logout-btn').addEventListener('click', () => {
 checkAuth();
 
 /* ── Supabase client (service role if available) ─────────────────── */
-const adminClient = supabase.createClient(SUPABASE_URL, SUPABASE_ADMIN_KEY);
+const adminClient = supabase.createClient(SUPABASE_ADMIN_URL, SUPABASE_ADMIN_KEY);
 
 /* ── Utilities ─────────────────────────────────────────────────── */
 function esc(s) {
@@ -1052,7 +1058,7 @@ async function loadPipeline() {
       runsList.innerHTML = `<div style="color:var(--red);font-size:13px">GitHub API error: ${esc(e.message)}</div>`;
     }
   } else {
-    runsList.innerHTML = '<div style="color:var(--faint);font-size:13px">Configure ADMIN_GH_TOKEN in admin-config.js to see run history.</div>';
+    runsList.innerHTML = '<div style="color:var(--faint);font-size:13px">Set ADMIN_CONFIG.gh_token in admin-config.js to see run history.</div>';
   }
 
   // Pipeline step timestamps from Supabase
@@ -1108,7 +1114,7 @@ async function loadPipeline() {
 // Run Pipeline Now
 document.getElementById('run-pipeline-btn').addEventListener('click', async () => {
   if (!GH_TOKEN) {
-    toast('ADMIN_GH_TOKEN not set in admin-config.js', 'error'); return;
+    toast('Set ADMIN_CONFIG.gh_token in admin-config.js', 'error'); return;
   }
   const ok = await confirm('Trigger Pipeline Run', 'This will immediately dispatch the Daily Dealer Signal Scrape workflow on GitHub Actions. Continue?');
   if (!ok) return;
@@ -1573,7 +1579,7 @@ async function loadDigest() {
 document.getElementById('test-digest-btn').addEventListener('click', async () => {
   const ok = await confirm('Send Test Digest', 'This will trigger the send_daily_digest.py script via GitHub Actions dispatch. Continue?');
   if (!ok) return;
-  if (!GH_TOKEN) { toast('ADMIN_GH_TOKEN not set in admin-config.js', 'error'); return; }
+  if (!GH_TOKEN) { toast('Set ADMIN_CONFIG.gh_token in admin-config.js', 'error'); return; }
   const btn = document.getElementById('test-digest-btn');
   btn.disabled = true; btn.textContent = 'Sending…';
   try {
