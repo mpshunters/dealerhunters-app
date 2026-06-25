@@ -97,16 +97,16 @@ for state_idx, state_name in enumerate(STATES, 1):
 
                     record = {
                         "google_place_id": place["id"],
-                        "name":            place.get("displayName", {}).get("text", ""),
-                        "address":         place.get("formattedAddress", ""),
+                        "dealership_name": place.get("displayName", {}).get("text", ""),
                         "city":            city,
                         "state":           state_abbr,
-                        "zip":             zip_code,
-                        "brand":           brand,
+                        "franchise":       brand,
                         "phone":           place.get("nationalPhoneNumber"),
                         "website":         place.get("websiteUri"),
                         "google_rating":   place.get("rating"),
                         "google_reviews":  place.get("userRatingCount"),
+                        "dealer_group_id": None,
+                        "rooftop_status":  "active",
                     }
 
                     supabase.table("dealerships").upsert(
