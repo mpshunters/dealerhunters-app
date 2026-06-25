@@ -147,6 +147,7 @@ for match in matches.data:
         "fit_score":        match["fit_score"],
         "ai_summary":       ai_summary,
         "pitch_angle":      pitch_angle,
+        "source_name":      source.get("source_name"),
     }
 
     if matched:
