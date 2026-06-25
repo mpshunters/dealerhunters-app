@@ -11,17 +11,21 @@
   <!-- config.js provides SUPABASE_URL and SUPABASE_ANON_KEY -->
   <script src="config.js"></script>
   <!--
-    Fill in admin-config.js (gitignored — never committed):
-      const ADMIN_CONFIG = {
-        supabase_url: "https://xahazlzuxowamknucprs.supabase.co",
-        supabase_key: "your-service-role-key",   // bypasses RLS
-        gh_token:     "ghp_your-github-pat",      // actions:write scope
-        gh_repo:      "mpshunters/dealerhunters-app"
-      };
-    Without supabase_key, falls back to anon key (RLS may block some tables).
-    Without gh_token, Run Pipeline and Send Digest buttons are disabled.
+    PRODUCTION (Cloudflare Pages):
+      /admin-config is served by functions/admin-config.js which reads:
+        ADMIN_SUPABASE_KEY  — Supabase service role key
+        ADMIN_GH_TOKEN      — GitHub PAT with actions:write scope
+      Set these in CF Pages → Settings → Environment variables.
+
+    LOCAL DEVELOPMENT:
+      CF Functions don't run locally via plain file:// or simple HTTP.
+      Create admin-config.js in repo root (gitignored) with real values
+      and open admin.html via a local server that maps /admin-config to it.
+      Or temporarily change the script src to "admin-config.js" locally.
   -->
-  <script src="admin-config.js" onerror="console.warn('admin-config.js not found — GH actions disabled')"></script>
+  <!-- Served by functions/admin-config.js (Cloudflare Pages Function) -->
+  <!-- Locally: served from admin-config.js in repo root -->
+  <script src="/admin-config" onerror="console.warn('admin-config not available — falling back to anon key')"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 

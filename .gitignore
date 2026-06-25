@@ -33,4 +33,4 @@ dist/
 # Secrets
 secrets.json
 credentials.json
-admin-config.js
+/admin-config.js
