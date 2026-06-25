@@ -13,56 +13,76 @@
 
     body {
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background: #ECEEF2;
-      color: #111827;
+      background: #F8F9FC;
+      color: #1A1F36;
       min-height: 100vh;
     }
 
     /* ── Header ── */
     .header {
-      background: #1A3A5C;
-      padding: 14px 28px;
+      background: #0F1F35;
+      padding: 18px 32px;
       display: flex;
       align-items: center;
-      gap: 14px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      justify-content: space-between;
+      border-bottom: 2px solid #FF6B35;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 13px;
     }
 
     .logo-wordmark {
       display: flex;
       flex-direction: column;
-      gap: 1px;
+      gap: 3px;
     }
 
     .logo-name {
-      font-size: 21px;
+      font-size: 20px;
       font-weight: 800;
-      color: #fff;
-      letter-spacing: -0.4px;
+      letter-spacing: -0.5px;
       line-height: 1;
     }
 
+    .logo-name .dealer  { color: #ffffff; }
+    .logo-name .hunters { color: #FF6B35; }
+
     .logo-tagline {
-      font-size: 11.5px;
-      color: rgba(255,255,255,0.55);
+      font-size: 11px;
+      color: rgba(255,255,255,0.42);
       font-weight: 400;
-      letter-spacing: 0.1px;
+      letter-spacing: 0.15px;
+    }
+
+    .header-meta {
+      font-size: 12px;
+      color: rgba(255,255,255,0.38);
+      font-weight: 400;
+    }
+
+    .header-meta strong {
+      color: rgba(255,255,255,0.6);
+      font-weight: 500;
     }
 
     /* ── Main ── */
     .main {
       max-width: 900px;
       margin: 0 auto;
-      padding: 28px 16px 48px;
+      padding: 28px 16px 64px;
     }
 
     /* ── Stats bar ── */
     .stats-bar {
-      background: white;
+      background: #ffffff;
+      border: 1px solid #E8ECF4;
       border-radius: 10px;
       padding: 14px 20px;
       margin-bottom: 20px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
       display: flex;
       align-items: center;
       gap: 8px;
@@ -73,22 +93,23 @@
     .stats-count {
       font-size: 22px;
       font-weight: 800;
-      color: #1A3A5C;
+      color: #0F1F35;
     }
 
     /* ── Card ── */
     .card {
-      background: white;
+      background: #ffffff;
+      border: 1px solid #E8ECF4;
+      border-top-width: 3px;
       border-radius: 12px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-      margin-bottom: 16px;
-      padding: 22px 24px 18px;
-      border-left: 4px solid transparent;
-      transition: border-color 0.25s ease;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      margin-bottom: 14px;
+      padding: 20px 22px 18px;
+      transition: box-shadow 0.2s ease;
     }
 
-    .card.contacted {
-      border-left-color: #059669;
+    .card:hover {
+      box-shadow: 0 6px 24px rgba(0,0,0,0.10);
     }
 
     .card-top {
@@ -99,38 +120,36 @@
       gap: 12px;
     }
 
-    .card-identity {
-      flex: 1;
-      min-width: 0;
-    }
+    .card-identity { flex: 1; min-width: 0; }
 
     .dealer-name {
-      font-size: 19px;
+      font-size: 18px;
       font-weight: 700;
-      color: #111827;
+      color: #1A1F36;
       line-height: 1.25;
     }
 
     .location {
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 4px;
       color: #9CA3AF;
       font-size: 13px;
       margin-top: 5px;
     }
 
+    /* ── Badge ── */
     .badge {
       display: inline-block;
-      font-size: 10.5px;
-      font-weight: 700;
+      font-size: 11px;
+      font-weight: 600;
       padding: 3px 10px;
       border-radius: 999px;
-      margin-bottom: 13px;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
+      margin-bottom: 12px;
+      letter-spacing: 0.2px;
     }
 
+    /* ── Summary ── */
     .summary {
       font-size: 14px;
       line-height: 1.65;
@@ -140,26 +159,24 @@
 
     /* ── Pitch box ── */
     .pitch-box {
-      border-left: 4px solid #E8401C;
-      background: #FFF8F6;
-      padding: 11px 14px;
+      border-left: 3px solid #FF6B35;
+      background: #FFF8F5;
+      padding: 10px 14px;
       border-radius: 0 8px 8px 0;
-      margin-bottom: 18px;
+      margin-bottom: 16px;
     }
 
     .pitch-label {
-      font-size: 10px;
-      font-weight: 700;
-      color: #E8401C;
-      text-transform: uppercase;
-      letter-spacing: 0.7px;
-      margin-bottom: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      color: #9CA3AF;
+      margin-bottom: 3px;
     }
 
     .pitch-text {
       font-size: 13.5px;
       font-weight: 500;
-      color: #1A3A5C;
+      color: #1A1F36;
       line-height: 1.5;
     }
 
@@ -170,36 +187,38 @@
     }
 
     .btn-contact {
-      background: #1A3A5C;
-      color: white;
-      border: none;
-      padding: 8px 18px;
+      background: transparent;
+      color: #6B7280;
+      border: 1.5px solid #D1D5DB;
+      padding: 7px 16px;
       border-radius: 8px;
       font-size: 13px;
-      font-weight: 600;
+      font-weight: 500;
       cursor: pointer;
       font-family: inherit;
-      letter-spacing: 0.1px;
-      transition: background 0.15s ease;
+      transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
     }
 
     .btn-contact:hover:not(:disabled) {
-      background: #E8401C;
+      border-color: #6B7280;
+      color: #374151;
     }
 
     .btn-contact.is-contacted {
-      background: #ECFDF5;
-      color: #059669;
+      background: #16A34A;
+      color: #ffffff;
+      border-color: #16A34A;
       cursor: default;
     }
 
-    /* ── States ── */
+    /* ── Empty / error states ── */
     .state-card {
-      background: white;
+      background: #ffffff;
+      border: 1px solid #E8ECF4;
       border-radius: 12px;
       padding: 48px 24px;
       text-align: center;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
       color: #6B7280;
       font-size: 15px;
     }
@@ -210,35 +229,27 @@
 <body>
 
 <header class="header">
-  <!-- Bullseye + SUV logo -->
-  <svg width="46" height="46" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <!-- Outer ring -->
-    <circle cx="24" cy="24" r="22" stroke="#E8401C" stroke-width="2.5"/>
-    <!-- Inner ring -->
-    <circle cx="24" cy="24" r="13.5" stroke="#E8401C" stroke-width="2"/>
-    <!-- Crosshairs -->
-    <line x1="24" y1="1"  x2="24" y2="10"  stroke="#E8401C" stroke-width="2" stroke-linecap="round"/>
-    <line x1="24" y1="38" x2="24" y2="47"  stroke="#E8401C" stroke-width="2" stroke-linecap="round"/>
-    <line x1="1"  y1="24" x2="10" y2="24"  stroke="#E8401C" stroke-width="2" stroke-linecap="round"/>
-    <line x1="38" y1="24" x2="47" y2="24"  stroke="#E8401C" stroke-width="2" stroke-linecap="round"/>
-    <!-- SUV body -->
-    <path d="M8 27 H40 V34 Q40 36 38 36 H10 Q8 36 8 34 Z" fill="#E8401C"/>
-    <!-- SUV roof/cab -->
-    <path d="M11 27 L14.5 20 H32.5 L37 27 Z" fill="#E8401C"/>
-    <!-- Window -->
-    <path d="M16 26.5 L18.5 21.5 H30 L33.5 26.5 Z" fill="#1A3A5C" opacity="0.45"/>
-    <!-- Front wheel -->
-    <circle cx="32.5" cy="36" r="4"   fill="#1A3A5C"/>
-    <circle cx="32.5" cy="36" r="2"   fill="white"/>
-    <!-- Rear wheel -->
-    <circle cx="15.5" cy="36" r="4"   fill="#1A3A5C"/>
-    <circle cx="15.5" cy="36" r="2"   fill="white"/>
-  </svg>
+  <div class="header-left">
+    <!-- Minimal crosshair / scope icon -->
+    <svg width="34" height="34" viewBox="0 0 36 36" fill="none" aria-hidden="true">
+      <circle cx="18" cy="18" r="16.5" stroke="#FF6B35" stroke-width="1.25"/>
+      <circle cx="18" cy="18" r="9"    stroke="#FF6B35" stroke-width="1.25"/>
+      <line x1="18" y1="1"  x2="18" y2="8"  stroke="#FF6B35" stroke-width="1.25" stroke-linecap="round"/>
+      <line x1="18" y1="28" x2="18" y2="35" stroke="#FF6B35" stroke-width="1.25" stroke-linecap="round"/>
+      <line x1="1"  y1="18" x2="8"  y2="18" stroke="#FF6B35" stroke-width="1.25" stroke-linecap="round"/>
+      <line x1="28" y1="18" x2="35" y2="18" stroke="#FF6B35" stroke-width="1.25" stroke-linecap="round"/>
+      <circle cx="18" cy="18" r="1.75" fill="#FF6B35"/>
+    </svg>
 
-  <div class="logo-wordmark">
-    <span class="logo-name">DealerHunters</span>
-    <span class="logo-tagline">Automotive buying signals for CR Advertising</span>
+    <div class="logo-wordmark">
+      <div class="logo-name">
+        <span class="dealer">Dealer</span><span class="hunters">Hunters</span>
+      </div>
+      <div class="logo-tagline">Intelligent lead signals for automotive advertising</div>
+    </div>
   </div>
+
+  <div class="header-meta">Last updated: <strong id="last-updated">—</strong></div>
 </header>
 
 <main class="main">
@@ -253,40 +264,46 @@
 const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const SIGNAL_CONFIG = {
-  'ownership_change':  { label: 'Ownership Change',  color: '#B91C1C', bg: '#FEE2E2' },
-  'hiring':            { label: 'Marketing Hire',    color: '#1D4ED8', bg: '#DBEAFE' },
-  'new_rooftop':       { label: 'Expansion',         color: '#047857', bg: '#D1FAE5' },
-  'oem_event':         { label: 'OEM Event',         color: '#6D28D9', bg: '#EDE9FE' },
+  'ownership_change':  { label: 'Ownership Change',  color: '#B42318', bg: '#FEF3F2', border: '#FDA29B' },
+  'hiring':            { label: 'Marketing Hire',    color: '#175CD3', bg: '#EFF8FF', border: '#84CAFF' },
+  'new_rooftop':       { label: 'New Rooftop',       color: '#027A48', bg: '#ECFDF3', border: '#6CE9A6' },
+  'oem_event':         { label: 'OEM Event',         color: '#6941C6', bg: '#F9F5FF', border: '#D6BBFB' },
   // Legacy Title Case (seeded records)
-  'Ownership Change':  { label: 'Ownership Change',  color: '#B91C1C', bg: '#FEE2E2' },
-  'Marketing Hire':    { label: 'Marketing Hire',    color: '#1D4ED8', bg: '#DBEAFE' },
-  'Leadership Change': { label: 'Leadership Change', color: '#6D28D9', bg: '#EDE9FE' },
-  'Expansion':         { label: 'Expansion',         color: '#047857', bg: '#D1FAE5' },
+  'Ownership Change':  { label: 'Ownership Change',  color: '#B42318', bg: '#FEF3F2', border: '#FDA29B' },
+  'Marketing Hire':    { label: 'Marketing Hire',    color: '#175CD3', bg: '#EFF8FF', border: '#84CAFF' },
+  'Leadership Change': { label: 'Leadership Change', color: '#6941C6', bg: '#F9F5FF', border: '#D6BBFB' },
+  'Expansion':         { label: 'Expansion',         color: '#027A48', bg: '#ECFDF3', border: '#6CE9A6' },
 };
 
-const DEFAULT_SIGNAL = { label: 'Signal Detected', color: '#374151', bg: '#F3F4F6' };
+const DEFAULT_SIGNAL = { label: 'Signal', color: '#344054', bg: '#F2F4F7', border: '#D0D5DD' };
 
-const PIN_ICON = `<svg width="11" height="14" viewBox="0 0 12 15" fill="none">
+const PIN_ICON = `<svg width="10" height="13" viewBox="0 0 12 15" fill="none">
   <path d="M6 0C3.51 0 1.5 2.01 1.5 4.5c0 3.375 4.5 9 4.5 9s4.5-5.625 4.5-9C10.5 2.01 8.49 0 6 0zm0 6.375A1.875 1.875 0 1 1 6 2.625a1.875 1.875 0 0 1 0 3.75z" fill="#9CA3AF"/>
 </svg>`;
 
 function scoreGauge(rawScore) {
-  const score = Math.min(Math.max(Number(rawScore) || 0, 0), 100);
-  const r = 20;
-  const circ = +(2 * Math.PI * r).toFixed(2);
+  const score  = Math.min(Math.max(Number(rawScore) || 0, 0), 100);
+  const r      = 19;
+  const circ   = +(2 * Math.PI * r).toFixed(2);
   const offset = +(circ * (1 - score / 100)).toFixed(2);
-  const stroke = score >= 80 ? '#059669' : score >= 50 ? '#E8401C' : '#9CA3AF';
+  const stroke = score >= 70 ? '#FF6B35' : score >= 40 ? '#F79009' : '#D0D5DD';
 
-  return `
-    <svg width="58" height="58" viewBox="0 0 60 60" style="flex-shrink:0">
-      <circle cx="30" cy="30" r="${r}" fill="none" stroke="#E5E7EB" stroke-width="6"/>
-      <circle cx="30" cy="30" r="${r}" fill="none" stroke="${stroke}" stroke-width="6"
-        stroke-dasharray="${circ}" stroke-dashoffset="${offset}"
-        stroke-linecap="round" transform="rotate(-90 30 30)"/>
-      <text x="30" y="35" text-anchor="middle"
-        font-family="Inter,system-ui,sans-serif" font-size="13" font-weight="700"
-        fill="#111827">${score}</text>
-    </svg>`;
+  return `<svg width="54" height="54" viewBox="0 0 54 54" style="flex-shrink:0">
+    <circle cx="27" cy="27" r="${r}" fill="none" stroke="#F2F4F7" stroke-width="3.5"/>
+    <circle cx="27" cy="27" r="${r}" fill="none" stroke="${stroke}" stroke-width="3.5"
+      stroke-dasharray="${circ}" stroke-dashoffset="${offset}"
+      stroke-linecap="round" transform="rotate(-90 27 27)"/>
+    <text x="27" y="32" text-anchor="middle"
+      font-family="Inter,system-ui,sans-serif" font-size="14" font-weight="700"
+      fill="#1A1F36">${score}</text>
+  </svg>`;
+}
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric'
+  });
 }
 
 async function markContacted(id, card, btn) {
@@ -305,14 +322,15 @@ async function markContacted(id, card, btn) {
     return;
   }
 
-  card.classList.add('contacted');
+  card.style.borderTopColor = '#16A34A';
   btn.textContent = '✓ Contacted';
   btn.classList.add('is-contacted');
 }
 
 async function loadOpportunities() {
-  const results = document.getElementById('results');
-  const totalEl = document.getElementById('total');
+  const results   = document.getElementById('results');
+  const totalEl   = document.getElementById('total');
+  const updatedEl = document.getElementById('last-updated');
 
   const { data, error } = await client
     .from('opportunities')
@@ -336,6 +354,11 @@ async function loadOpportunities() {
   }
 
   totalEl.textContent = data.length;
+
+  const latest = data.reduce((a, b) =>
+    new Date(a.created_at) > new Date(b.created_at) ? a : b, data[0]);
+  updatedEl.textContent = formatDate(latest.created_at);
+
   results.innerHTML = '';
 
   data.forEach(item => {
@@ -345,13 +368,14 @@ async function loadOpportunities() {
     const location  = [city, state].filter(Boolean).join(', ') || 'Location unavailable';
     const rawType   = item.signal_type || item.opportunity_type || '';
     const signal    = SIGNAL_CONFIG[rawType] || DEFAULT_SIGNAL;
-    const summary   = item.ai_summary   || 'No summary available.';
-    const pitch     = item.pitch_angle  || item.recommended_offer || 'No pitch available.';
+    const summary   = item.ai_summary  || 'No summary available.';
+    const pitch     = item.pitch_angle || item.recommended_offer || 'No pitch available.';
     const score     = item.confidence_score ?? item.fit_score ?? 0;
     const contacted = item.status === 'contacted';
 
     const card = document.createElement('div');
-    card.className = 'card' + (contacted ? ' contacted' : '');
+    card.className = 'card';
+    card.style.borderTopColor = contacted ? '#16A34A' : signal.border;
 
     card.innerHTML = `
       <div class="card-top">
@@ -369,15 +393,13 @@ async function loadOpportunities() {
       <div class="summary">${summary}</div>
 
       <div class="pitch-box">
-        <div class="pitch-label">Suggested Pitch</div>
+        <div class="pitch-label">Suggested pitch</div>
         <div class="pitch-text">${pitch}</div>
       </div>
 
       <div class="card-footer">
-        <button
-          class="btn-contact${contacted ? ' is-contacted' : ''}"
-          data-id="${item.id}"
-          ${contacted ? 'disabled' : ''}>
+        <button class="btn-contact${contacted ? ' is-contacted' : ''}"
+          data-id="${item.id}" ${contacted ? 'disabled' : ''}>
           ${contacted ? '✓ Contacted' : 'Mark Contacted'}
         </button>
       </div>
