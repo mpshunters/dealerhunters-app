@@ -361,6 +361,33 @@
 
     .source-link:hover { color: #10B981; }
 
+    .card-footer-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-find-contact {
+      background: transparent;
+      color: #10B981;
+      border: 1.5px solid #10B981;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      text-decoration: none;
+      display: inline-block;
+      line-height: 1;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .btn-find-contact:hover {
+      background: #10B981;
+      color: #ffffff;
+    }
+
     .btn-contact {
       background: transparent;
       color: #6B7280;
@@ -447,7 +474,7 @@
       <div class="logo-name">
         <span class="dealer">Dealer</span><span class="hunters">Hunters</span>
       </div>
-      <div class="logo-tagline">Intelligent lead signals for automotive advertising</div>
+      <div class="logo-tagline">Dealer signals. Delivered daily.</div>
     </div>
   </div>
   <div class="header-meta">Last updated: <strong id="last-updated">—</strong></div>
@@ -715,7 +742,11 @@ function renderCards(data) {
         </div>
         <div class="card-footer">
           ${srcLink}
-          <button class="btn-contact" data-id="${item.id}">Mark Contacted</button>
+          <div class="card-footer-right">
+            <a href="https://app.apollo.io/#/people?organizationName=${encodeURIComponent(name)}&personTitles[]=General Manager&personTitles[]=Marketing Director"
+              target="_blank" rel="noopener noreferrer" class="btn-find-contact">Find Contact</a>
+            <button class="btn-contact" data-id="${item.id}">Mark Contacted</button>
+          </div>
         </div>
       </div>`;
   }).join('');
