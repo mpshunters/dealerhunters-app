@@ -600,6 +600,19 @@
       margin-top: 4px;
     }
 
+    .dealer-website {
+      display: inline-block;
+      font-size: 12px;
+      color: #9CA3AF;
+      margin-top: 3px;
+      text-decoration: none;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 220px;
+    }
+    .dealer-website:hover { color: #6B7280; text-decoration: underline; }
+
     .detected-time {
       font-size: 11px;
       color: #C4C9D4;
@@ -1416,6 +1429,13 @@ function buildCard(item, i) {
   const doneCount = OUTREACH_STEPS.filter(s => steps[s.key]).length;
   const allDone   = doneCount === OUTREACH_STEPS.length;
 
+  const websiteDisplay = item.website
+    ? item.website.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')
+    : null;
+  const websiteHtml = websiteDisplay
+    ? `<a href="${esc(item.website)}" target="_blank" rel="noopener noreferrer" class="dealer-website">🌐 ${esc(websiteDisplay)}</a>`
+    : '';
+
   const isRealUrl = item.source_url
     && item.source_url.startsWith('http')
     && !item.source_url.includes('dealerhunters.com');
@@ -1440,6 +1460,7 @@ function buildCard(item, i) {
             ${isNew ? '<span class="new-badge">NEW</span>' : ''}
           </div>
           <div class="location">${PIN_ICON} ${esc(location)}</div>
+          ${websiteHtml}
           ${detected ? `<div class="detected-time">${detected}</div>` : ''}
         </div>
         <div class="score-wrap">
