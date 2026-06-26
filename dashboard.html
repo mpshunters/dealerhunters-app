@@ -222,6 +222,7 @@
       border-bottom: 1px solid #E8ECF4;
       box-shadow: 0 2px 14px rgba(0,0,0,0.07);
     }
+
     .filter-bar {
       max-width: 960px;
       margin: 0 auto;
@@ -230,11 +231,11 @@
       flex-direction: column;
       gap: 0;
     }
+
     .filter-row {
       display: flex;
       align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
+      gap: 10px;
     }
     .filter-row-1 { padding-bottom: 10px; }
     .filter-row-divider {
@@ -243,48 +244,43 @@
       margin: 0 -16px;
     }
     .filter-row-2 { padding-top: 10px; }
-    .stage-label {
-      font-size: 10px; font-weight: 700; color: #C4C9D4;
-      letter-spacing: 0.9px; text-transform: uppercase;
-      white-space: nowrap; flex-shrink: 0;
-    }
-    .filter-pills {
-      display: flex; align-items: center;
-      gap: 7px; flex-wrap: wrap; flex: 1;
-    }
-    .stage-pills {
-      display: flex; align-items: center;
-      gap: 6px; flex-wrap: wrap;
-    }
 
-    /* Pill styles */
-    .filter-pill {
-      background: transparent;
-      border: 1.5px solid #E5E7EB;
-      color: #6B7280;
-      padding: 5px 14px;
-      border-radius: 999px;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      font-family: inherit;
-      transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+    .stage-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #C4C9D4;
+      letter-spacing: 0.9px;
+      text-transform: uppercase;
       white-space: nowrap;
-      line-height: 1.4;
       flex-shrink: 0;
     }
-    .filter-pill:hover { border-color: #10B981; color: #10B981; }
-    .filter-pill.active {
-      background: #10B981; border-color: #10B981; color: #ffffff;
-      box-shadow: 0 0 0 3px rgba(16,185,129,0.18), 0 2px 8px rgba(16,185,129,0.3);
+
+    .filter-pills {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex-wrap: wrap;
+      flex: 1;
     }
+
+    .stage-pills {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
     .stage-pill {
-      font-size: 12px; padding: 4px 10px;
-      color: #9CA3AF; border-color: #EAECF0; background: #FAFAFA;
+      font-size: 12px !important;
+      padding: 4px 10px !important;
+      color: #9CA3AF !important;
+      border-color: #EAECF0 !important;
+      background: #FAFAFA !important;
     }
     .stage-pill:hover { border-color: #6366F1 !important; color: #6366F1 !important; background: transparent !important; }
     .stage-pill.active {
-      background: #6366F1 !important; border-color: #6366F1 !important;
+      background: #6366F1 !important;
+      border-color: #6366F1 !important;
       color: #fff !important;
       box-shadow: 0 0 0 3px rgba(99,102,241,0.15), 0 2px 6px rgba(99,102,241,0.25) !important;
     }
@@ -297,14 +293,40 @@
     }
     .territory-pill:hover { background: rgba(16,185,129,0.12) !important; }
     .territory-pill.active {
-      background: #10B981 !important; border-color: #10B981 !important;
-      color: #fff !important; box-shadow: 0 0 0 3px rgba(16,185,129,0.18) !important;
+      background: #10B981 !important;
+      border-color: #10B981 !important;
+      color: #fff !important;
+      box-shadow: 0 0 0 3px rgba(16,185,129,0.18) !important;
+    }
+
+    .filter-pill {
+      background: transparent;
+      border: 1.5px solid #E5E7EB;
+      color: #6B7280;
+      padding: 7px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+      white-space: nowrap;
+      line-height: 1.4;
+    }
+
+    .filter-pill:hover { border-color: #10B981; color: #10B981; }
+
+    .filter-pill.active {
+      background: #10B981;
+      border-color: #10B981;
+      color: #ffffff;
+      box-shadow: 0 0 0 3px rgba(16,185,129,0.18), 0 2px 8px rgba(16,185,129,0.3);
     }
 
     .filter-right {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       flex-shrink: 0;
     }
 
@@ -1441,7 +1463,7 @@
 
     /* ── Mobile ── */
     @media (max-width: 768px) {
-      .filter-pills, .stage-pills { gap: 5px; }
+      .filter-pills, .stage-pills { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
       .btn-export-csv { display: none; }
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
       .card-footer { flex-direction: column; gap: 8px; }
@@ -1787,12 +1809,12 @@
     <div class="filter-row filter-row-2">
       <span class="stage-label">Pipeline Stage</span>
       <div class="stage-pills" id="stage-pills">
-        <button class="filter-pill stage-pill" data-filter="stage:new" title="Filter by pipeline stage: New">🆕 New</button>
-        <button class="filter-pill stage-pill" data-filter="stage:contacted" title="Filter by pipeline stage: Contacted">📞 Contacted</button>
-        <button class="filter-pill stage-pill" data-filter="stage:in_conversation" title="Filter by pipeline stage: In Conversation">💬 In Conv.</button>
-        <button class="filter-pill stage-pill" data-filter="stage:proposal_sent" title="Filter by pipeline stage: Proposal Sent">📝 Proposal</button>
-        <button class="filter-pill stage-pill" data-filter="stage:won" title="Filter by pipeline stage: Won">✅ Won</button>
-        <button class="filter-pill stage-pill" data-filter="stage:lost" title="Filter by pipeline stage: Lost">❌ Lost</button>
+        <button class="filter-pill stage-pill" data-filter="stage:new" title="Filter by pipeline stage">🆕 New</button>
+        <button class="filter-pill stage-pill" data-filter="stage:contacted" title="Filter by pipeline stage">📞 Contacted</button>
+        <button class="filter-pill stage-pill" data-filter="stage:in_conversation" title="Filter by pipeline stage">💬 In Conv.</button>
+        <button class="filter-pill stage-pill" data-filter="stage:proposal_sent" title="Filter by pipeline stage">📝 Proposal</button>
+        <button class="filter-pill stage-pill" data-filter="stage:won" title="Filter by pipeline stage">✅ Won</button>
+        <button class="filter-pill stage-pill" data-filter="stage:lost" title="Filter by pipeline stage">❌ Lost</button>
       </div>
     </div>
 
