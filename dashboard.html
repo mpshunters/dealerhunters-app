@@ -752,6 +752,147 @@
     }
     .btn-export-csv:hover { border-color: #10B981; color: #10B981; }
 
+    .btn-report {
+      background: #111827;
+      color: #fff;
+      border: 1.5px solid #111827;
+      border-radius: 8px;
+      padding: 7px 13px;
+      font-size: 12px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    .btn-report:hover { background: #1F2937; border-color: #1F2937; }
+
+    /* ── Territory chip ── */
+    .territory-chip {
+      font-size: 11px; font-weight: 500;
+      color: #10B981;
+      background: rgba(16,185,129,0.08);
+      border: 1px solid rgba(16,185,129,0.22);
+      border-radius: 999px; padding: 3px 10px;
+      white-space: nowrap; display: none;
+    }
+    .territory-chip.visible { display: inline-flex; align-items: center; gap: 4px; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 80px; left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      background: #111827; color: #fff;
+      font-size: 13px; font-weight: 500;
+      padding: 10px 20px; border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      z-index: 9998; opacity: 0;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── Onboarding modal ── */
+    .ob-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.72); z-index: 9990;
+      align-items: center; justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    .ob-overlay.open { display: flex; }
+    .ob-modal {
+      background: #fff; border-radius: 18px;
+      width: min(540px, 94vw); max-height: 88vh;
+      overflow-y: auto;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.35);
+      display: flex; flex-direction: column;
+    }
+    .ob-header {
+      background: #111827; border-radius: 18px 18px 0 0;
+      padding: 28px 32px 22px; color: #fff;
+      -webkit-print-color-adjust: exact;
+    }
+    .ob-logo-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .ob-logo-name { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+    .ob-logo-name .dealer { color: #fff; }
+    .ob-logo-name .hunters { color: #10B981; }
+    .ob-title { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+    .ob-subtitle { font-size: 13px; color: rgba(255,255,255,0.6); line-height: 1.5; }
+
+    .ob-body { padding: 24px 32px 28px; flex: 1; }
+    .ob-step { display: none; }
+    .ob-step.active { display: block; }
+
+    .ob-progress {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 22px;
+    }
+    .ob-progress-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #E5E7EB; transition: background 0.2s;
+    }
+    .ob-progress-dot.done { background: #10B981; }
+    .ob-progress-label { font-size: 11px; color: #9CA3AF; margin-left: 4px; }
+
+    .ob-step-title { font-size: 17px; font-weight: 700; color: #111827; margin-bottom: 6px; }
+    .ob-step-desc  { font-size: 13px; color: #6B7280; line-height: 1.55; margin-bottom: 20px; }
+
+    /* state grid */
+    .state-selector-grid {
+      display: grid; grid-template-columns: repeat(10, 1fr);
+      gap: 5px; margin-bottom: 14px;
+    }
+    .state-btn {
+      font-size: 10px; font-weight: 700;
+      padding: 6px 2px; border-radius: 5px;
+      border: 1.5px solid #E5E7EB; background: #F9FAFB;
+      color: #6B7280; cursor: pointer; font-family: inherit;
+      transition: all 0.12s ease; text-align: center;
+    }
+    .state-btn:hover { border-color: #10B981; color: #10B981; background: #F0FDF4; }
+    .state-btn.selected { background: #10B981; border-color: #10B981; color: #fff; }
+    .state-actions { display: flex; gap: 8px; margin-bottom: 20px; }
+    .state-actions button {
+      font-size: 12px; padding: 5px 12px; border-radius: 6px;
+      border: 1px solid #E5E7EB; background: transparent;
+      color: #6B7280; cursor: pointer; font-family: inherit;
+    }
+    .state-actions button:hover { background: #F3F4F6; }
+
+    /* notification toggles */
+    .notif-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+    .notif-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 14px; border: 1.5px solid #E5E7EB; border-radius: 10px;
+    }
+    .notif-item.on { border-color: rgba(16,185,129,0.3); background: #F0FDF4; }
+    .notif-label { font-size: 13px; font-weight: 500; color: #111827; }
+    .notif-sub   { font-size: 11px; color: #9CA3AF; margin-top: 2px; }
+    .notif-toggle {
+      width: 40px; height: 22px; border-radius: 999px;
+      background: #E5E7EB; position: relative; cursor: pointer;
+      flex-shrink: 0; transition: background 0.2s;
+      border: none;
+    }
+    .notif-toggle::after {
+      content: ''; position: absolute;
+      top: 3px; left: 3px;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: #fff; transition: transform 0.2s;
+    }
+    .notif-toggle.on { background: #10B981; }
+    .notif-toggle.on::after { transform: translateX(18px); }
+    .notif-email-row { font-size: 12px; color: #6B7280; margin-bottom: 8px; }
+    .notif-email-row strong { color: #111827; }
+    .notif-settings-note { font-size: 11px; color: #9CA3AF; }
+
+    /* ob footer actions */
+    .ob-actions { display: flex; gap: 10px; margin-top: 24px; }
+    .btn-ob-back  { background: #F3F4F6; color: #6B7280; border: none; border-radius: 9px; padding: 11px 20px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .btn-ob-next  { flex: 1; background: #10B981; color: #fff; border: none; border-radius: 9px; padding: 11px 20px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.15s; }
+    .btn-ob-next:hover { background: #059669; }
+    .btn-ob-back:hover { background: #E5E7EB; }
+
     .badge {
       display: inline-block;
       font-size: 11px;
@@ -1355,6 +1496,7 @@
       Last updated: <strong id="last-updated">—</strong>
       <span class="refresh-status" id="refresh-status"></span>
     </div>
+    <span class="territory-chip" id="territory-chip"></span>
     <span class="user-chip" id="user-email"></span>
     <button class="btn-signout" id="btn-signout">Sign Out</button>
     <div class="settings-wrap" id="settings-wrap">
@@ -1407,6 +1549,7 @@
           <span class="search-shortcut">⌘K</span>
         </div>
         <button class="btn-export-csv" id="btn-export-csv">⬇ Export CSV</button>
+        <button class="btn-report" id="btn-report">📄 Download Report</button>
         <div class="results-meta" id="results-meta"></div>
       </div>
     </div>
@@ -1531,6 +1674,114 @@
     <div class="footer-powered">Powered by True Measure Advisors, LLC</div>
   </div>
 </footer>
+
+<!-- ── Toast ── -->
+<div class="toast" id="toast"></div>
+
+<!-- ── Onboarding Modal ── -->
+<div class="ob-overlay" id="ob-overlay">
+  <div class="ob-modal">
+    <div class="ob-header">
+      <div class="ob-logo-row">
+        <svg width="38" height="38" viewBox="0 0 40 40" fill="none">
+          <circle cx="20" cy="20" r="18" stroke="#10B981" stroke-width="1.5"/>
+          <line x1="20" y1="1"  x2="20" y2="9"  stroke="#10B981" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="20" y1="31" x2="20" y2="39" stroke="#10B981" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="1"  y1="20" x2="9"  y2="20" stroke="#10B981" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="31" y1="20" x2="39" y2="20" stroke="#10B981" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="20" cy="20" r="2" fill="#10B981"/>
+          <rect x="5" y="21" width="30" height="8" rx="1.5" stroke="#10B981" stroke-width="1.5"/>
+          <path d="M9 21 L13 13 H27 L32 21" stroke="#10B981" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle cx="12.5" cy="29" r="4" stroke="#10B981" stroke-width="1.5"/>
+          <circle cx="27.5" cy="29" r="4" stroke="#10B981" stroke-width="1.5"/>
+        </svg>
+        <div class="ob-logo-name"><span class="dealer">Dealer</span><span class="hunters">Hunters</span></div>
+      </div>
+      <div class="ob-title" id="ob-title">Welcome to DealerHunters</div>
+      <div class="ob-subtitle" id="ob-subtitle">Your dealer intelligence platform is ready. Let's get you set up in 60 seconds.</div>
+    </div>
+    <div class="ob-body">
+
+      <!-- Step 1: Welcome -->
+      <div class="ob-step active" id="ob-step-1">
+        <div class="ob-progress">
+          <div class="ob-progress-dot done" id="dot-1"></div>
+          <div class="ob-progress-dot" id="dot-2"></div>
+          <div class="ob-progress-dot" id="dot-3"></div>
+          <span class="ob-progress-label">Step 1 of 3</span>
+        </div>
+        <div class="ob-step-title">Welcome, CR Advertising 👋</div>
+        <div class="ob-step-desc">DealerHunters monitors 43,000+ dealerships across all 50 states for ownership changes, leadership transitions, marketing hires, and digital weakness signals — then routes them directly to you.<br><br>Let's personalize your experience so you see the right leads for your team.</div>
+        <div class="ob-actions">
+          <button class="btn-ob-next" id="btn-ob-1">Get Started →</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Territory -->
+      <div class="ob-step" id="ob-step-2">
+        <div class="ob-progress">
+          <div class="ob-progress-dot done"></div>
+          <div class="ob-progress-dot done" id="dot-2b"></div>
+          <div class="ob-progress-dot"></div>
+          <span class="ob-progress-label">Step 2 of 3</span>
+        </div>
+        <div class="ob-step-title">Which states does your team focus on?</div>
+        <div class="ob-step-desc">Select your territory. We'll highlight signals from these states first.</div>
+        <div class="state-actions">
+          <button id="btn-select-all">Select All</button>
+          <button id="btn-clear-states">Clear</button>
+        </div>
+        <div class="state-selector-grid" id="state-selector-grid"></div>
+        <div class="ob-actions">
+          <button class="btn-ob-back" id="btn-ob-2-back">← Back</button>
+          <button class="btn-ob-next" id="btn-ob-2">Next →</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Notifications -->
+      <div class="ob-step" id="ob-step-3">
+        <div class="ob-progress">
+          <div class="ob-progress-dot done"></div>
+          <div class="ob-progress-dot done"></div>
+          <div class="ob-progress-dot done"></div>
+          <span class="ob-progress-label">Step 3 of 3</span>
+        </div>
+        <div class="ob-step-title">How would you like to receive alerts?</div>
+        <div class="ob-step-desc">Choose your notification preferences. These can be changed anytime.</div>
+        <div class="notif-list">
+          <div class="notif-item on" id="notif-daily">
+            <div>
+              <div class="notif-label">Daily email digest</div>
+              <div class="notif-sub">6:17am Central — hot leads and ownership changes</div>
+            </div>
+            <button class="notif-toggle on" data-notif="daily" aria-label="Toggle daily digest"></button>
+          </div>
+          <div class="notif-item on" id="notif-hot">
+            <div>
+              <div class="notif-label">Hot lead instant alerts</div>
+              <div class="notif-sub">When a dealership triggers multiple signals at once</div>
+            </div>
+            <button class="notif-toggle on" data-notif="hot" aria-label="Toggle hot lead alerts"></button>
+          </div>
+          <div class="notif-item on" id="notif-weekly">
+            <div>
+              <div class="notif-label">Weekly performance report</div>
+              <div class="notif-sub">Mondays — pipeline summary and top opportunities</div>
+            </div>
+            <button class="notif-toggle on" data-notif="weekly" aria-label="Toggle weekly report"></button>
+          </div>
+        </div>
+        <div class="notif-email-row">Your alerts go to: <strong id="ob-email-display">—</strong></div>
+        <div class="notif-settings-note">These preferences can be changed anytime in account settings.</div>
+        <div class="ob-actions">
+          <button class="btn-ob-back" id="btn-ob-3-back">← Back</button>
+          <button class="btn-ob-next" id="btn-ob-3">Enter Dashboard →</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
 
 <!-- ── Won Value Modal ── -->
 <div class="won-modal-overlay" id="won-modal-overlay">
@@ -2291,6 +2542,150 @@ document.addEventListener('keydown', e => {
 
 document.getElementById('btn-export-csv').addEventListener('click', exportCSV);
 
+/* ── PDF Report ── */
+function downloadReport() {
+  const data = getFiltered();
+  const active = data.filter(d => (d.status || 'new') !== 'lost');
+  const scores = data.map(d => Number(d.confidence_score ?? d.fit_score ?? 0)).filter(Boolean);
+  const stats = {
+    total:     data.length,
+    ownership: data.filter(d => {
+      const t = d.signal_type || d.opportunity_type || '';
+      return t === 'ownership_change' || t === 'Ownership Change';
+    }).length,
+    avgScore:  scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0,
+    hotLeads:  data.filter(d => d.is_hot_lead).length,
+    filter:    activeFilter,
+    date:      new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+  };
+  localStorage.setItem('dh_report_data',  JSON.stringify(data));
+  localStorage.setItem('dh_report_stats', JSON.stringify(stats));
+  window.open('/report', '_blank');
+}
+document.getElementById('btn-report').addEventListener('click', downloadReport);
+
+/* ── Toast ── */
+function showToast(msg, duration = 3000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), duration);
+}
+
+/* ── Territory chip ── */
+function refreshTerritoryChip() {
+  const saved  = JSON.parse(localStorage.getItem('dh_territory_states') || '[]');
+  const chip   = document.getElementById('territory-chip');
+  if (!chip) return;
+  if (saved.length > 0) {
+    chip.textContent = `📍 ${saved.length} state${saved.length !== 1 ? 's' : ''}`;
+    chip.title = saved.join(', ');
+    chip.classList.add('visible');
+  } else {
+    chip.classList.remove('visible');
+  }
+}
+
+/* ── Onboarding ── */
+const ALL_STATES = [
+  'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA',
+  'HI','ID','IL','IN','IA','KS','KY','LA','ME','MD',
+  'MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ',
+  'NM','NY','NC','ND','OH','OK','OR','PA','RI','SC',
+  'SD','TN','TX','UT','VT','VA','WA','WV','WI','WY',
+];
+
+let selectedStates  = new Set();
+let notifPrefs      = { daily: true, hot: true, weekly: true };
+let currentObStep   = 1;
+
+function buildStateGrid() {
+  const grid = document.getElementById('state-selector-grid');
+  if (!grid) return;
+  grid.innerHTML = ALL_STATES.map(s => `
+    <button class="state-btn${selectedStates.has(s) ? ' selected' : ''}" data-state="${s}">${s}</button>
+  `).join('');
+}
+
+function goObStep(n) {
+  document.querySelectorAll('.ob-step').forEach((el, i) => {
+    el.classList.toggle('active', i + 1 === n);
+  });
+  const titles = [
+    'Welcome to DealerHunters',
+    'Set Your Territory',
+    'Notification Preferences',
+  ];
+  const subs = [
+    'Your dealer intelligence platform is ready. Let\'s get you set up in 60 seconds.',
+    'Select the states your team focuses on. You can change this anytime.',
+    'Control how and when we reach you.',
+  ];
+  document.getElementById('ob-title').textContent    = titles[n - 1];
+  document.getElementById('ob-subtitle').textContent = subs[n - 1];
+  currentObStep = n;
+  if (n === 2) buildStateGrid();
+}
+
+function closeOnboarding(userEmail) {
+  localStorage.setItem('dh_onboarding_complete', 'true');
+  localStorage.setItem('dh_notif_prefs', JSON.stringify(notifPrefs));
+  document.getElementById('ob-overlay').classList.remove('open');
+  refreshTerritoryChip();
+  showToast('Setup complete ✓');
+}
+
+function checkOnboarding(session) {
+  if (localStorage.getItem('dh_onboarding_complete') === 'true') {
+    refreshTerritoryChip();
+    return;
+  }
+  const emailDisplay = document.getElementById('ob-email-display');
+  if (emailDisplay) emailDisplay.textContent = session.user.email;
+
+  const savedStates = JSON.parse(localStorage.getItem('dh_territory_states') || '[]');
+  savedStates.forEach(s => selectedStates.add(s));
+
+  document.getElementById('ob-overlay').classList.add('open');
+
+  /* step nav */
+  document.getElementById('btn-ob-1').addEventListener('click', () => goObStep(2));
+  document.getElementById('btn-ob-2-back').addEventListener('click', () => goObStep(1));
+  document.getElementById('btn-ob-2').addEventListener('click', () => {
+    localStorage.setItem('dh_territory_states', JSON.stringify([...selectedStates]));
+    goObStep(3);
+  });
+  document.getElementById('btn-ob-3-back').addEventListener('click', () => goObStep(2));
+  document.getElementById('btn-ob-3').addEventListener('click', () => closeOnboarding(session.user.email));
+
+  /* state grid clicks */
+  document.getElementById('state-selector-grid').addEventListener('click', e => {
+    const btn = e.target.closest('.state-btn');
+    if (!btn) return;
+    const st = btn.dataset.state;
+    if (selectedStates.has(st)) { selectedStates.delete(st); btn.classList.remove('selected'); }
+    else                        { selectedStates.add(st);    btn.classList.add('selected'); }
+  });
+  document.getElementById('btn-select-all').addEventListener('click', () => {
+    ALL_STATES.forEach(s => selectedStates.add(s));
+    buildStateGrid();
+  });
+  document.getElementById('btn-clear-states').addEventListener('click', () => {
+    selectedStates.clear();
+    buildStateGrid();
+  });
+
+  /* notification toggles */
+  document.querySelectorAll('.notif-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.notif;
+      notifPrefs[key] = !notifPrefs[key];
+      btn.classList.toggle('on', notifPrefs[key]);
+      btn.closest('.notif-item').classList.toggle('on', notifPrefs[key]);
+    });
+  });
+}
+
 const notesSaveTimers = {};
 resultsEl.addEventListener('focusout', async e => {
   const ta = e.target.closest('.notes-textarea');
@@ -2450,6 +2845,7 @@ async function loadOpportunities() {
     window.location.href = '/login';
   });
 
+  checkOnboarding(session);
   loadOpportunities();
 })();
 </script>
