@@ -177,6 +177,24 @@ rules = [
         "fit_score": 3,
         "active": True,
     },
+
+    # ── agency_shopping ───────────────────────────────────────────────────────
+
+    {
+        "rule_name": "agency_shopping_high",
+        "signal_type": "agency_shopping",
+        "keywords": [
+            "looking for agency", "marketing agency review",
+            "ad agency comparison", "switching agencies",
+            "evaluating vendors", "marketing partner",
+            "agency of record", "vendor review",
+            "marketing services", "advertising agency",
+            "new marketing strategy", "marketing budget",
+            "marketing overhaul", "agency search",
+        ],
+        "fit_score": 3,
+        "active": True,
+    },
 ]
 
 inserted = 0

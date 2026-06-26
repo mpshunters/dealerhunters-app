@@ -554,6 +554,21 @@
       flex-shrink: 0;
     }
 
+    .surge-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      background: #ECFDF5;
+      color: #065F46;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 999px;
+      letter-spacing: 0.3px;
+      flex-shrink: 0;
+      border: 1px solid #6EE7B7;
+    }
+
     .hot-badge {
       display: inline-flex;
       align-items: center;
@@ -1780,6 +1795,7 @@
         <button class="filter-pill" data-filter="Expansion" title="Show dealerships opening new locations">Expansion</button>
         <button class="filter-pill" data-filter="Weak Digital" title="Show dealerships with weak digital presence">Weak Digital</button>
         <button class="filter-pill hot-pill" data-filter="Hot Leads" title="Show dealerships with multiple signals detected">🔥 Hot Leads</button>
+        <button class="filter-pill" data-filter="Surging" title="Show dealerships with rapidly increasing signal mentions">📈 Surging</button>
         <button class="filter-pill territory-pill" id="territory-filter-pill" data-filter="territory" title="Showing your territory — click to toggle" style="display:none">📍 Territory</button>
       </div>
       <div class="filter-right">
@@ -2260,6 +2276,8 @@ function getFiltered() {
       if ((item.status || 'new') !== activeFilter.replace('stage:', '')) return false;
     } else if (activeFilter === 'Hot Leads') {
       if (!item.is_hot_lead) return false;
+    } else if (activeFilter === 'Surging') {
+      if (!item.surge_detected) return false;
     } else if (activeFilter === 'territory') {
       if (territoryStates.length && !territoryStates.includes(item.state)) return false;
     } else if (activeFilter !== 'All') {
@@ -2496,6 +2514,7 @@ function buildCard(item, i) {
             ${faviconHtml}
             <div class="dealer-name">${esc(name)}</div>
             ${item.is_hot_lead ? '<span class="hot-badge">🔥 Hot Lead</span>' : ''}
+            ${item.surge_detected ? '<span class="surge-badge">📈 Surging</span>' : ''}
             ${isNew ? '<span class="new-badge">NEW</span>' : ''}
             ${isWon ? '<span class="won-badge">🏆</span>' : ''}
           </div>
@@ -3161,6 +3180,7 @@ function openPanel(id) {
       <div>
         <span class="badge" style="color:${signal.color};background:${signal.bg}">${signal.label}</span>
         ${item.is_hot_lead ? ' <span class="hot-badge">🔥 Hot Lead</span>' : ''}
+        ${item.surge_detected ? ' <span class="surge-badge">📈 Surging</span>' : ''}
         ${status === 'won' ? ' <span class="won-badge">🏆</span>' : ''}
       </div>
       <div class="panel-contact-row">

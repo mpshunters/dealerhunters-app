@@ -1218,6 +1218,85 @@
     .access-form-wrap.hide { display: none; }
     .access-error { font-size: 12px; color: #EF4444; margin-top: 8px; display: none; }
     .access-error.show { display: block; }
+
+    /* ── Visitor capture bar ── */
+    .capture-bar {
+      position: fixed;
+      bottom: -90px;
+      left: 0; right: 0;
+      background: #111827;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 -4px 24px rgba(0,0,0,0.4);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 9000;
+      transition: bottom 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .capture-bar.visible { bottom: 0; }
+    .capture-bar-text {
+      font-size: 14px;
+      color: rgba(255,255,255,0.85);
+      font-weight: 500;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .capture-bar-text strong { color: #10B981; }
+    .capture-bar-input {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 13px;
+      padding: 8px 14px;
+      width: 220px;
+      outline: none;
+      font-family: inherit;
+      transition: border-color 0.15s;
+    }
+    .capture-bar-input::placeholder { color: rgba(255,255,255,0.35); }
+    .capture-bar-input:focus { border-color: #10B981; }
+    .capture-bar-btn {
+      background: #10B981;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+    .capture-bar-btn:hover { background: #059669; }
+    .capture-bar-dismiss {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.35);
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      padding: 0 4px;
+      transition: color 0.15s;
+      flex-shrink: 0;
+    }
+    .capture-bar-dismiss:hover { color: rgba(255,255,255,0.7); }
+    .capture-bar-thanks {
+      font-size: 14px;
+      color: #10B981;
+      font-weight: 600;
+      display: none;
+    }
+    .capture-bar-thanks.show { display: block; }
+    @media (max-width: 680px) {
+      .capture-bar { flex-wrap: wrap; gap: 10px; }
+      .capture-bar-text { white-space: normal; font-size: 13px; }
+      .capture-bar-input { width: 100%; }
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
@@ -1896,6 +1975,64 @@ document.getElementById('access-form').addEventListener('submit', async e => {
 
   fetchLiveStats();
   setInterval(fetchLiveStats, 60000);
+})();
+</script>
+
+<!-- Visitor capture bar -->
+<div class="capture-bar" id="capture-bar">
+  <span class="capture-bar-text">Interested in <strong>DealerHunters</strong> for your agency? Get early access →</span>
+  <span class="capture-bar-thanks" id="capture-bar-thanks">Thanks! We'll be in touch soon.</span>
+  <input class="capture-bar-input" id="capture-bar-email" type="email" placeholder="your@email.com" autocomplete="email">
+  <button class="capture-bar-btn" id="capture-bar-btn">Request Access</button>
+  <button class="capture-bar-dismiss" id="capture-bar-dismiss" title="Dismiss">&#215;</button>
+</div>
+
+<script>
+(function () {
+  const bar     = document.getElementById('capture-bar');
+  const input   = document.getElementById('capture-bar-email');
+  const btn     = document.getElementById('capture-bar-btn');
+  const dismiss = document.getElementById('capture-bar-dismiss');
+  const thanks  = document.getElementById('capture-bar-thanks');
+
+  if (localStorage.getItem('dh_capture_done')) return;
+
+  const timer = setTimeout(() => bar.classList.add('visible'), 30000);
+
+  dismiss.addEventListener('click', () => {
+    bar.classList.remove('visible');
+    localStorage.setItem('dh_capture_done', '1');
+    clearTimeout(timer);
+  });
+
+  btn.addEventListener('click', async () => {
+    const email = input.value.trim();
+    if (!email || !email.includes('@')) { input.focus(); return; }
+
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+
+    try {
+      await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          access_key: '698e8ff4-bff3-4281-ac94-4aae97aa52f5',
+          subject: 'DealerHunters Early Access Request',
+          to: 'signals@mpshunters.com',
+          email,
+          message: `Early access request from landing page capture bar.\n\nEmail: ${email}`,
+        }),
+      });
+    } catch (_) { /* silent — still show thanks */ }
+
+    input.style.display = 'none';
+    btn.style.display   = 'none';
+    document.querySelector('.capture-bar-text').style.display = 'none';
+    thanks.classList.add('show');
+    localStorage.setItem('dh_capture_done', '1');
+    setTimeout(() => bar.classList.remove('visible'), 3000);
+  });
 })();
 </script>
 
