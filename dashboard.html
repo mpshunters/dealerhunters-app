@@ -1187,7 +1187,7 @@
     </div>
     <div class="stat-card">
       <div class="stat-value" id="stat-signals">—</div>
-      <div class="stat-label">⚡ Signals Detected</div>
+      <div class="stat-label">New This Week</div>
     </div>
     <div class="stat-card">
       <div class="stat-value" id="stat-dealerships">—</div>
@@ -1900,28 +1900,20 @@ async function loadOpportunities() {
   const [
     { data, error },
     dealerResult,
-    signalResult,
   ] = await Promise.all([
     client.from('opportunities').select('*').order('confidence_score', { ascending: false }),
     client.from('dealerships').select('id', { count: 'exact', head: true }),
-    client.from('signal_matches').select('*', { count: 'exact', head: true }),
   ]);
 
   refreshStatus.textContent = '';
 
-  if (signalResult.error) {
-    console.warn('Signal count unavailable:', signalResult.error.message);
-  } else if (signalResult.count != null) {
-    animateCount(statSignals, signalResult.count);
-  }
-
   if (dealerResult.error) {
     console.warn('Dealerships count unavailable:', dealerResult.error.message);
-    animateCount(statDealerships, 33000);
+    animateCount(statDealerships, 36000);
   } else if (dealerResult.count != null && dealerResult.count > 0) {
     animateCount(statDealerships, dealerResult.count);
   } else {
-    animateCount(statDealerships, 33000);
+    animateCount(statDealerships, 36000);
   }
 
   if (error) {
@@ -1939,6 +1931,8 @@ async function loadOpportunities() {
   }
 
   allData = data;
+  const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  animateCount(statSignals, data.filter(d => new Date(d.created_at).getTime() >= oneWeekAgo).length);
   updateStats(data);
 
   const latest = data.reduce((a, b) =>
