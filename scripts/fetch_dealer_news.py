@@ -87,31 +87,29 @@ for source in sources.data:
     source_url  = source["source_url"]
 
     source_type = source.get("source_type") or "html"
-    print(f"\nScraping {source_name} [{source_type}]...")
+    is_rss = (
+        source_type == "rss"
+        or "feeds.google.com" in source_url
+        or "/rss" in source_url
+        or "/feed" in source_url
+        or "rss=" in source_url
+    )
+    print(f"\nScraping {source_name} [{'rss' if is_rss else source_type}]...")
 
     # ── RSS path ────────────────────────────────────────────────────
-    if source_type == "rss":
-        verify_ssl = True
+    if is_rss:
         try:
-            try:
-                resp = requests.get(source_url, timeout=20, headers=HEADERS)
-            except requests.exceptions.SSLError:
-                print(f"  SSL error — retrying with verify=False")
-                verify_ssl = False
-                resp = requests.get(source_url, timeout=20, headers=HEADERS, verify=False)
+            feed = feedparser.parse(source_url)
+            if feed.bozo and not feed.entries:
+                raise ValueError(f"Feed parse error: {feed.bozo_exception}")
+
+            display_name = feed.feed.get("title") or source_name
+            entries = feed.entries[:MAX_ARTICLES]
+            print(f"  Found {len(entries)} RSS entries (feed: {display_name})")
 
             supabase.table("source_registry").update({
-                "last_status_code": resp.status_code,
-                "health_status": "healthy" if resp.status_code == 200 else "warning",
+                "health_status": "healthy",
             }).eq("id", source_id).execute()
-
-            if resp.status_code != 200:
-                print(f"  Feed returned {resp.status_code}, skipping")
-                continue
-
-            feed = feedparser.parse(resp.text)
-            entries = feed.entries[:MAX_ARTICLES]
-            print(f"  Found {len(entries)} RSS entries")
 
         except Exception as e:
             print(f"  RSS fetch failed: {e}")
@@ -134,14 +132,14 @@ for source in sources.data:
             if existing.data:
                 continue
 
-            title = entry.get("title", source_name)
+            title = entry.get("title", display_name)
             raw_summary = entry.get("summary") or entry.get("description", "")
             body_text = BeautifulSoup(raw_summary, "html.parser").get_text(" ", strip=True)[:5000] if raw_summary else ""
 
             try:
                 supabase.table("raw_signals").insert({
                     "source_id":        source_id,
-                    "source_name":      source_name,
+                    "source_name":      display_name,
                     "source_url":       source_url,
                     "title":            title,
                     "article_url":      article_url,
@@ -158,7 +156,7 @@ for source in sources.data:
             "last_error":      None,
         }).eq("id", source_id).execute()
 
-        print(f"  {inserted} new articles from {source_name}")
+        print(f"  {inserted} new articles from {display_name}")
         total_inserted += inserted
         continue
     # ── end RSS path ─────────────────────────────────────────────────
