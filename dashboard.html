@@ -618,7 +618,94 @@
       font-size: 11px;
       color: #C4C9D4;
       margin-top: 3px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
     }
+
+    .age-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 999px;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+    }
+    .age-fresh   { color: #065F46; background: #D1FAE5; }
+    .age-warm    { color: #92400E; background: #FEF3C7; }
+    .age-cooling { color: #9A3412; background: #FFEDD5; }
+    .age-cold    { color: #991B1B; background: #FEE2E2; }
+
+    .dealer-favicon {
+      width: 20px; height: 20px;
+      border-radius: 4px;
+      object-fit: cover;
+      flex-shrink: 0;
+      vertical-align: middle;
+    }
+
+    .phone-link {
+      display: inline-block;
+      font-size: 12px;
+      color: #6B7280;
+      margin-top: 3px;
+      text-decoration: none;
+    }
+    .phone-link:hover { color: #10B981; }
+
+    .notes-section {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid #F0F2F7;
+    }
+    .notes-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: #9CA3AF;
+      margin-bottom: 6px;
+    }
+    .notes-textarea {
+      width: 100%;
+      font-size: 13px;
+      font-family: inherit;
+      color: #374151;
+      background: #F9FAFB;
+      border: 1.5px solid #E5E7EB;
+      border-radius: 8px;
+      padding: 8px 10px;
+      resize: none;
+      outline: none;
+      line-height: 1.55;
+      transition: border-color 0.15s ease, background 0.15s ease, min-height 0.2s ease;
+      min-height: 56px;
+    }
+    .notes-textarea:focus {
+      border-color: #10B981;
+      background: #ffffff;
+      min-height: 80px;
+    }
+    .notes-textarea::placeholder { color: #C4C9D4; }
+
+    .btn-export-csv {
+      background: transparent;
+      color: #6B7280;
+      border: 1.5px solid #E5E7EB;
+      border-radius: 8px;
+      padding: 7px 13px;
+      font-size: 12px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: border-color 0.15s ease, color 0.15s ease;
+    }
+    .btn-export-csv:hover { border-color: #10B981; color: #10B981; }
 
     .badge {
       display: inline-block;
@@ -1066,6 +1153,7 @@
           placeholder="Search dealerships…" autocomplete="off" />
         <span class="search-shortcut">⌘K</span>
       </div>
+      <button class="btn-export-csv" id="btn-export-csv">⬇ Export CSV</button>
       <div class="results-meta" id="results-meta"></div>
     </div>
   </div>
@@ -1265,6 +1353,40 @@ function timeAgo(iso) {
   return `Detected ${Math.floor(hrs / 24)}d ago`;
 }
 
+function ageBadge(iso) {
+  if (!iso) return '';
+  const days = (Date.now() - new Date(iso).getTime()) / 86400000;
+  if (days < 1)  return '<span class="age-badge age-fresh">🟢 Fresh</span>';
+  if (days < 4)  return '<span class="age-badge age-warm">🟡 Warm</span>';
+  if (days < 8)  return '<span class="age-badge age-cooling">🟠 Cooling</span>';
+  return '<span class="age-badge age-cold">🔴 Cold</span>';
+}
+
+function exportCSV() {
+  const data = getFiltered();
+  const headers = ['Dealership','City','State','Signal Type','Score','Source','Detected','Website','Phone','Pitch','Status'];
+  const rows = data.map(d => [
+    d.dealership_name   || '',
+    d.city              || '',
+    d.state             || '',
+    d.opportunity_type  || d.signal_type || '',
+    d.confidence_score  ?? d.fit_score   ?? '',
+    d.source_name       || '',
+    d.created_at ? new Date(d.created_at).toLocaleDateString() : '',
+    d.website           || '',
+    d.phone             || '',
+    d.pitch_angle       || d.recommended_offer || '',
+    d.status            || '',
+  ].map(v => `"${String(v).replace(/"/g, '""')}"`));
+  const csv  = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const url  = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  const a    = Object.assign(document.createElement('a'), {
+    href: url, download: `dealerhunters-${new Date().toISOString().slice(0,10)}.csv`
+  });
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function getFiltered() {
   return allData.filter(item => {
     if (item.status === 'contacted') return false;
@@ -1442,6 +1564,14 @@ function buildCard(item, i) {
     ? `<a href="${esc(item.website)}" target="_blank" rel="noopener noreferrer" class="dealer-website">🌐 ${esc(websiteDisplay)}</a>`
     : '';
 
+  const phoneHtml = item.phone
+    ? `<a href="tel:${esc(item.phone)}" class="phone-link" style="color:inherit;text-decoration:none;">📞 ${esc(item.phone)}</a>`
+    : '';
+
+  const faviconHtml = item.website
+    ? `<img class="dealer-favicon" src="https://www.google.com/s2/favicons?domain=${encodeURIComponent(item.website)}&sz=32" alt="" onerror="this.style.display='none'" />`
+    : '';
+
   const isRealUrl = item.source_url
     && item.source_url.startsWith('http')
     && !item.source_url.includes('dealerhunters.com');
@@ -1461,13 +1591,15 @@ function buildCard(item, i) {
       <div class="card-top">
         <div class="card-identity">
           <div class="card-name-row">
+            ${faviconHtml}
             <div class="dealer-name">${esc(name)}</div>
             ${item.is_hot_lead ? '<span class="hot-badge">🔥 Hot Lead</span>' : ''}
             ${isNew ? '<span class="new-badge">NEW</span>' : ''}
           </div>
           <div class="location">${PIN_ICON} ${esc(location)}</div>
           ${websiteHtml}
-          ${detected ? `<div class="detected-time">${detected}</div>` : ''}
+          ${phoneHtml}
+          ${detected ? `<div class="detected-time">${detected}${ageBadge(item.created_at)}</div>` : ''}
         </div>
         <div class="score-wrap">
           ${scoreGauge(score)}
@@ -1505,6 +1637,11 @@ function buildCard(item, i) {
           <span class="outreach-progress${allDone ? ' complete' : ''}" data-progress-id="${item.id}">${doneCount}/${OUTREACH_STEPS.length}</span>
         </div>
         <div class="outreach-steps-list">${stepsHtml}</div>
+      </div>
+      <div class="notes-section">
+        <div class="notes-label">Notes</div>
+        <textarea class="notes-textarea" data-id="${item.id}" rows="2"
+          placeholder="Add notes about this lead...">${esc(item.notes || '')}</textarea>
       </div>
     </div>`;
 }
@@ -1662,6 +1799,22 @@ resultsEl.addEventListener('click', e => {
   const btn = e.target.closest('.btn-contact');
   if (!btn || btn.disabled) return;
   markContacted(btn.dataset.id, btn.closest('.card'), btn);
+});
+
+document.getElementById('btn-export-csv').addEventListener('click', exportCSV);
+
+const notesSaveTimers = {};
+resultsEl.addEventListener('focusout', async e => {
+  const ta = e.target.closest('.notes-textarea');
+  if (!ta) return;
+  const id    = ta.dataset.id;
+  const notes = ta.value;
+  clearTimeout(notesSaveTimers[id]);
+  notesSaveTimers[id] = setTimeout(async () => {
+    const item = allData.find(d => String(d.id) === String(id));
+    if (item) item.notes = notes;
+    await client.from('opportunities').update({ notes }).eq('id', id);
+  }, 500);
 });
 
 resultsEl.addEventListener('change', async e => {
