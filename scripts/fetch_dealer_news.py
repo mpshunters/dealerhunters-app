@@ -3,6 +3,7 @@ from supabase import create_client
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 from datetime import datetime, timezone
+import feedparser
 import requests
 import re
 import os
@@ -72,7 +73,7 @@ def extract_body_text(soup):
 
 
 sources = supabase.table("source_registry") \
-    .select("id, source_name, source_url") \
+    .select("id, source_name, source_url, source_type") \
     .eq("active", True) \
     .execute()
 
@@ -85,7 +86,83 @@ for source in sources.data:
     source_name = source["source_name"]
     source_url  = source["source_url"]
 
-    print(f"\nScraping {source_name}...")
+    source_type = source.get("source_type") or "html"
+    print(f"\nScraping {source_name} [{source_type}]...")
+
+    # ── RSS path ────────────────────────────────────────────────────
+    if source_type == "rss":
+        verify_ssl = True
+        try:
+            try:
+                resp = requests.get(source_url, timeout=20, headers=HEADERS)
+            except requests.exceptions.SSLError:
+                print(f"  SSL error — retrying with verify=False")
+                verify_ssl = False
+                resp = requests.get(source_url, timeout=20, headers=HEADERS, verify=False)
+
+            supabase.table("source_registry").update({
+                "last_status_code": resp.status_code,
+                "health_status": "healthy" if resp.status_code == 200 else "warning",
+            }).eq("id", source_id).execute()
+
+            if resp.status_code != 200:
+                print(f"  Feed returned {resp.status_code}, skipping")
+                continue
+
+            feed = feedparser.parse(resp.text)
+            entries = feed.entries[:MAX_ARTICLES]
+            print(f"  Found {len(entries)} RSS entries")
+
+        except Exception as e:
+            print(f"  RSS fetch failed: {e}")
+            supabase.table("source_registry").update({
+                "health_status": "error",
+                "last_error": str(e),
+            }).eq("id", source_id).execute()
+            continue
+
+        inserted = 0
+        for entry in entries:
+            article_url = entry.get("link", "")
+            if not article_url:
+                continue
+
+            existing = supabase.table("raw_signals") \
+                .select("id") \
+                .eq("article_url", article_url) \
+                .execute()
+            if existing.data:
+                continue
+
+            title = entry.get("title", source_name)
+            raw_summary = entry.get("summary") or entry.get("description", "")
+            body_text = BeautifulSoup(raw_summary, "html.parser").get_text(" ", strip=True)[:5000] if raw_summary else ""
+
+            try:
+                supabase.table("raw_signals").insert({
+                    "source_id":        source_id,
+                    "source_name":      source_name,
+                    "source_url":       source_url,
+                    "title":            title,
+                    "article_url":      article_url,
+                    "raw_text":         body_text,
+                    "matched_keywords": [],
+                }).execute()
+                inserted += 1
+                print(f"  Inserted: {title[:70]}")
+            except Exception as e:
+                print(f"  Skipped {article_url}: {e}")
+
+        supabase.table("source_registry").update({
+            "last_scraped_at": datetime.now(timezone.utc).isoformat(),
+            "last_error":      None,
+        }).eq("id", source_id).execute()
+
+        print(f"  {inserted} new articles from {source_name}")
+        total_inserted += inserted
+        continue
+    # ── end RSS path ─────────────────────────────────────────────────
+
     verify_ssl = True
 
     try:

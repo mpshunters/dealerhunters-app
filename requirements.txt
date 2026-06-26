@@ -2,6 +2,7 @@ supabase
 python-dotenv
 requests
 beautifulsoup4
+feedparser
 openai
 resend
 pdfplumber
