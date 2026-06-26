@@ -277,42 +277,12 @@
     }
     .btn-pill-arrow:hover:not(:disabled) { background: #10B981; }
     .btn-pill-arrow:disabled { opacity: 0.25; cursor: default; }
-    .filter-bar-wrap.collapsed .btn-pill-arrow { display: none; }
 
-    /* Mini bar (collapsed state) */
-    .mini-filter-left {
-      display: none; align-items: center; gap: 8px; flex-shrink: 0;
-    }
-    .filter-bar-wrap.collapsed .pills-outer { display: none; }
-    .filter-bar-wrap.collapsed .mini-filter-left { display: flex; }
-    .mini-active-pill {
-      font-size: 12px; font-weight: 600; color: #111827;
-      background: #F3F4F6; border-radius: 999px;
-      padding: 4px 12px; white-space: nowrap;
-      max-width: 160px; overflow: hidden; text-overflow: ellipsis;
-    }
-    .btn-filters-toggle {
-      font-size: 12px; font-weight: 500; color: #6B7280;
-      background: transparent; border: 1.5px solid #E5E7EB;
-      border-radius: 999px; padding: 4px 11px;
-      cursor: pointer; font-family: inherit; white-space: nowrap;
-      transition: border-color 0.15s, color 0.15s;
-    }
-    .btn-filters-toggle:hover { border-color: #10B981; color: #10B981; }
-
-    /* Temporary pills dropdown (collapsed + Filters▾ clicked) */
-    .pills-dropdown {
-      display: none;
-      position: absolute; left: 0; right: 0; top: 100%;
-      background: #fff; border-bottom: 1px solid #E8ECF4;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-      z-index: 99; padding: 10px 16px;
-    }
-    .pills-dropdown.open { display: block; }
-    .pills-dropdown-inner {
-      max-width: 960px; margin: 0 auto;
-      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
-    }
+    /* Collapsed state: compact padding only — pills stay visible */
+    .filter-bar { transition: padding 0.2s ease; }
+    .filter-bar-wrap.collapsed .filter-bar { padding-top: 4px; padding-bottom: 4px; }
+    .filter-bar-wrap.collapsed .btn-export-csv,
+    .filter-bar-wrap.collapsed .btn-report { display: none; }
 
     /* Pill styles */
     .filter-pill {
@@ -1548,9 +1518,6 @@
     body.dark-mode .pills-fade-right { background: linear-gradient(to left,  #111827 30%, transparent); }
     body.dark-mode .btn-pill-arrow { background: rgba(255,255,255,0.1); }
     body.dark-mode .btn-pill-arrow:hover:not(:disabled) { background: #10B981; }
-    body.dark-mode .pills-dropdown { background: #111827; border-color: rgba(255,255,255,0.08); }
-    body.dark-mode .mini-active-pill { background: #1A2433; color: #E5E7EB; }
-    body.dark-mode .btn-filters-toggle { border-color: rgba(255,255,255,0.12); color: #9CA3AF; }
     body.dark-mode .pill-sep { background: rgba(255,255,255,0.1); }
     body.dark-mode .search-input { background: var(--input-bg); border-color: rgba(255,255,255,0.12); color: var(--text); }
     body.dark-mode .notes-textarea { background: var(--input-bg); border-color: rgba(255,255,255,0.12); color: var(--text); }
@@ -1812,12 +1779,6 @@
 <div class="filter-bar-wrap" id="filter-bar-wrap">
   <div class="filter-bar">
 
-    <!-- Mini left: shown only when collapsed -->
-    <div class="mini-filter-left" id="mini-filter-left">
-      <span class="mini-active-pill" id="mini-active-pill">All</span>
-      <button class="btn-filters-toggle" id="btn-filters-toggle">Filters ▾</button>
-    </div>
-
     <!-- Single scrollable pill row -->
     <button class="btn-pill-arrow" id="btn-pill-left" aria-label="Scroll filters left" disabled>‹</button>
     <div class="pills-outer" id="pills-outer">
@@ -1864,9 +1825,6 @@
     </div>
 
   </div>
-  <!-- Temporary dropdown: shown when collapsed + Filters▾ clicked -->
-  <div class="pills-dropdown" id="pills-dropdown">
-    <div class="pills-dropdown-inner" id="pills-dropdown-inner"></div>
   </div>
 </div>
 
@@ -2859,88 +2817,22 @@ function scrollActivePillIntoView() {
   if (active) active.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
 }
 
-/* ── Collapsible filter bar ── */
-const STAGE_LABELS = {
-  'stage:new': '🆕 New', 'stage:contacted': '📞 Contacted',
-  'stage:in_conversation': '💬 In Conv.', 'stage:proposal_sent': '📝 Proposal',
-  'stage:won': '✅ Won', 'stage:lost': '❌ Lost',
-};
-
-function updateMiniActivePill() {
-  const el = document.getElementById('mini-active-pill');
-  if (!el) return;
-  let label = activeFilter === 'territory' ? '📍 Territory'
-            : STAGE_LABELS[activeFilter] || activeFilter;
-  el.textContent = label;
-}
-
-function closePillsDropdown() {
-  document.getElementById('pills-dropdown').classList.remove('open');
-  const btn = document.getElementById('btn-filters-toggle');
-  if (btn) btn.textContent = 'Filters ▾';
-}
-
-function openPillsDropdown() {
-  const dropdown = document.getElementById('pills-dropdown');
-  const inner    = document.getElementById('pills-dropdown-inner');
-  // Clone the current pill row into the dropdown
-  const src = document.getElementById('filter-pills');
-  inner.innerHTML = '';
-  Array.from(src.children).forEach(child => {
-    if (child.classList.contains('pill-sep')) {
-      const sep = document.createElement('span');
-      sep.className = 'pill-sep';
-      sep.setAttribute('aria-hidden', 'true');
-      inner.appendChild(sep);
-    } else if (child.tagName === 'BUTTON') {
-      const btn = child.cloneNode(true);
-      inner.appendChild(btn);
-    }
-  });
-  dropdown.classList.add('open');
-  document.getElementById('btn-filters-toggle').textContent = 'Filters ▴';
-}
-
-document.getElementById('btn-filters-toggle').addEventListener('click', () => {
-  const dropdown = document.getElementById('pills-dropdown');
-  dropdown.classList.contains('open') ? closePillsDropdown() : openPillsDropdown();
-});
-
-// Clicks inside the dropdown pill row apply the filter then close
-document.getElementById('pills-dropdown').addEventListener('click', e => {
-  const pill = e.target.closest('.filter-pill');
-  if (!pill) return;
-  activeFilter = pill.dataset.filter;
-  document.querySelectorAll('.filter-pill').forEach(p =>
-    p.classList.toggle('active', p.dataset.filter === activeFilter)
-  );
-  updateMiniActivePill();
-  renderFiltered();
-  closePillsDropdown();
-});
-
-// Close dropdown when clicking outside the filter bar
-document.addEventListener('click', e => {
-  if (!document.getElementById('filter-bar-wrap').contains(e.target)) closePillsDropdown();
-}, true);
-
+/* ── Collapsible filter bar (compact on scroll, pills always visible) ── */
 let _barCollapsed = false;
 window.addEventListener('scroll', () => {
-  const shouldCollapse = window.scrollY > 150;
+  const shouldCollapse = window.scrollY > 300;
   if (shouldCollapse === _barCollapsed) return;
   _barCollapsed = shouldCollapse;
   document.getElementById('filter-bar-wrap').classList.toggle('collapsed', shouldCollapse);
-  if (!shouldCollapse) closePillsDropdown();
 }, { passive: true });
 
 /* ── Event wiring ── */
 document.querySelector('.filter-bar-wrap').addEventListener('click', e => {
   const pill = e.target.closest('.filter-pill');
-  if (!pill || e.target.closest('#pills-dropdown')) return;
+  if (!pill) return;
   document.querySelectorAll('#filter-pills .filter-pill').forEach(p => p.classList.remove('active'));
   pill.classList.add('active');
   activeFilter = pill.dataset.filter;
-  updateMiniActivePill();
   scrollActivePillIntoView();
   renderFiltered();
 });
