@@ -287,6 +287,20 @@
       box-shadow: 0 0 0 3px rgba(99,102,241,0.15), 0 2px 6px rgba(99,102,241,0.25) !important;
     }
 
+    /* ── Territory pill ── */
+    .territory-pill {
+      border-color: rgba(16,185,129,0.4) !important;
+      color: #10B981 !important;
+      background: rgba(16,185,129,0.06) !important;
+    }
+    .territory-pill:hover { background: rgba(16,185,129,0.12) !important; }
+    .territory-pill.active {
+      background: #10B981 !important;
+      border-color: #10B981 !important;
+      color: #fff !important;
+      box-shadow: 0 0 0 3px rgba(16,185,129,0.18) !important;
+    }
+
     .filter-pill {
       background: transparent;
       border: 1.5px solid #E5E7EB;
@@ -1537,6 +1551,7 @@
         <button class="filter-pill" data-filter="Expansion">Expansion</button>
         <button class="filter-pill" data-filter="Weak Digital">Weak Digital</button>
         <button class="filter-pill hot-pill" data-filter="Hot Leads">🔥 Hot Leads</button>
+        <button class="filter-pill territory-pill" id="territory-filter-pill" data-filter="territory" style="display:none">📍 Territory</button>
       </div>
       <div class="filter-right">
         <div class="search-wrap">
@@ -1914,6 +1929,7 @@ let searchQuery    = '';
 let contactedCount = 0;
 let totalActive    = 0;
 let totalShowing   = 0;
+let territoryStates = [];
 
 /* ── DOM refs ── */
 const resultsEl       = document.getElementById('results');
@@ -2000,6 +2016,8 @@ function getFiltered() {
       if ((item.status || 'new') !== activeFilter.replace('stage:', '')) return false;
     } else if (activeFilter === 'Hot Leads') {
       if (!item.is_hot_lead) return false;
+    } else if (activeFilter === 'territory') {
+      if (territoryStates.length && !territoryStates.includes(item.state)) return false;
     } else if (activeFilter !== 'All') {
       if (getSignal(item).label !== activeFilter) return false;
     }
@@ -2652,7 +2670,13 @@ function checkOnboarding(session) {
   document.getElementById('btn-ob-1').addEventListener('click', () => goObStep(2));
   document.getElementById('btn-ob-2-back').addEventListener('click', () => goObStep(1));
   document.getElementById('btn-ob-2').addEventListener('click', () => {
-    localStorage.setItem('dh_territory_states', JSON.stringify([...selectedStates]));
+    territoryStates = [...selectedStates];
+    localStorage.setItem('dh_territory_states', JSON.stringify(territoryStates));
+    const tPill = document.getElementById('territory-filter-pill');
+    if (tPill && territoryStates.length > 0) {
+      tPill.textContent = `📍 ${territoryStates.length} state${territoryStates.length !== 1 ? 's' : ''}`;
+      tPill.style.display = '';
+    }
     goObStep(3);
   });
   document.getElementById('btn-ob-3-back').addEventListener('click', () => goObStep(2));
@@ -2817,6 +2841,15 @@ async function loadOpportunities() {
   }
 
   allData = data;
+
+  /* init territory pill */
+  territoryStates = JSON.parse(localStorage.getItem('dh_territory_states') || '[]');
+  const tPill = document.getElementById('territory-filter-pill');
+  if (tPill && territoryStates.length > 0) {
+    tPill.textContent = `📍 ${territoryStates.length} state${territoryStates.length !== 1 ? 's' : ''}`;
+    tPill.style.display = '';
+  }
+
   const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
   animateCount(statSignals, data.filter(d => new Date(d.created_at).getTime() >= oneWeekAgo).length);
   updateStats(data);

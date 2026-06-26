@@ -1152,6 +1152,72 @@
       .footer-top { grid-template-columns: 1fr; }
       .pricing-card { padding: 32px 24px; }
     }
+
+    /* ── Access Request Modal ── */
+    .access-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.65); z-index: 9000;
+      align-items: center; justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    .access-overlay.open { display: flex; }
+    .access-modal {
+      background: #fff; border-radius: 18px;
+      width: min(480px, 94vw);
+      box-shadow: 0 32px 80px rgba(0,0,0,0.35);
+      overflow: hidden;
+    }
+    .access-modal-header {
+      background: #111827; padding: 22px 28px 18px; color: #fff;
+    }
+    .access-modal-logo { font-size: 18px; font-weight: 800; margin-bottom: 5px; }
+    .access-modal-logo .hunters { color: #10B981; }
+    .access-modal-title { font-size: 15px; color: rgba(255,255,255,0.7); }
+    .access-modal-body  { padding: 24px 28px 28px; }
+    .access-modal-close {
+      float: right; background: none; border: none;
+      color: rgba(255,255,255,0.5); font-size: 20px;
+      cursor: pointer; padding: 0; line-height: 1;
+      margin-top: -2px;
+    }
+    .access-modal-close:hover { color: #fff; }
+    .form-row { margin-bottom: 14px; }
+    .form-label {
+      display: block; font-size: 12px; font-weight: 600;
+      color: #374151; margin-bottom: 5px;
+    }
+    .form-input, .form-select {
+      width: 100%; padding: 10px 13px;
+      border: 1.5px solid #E5E7EB; border-radius: 9px;
+      font-size: 14px; font-family: inherit; color: #111827;
+      background: #fff; outline: none;
+      transition: border-color 0.15s;
+    }
+    .form-input:focus, .form-select:focus { border-color: #10B981; }
+    .form-input::placeholder { color: #9CA3AF; }
+    .form-row-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .btn-access-submit {
+      width: 100%; padding: 13px;
+      background: #10B981; color: #fff;
+      border: none; border-radius: 10px;
+      font-size: 15px; font-weight: 700;
+      font-family: inherit; cursor: pointer;
+      transition: background 0.15s; margin-top: 6px;
+    }
+    .btn-access-submit:hover { background: #059669; }
+    .btn-access-submit:disabled { background: #9CA3AF; cursor: default; }
+    .access-success {
+      display: none; text-align: center;
+      padding: 32px 20px;
+    }
+    .access-success.show { display: block; }
+    .access-success-icon { font-size: 40px; margin-bottom: 12px; }
+    .access-success h3 { font-size: 18px; font-weight: 700; color: #111827; margin-bottom: 8px; }
+    .access-success p  { font-size: 14px; color: #6B7280; line-height: 1.5; }
+    .access-form-wrap  { display: block; }
+    .access-form-wrap.hide { display: none; }
+    .access-error { font-size: 12px; color: #EF4444; margin-top: 8px; display: none; }
+    .access-error.show { display: block; }
   </style>
 </head>
 <body>
@@ -1179,7 +1245,7 @@
     <li><a href="#pricing" data-section="pricing">Pricing</a></li>
     <li><a href="dashboard.html">Dashboard</a></li>
   </ul>
-  <a href="mailto:signals@mpshunters.com?subject=DealerHunters - Get Access" class="nav-cta">Get Access</a>
+  <button class="nav-cta" onclick="openAccessModal()">Get Access</button>
 </nav>
 
 <!-- ── Hero ────────────────────────────────────────────────────────────── -->
@@ -1462,7 +1528,7 @@
         <li><span class="check">✓</span> Live dashboard with filters &amp; search</li>
         <li><span class="check">✓</span> Unlimited opportunities tracked</li>
       </ul>
-      <a href="mailto:signals@mpshunters.com?subject=DealerHunters - Get Access" class="btn-pricing">Get Access →</a>
+      <button class="btn-pricing" onclick="openAccessModal()">Get Access →</button>
     </div>
   </div>
   </div>
@@ -1666,6 +1732,124 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
       target.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   });
+});
+</script>
+
+<!-- ── Access Request Modal ── -->
+<div class="access-overlay" id="access-overlay">
+  <div class="access-modal">
+    <div class="access-modal-header">
+      <button class="access-modal-close" onclick="closeAccessModal()" aria-label="Close">×</button>
+      <div class="access-modal-logo">Dealer<span class="hunters">Hunters</span></div>
+      <div class="access-modal-title">Request access to the platform</div>
+    </div>
+    <div class="access-modal-body">
+
+      <div class="access-form-wrap" id="access-form-wrap">
+        <form id="access-form" novalidate>
+          <!-- Web3Forms hidden fields -->
+          <input type="hidden" name="access_key" value="698e8ff4-bff3-4281-ac94-4aae97aa52f5" />
+          <input type="hidden" name="subject" id="form-subject" value="🎯 New DealerHunters Access Request" />
+          <input type="hidden" name="from_name" value="DealerHunters Website" />
+          <input type="checkbox" name="botcheck" style="display:none" />
+
+          <div class="form-row-2col">
+            <div class="form-row">
+              <label class="form-label" for="f-name">Name *</label>
+              <input class="form-input" id="f-name" name="name" type="text" placeholder="Jane Smith" required />
+            </div>
+            <div class="form-row">
+              <label class="form-label" for="f-company">Company / Agency *</label>
+              <input class="form-input" id="f-company" name="company" type="text" placeholder="Acme Automotive" required />
+            </div>
+          </div>
+          <div class="form-row-2col">
+            <div class="form-row">
+              <label class="form-label" for="f-email">Email *</label>
+              <input class="form-input" id="f-email" name="email" type="email" placeholder="you@agency.com" required />
+            </div>
+            <div class="form-row">
+              <label class="form-label" for="f-phone">Phone</label>
+              <input class="form-input" id="f-phone" name="phone" type="tel" placeholder="(555) 000-0000" />
+            </div>
+          </div>
+          <div class="form-row">
+            <label class="form-label" for="f-source">How did you hear about us?</label>
+            <select class="form-select" id="f-source" name="source">
+              <option value="">Select one…</option>
+              <option>Referral</option>
+              <option>Google Search</option>
+              <option>LinkedIn</option>
+              <option>Other</option>
+            </select>
+          </div>
+
+          <div class="access-error" id="access-error">Something went wrong. Please try again or email signals@mpshunters.com.</div>
+          <button type="submit" class="btn-access-submit" id="btn-access-submit">Request Access →</button>
+        </form>
+      </div>
+
+      <div class="access-success" id="access-success">
+        <div class="access-success-icon">✅</div>
+        <h3>Request received!</h3>
+        <p>We'll be in touch within 24 hours at the email you provided.<br><br>In the meantime, feel free to <a href="dashboard.html" style="color:#10B981;font-weight:600;">explore the live dashboard</a>.</p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+function openAccessModal() {
+  document.getElementById('access-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeAccessModal() {
+  document.getElementById('access-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.getElementById('access-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('access-overlay')) closeAccessModal();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeAccessModal();
+});
+
+document.getElementById('access-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn     = document.getElementById('btn-access-submit');
+  const errEl   = document.getElementById('access-error');
+  const company = document.getElementById('f-company').value.trim();
+
+  errEl.classList.remove('show');
+  btn.disabled    = true;
+  btn.textContent = 'Sending…';
+
+  document.getElementById('form-subject').value =
+    `🎯 New DealerHunters Access Request — ${company}`;
+
+  const formData = new FormData(e.target);
+  const payload  = Object.fromEntries(formData.entries());
+
+  try {
+    const res  = await fetch('https://api.web3forms.com/submit', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body:    JSON.stringify(payload),
+    });
+    const json = await res.json();
+    if (json.success) {
+      document.getElementById('access-form-wrap').classList.add('hide');
+      document.getElementById('access-success').classList.add('show');
+    } else {
+      throw new Error(json.message || 'Submission failed');
+    }
+  } catch (err) {
+    console.error('Access form error:', err);
+    errEl.classList.add('show');
+    btn.disabled    = false;
+    btn.textContent = 'Request Access →';
+  }
 });
 </script>
 
