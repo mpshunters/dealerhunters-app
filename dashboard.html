@@ -228,11 +228,33 @@
     .filter-bar {
       max-width: 960px;
       margin: 0 auto;
-      padding: 12px 16px;
+      padding: 12px 16px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .filter-row {
       display: flex;
       align-items: center;
       gap: 10px;
-      flex-wrap: wrap;
+    }
+    .filter-row-1 { padding-bottom: 10px; }
+    .filter-row-divider {
+      height: 1px;
+      background: #E8ECF4;
+      margin: 0 -16px;
+    }
+    .filter-row-2 { padding-top: 10px; }
+
+    .stage-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #C4C9D4;
+      letter-spacing: 0.9px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .filter-pills {
@@ -241,6 +263,28 @@
       gap: 7px;
       flex-wrap: wrap;
       flex: 1;
+    }
+
+    .stage-pills {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .stage-pill {
+      font-size: 12px !important;
+      padding: 4px 10px !important;
+      color: #9CA3AF !important;
+      border-color: #EAECF0 !important;
+      background: #FAFAFA !important;
+    }
+    .stage-pill:hover { border-color: #6366F1 !important; color: #6366F1 !important; background: transparent !important; }
+    .stage-pill.active {
+      background: #6366F1 !important;
+      border-color: #6366F1 !important;
+      color: #fff !important;
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.15), 0 2px 6px rgba(99,102,241,0.25) !important;
     }
 
     .filter-pill {
@@ -1266,7 +1310,7 @@
 
     /* ── Mobile ── */
     @media (max-width: 768px) {
-      .filter-pills { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+      .filter-pills, .stage-pills { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
       .btn-export-csv { display: none; }
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
       .card-footer { flex-direction: column; gap: 8px; }
@@ -1340,35 +1384,49 @@
 <!-- ── Filter bar ── -->
 <div class="filter-bar-wrap">
   <div class="filter-bar">
-    <div class="filter-pills" id="filter-pills">
-      <button class="filter-pill active" data-filter="All">All</button>
-      <button class="filter-pill" data-filter="Ownership Change">Ownership Change</button>
-      <button class="filter-pill" data-filter="Marketing Hire">Marketing Hire</button>
-      <button class="filter-pill" data-filter="Leadership Change">Leadership Change</button>
-      <button class="filter-pill" data-filter="Expansion">Expansion</button>
-      <button class="filter-pill" data-filter="Weak Digital">Weak Digital</button>
-      <button class="filter-pill hot-pill" data-filter="Hot Leads">🔥 Hot Leads</button>
-      <span class="pill-divider"></span>
-      <button class="filter-pill" data-filter="stage:new">🆕 New</button>
-      <button class="filter-pill" data-filter="stage:contacted">📞 Contacted</button>
-      <button class="filter-pill" data-filter="stage:in_conversation">💬 In Conv.</button>
-      <button class="filter-pill" data-filter="stage:proposal_sent">📝 Proposal</button>
-      <button class="filter-pill" data-filter="stage:won">✅ Won</button>
-      <button class="filter-pill" data-filter="stage:lost">❌ Lost</button>
-    </div>
-    <div class="filter-right">
-      <div class="search-wrap">
-        <svg class="search-icon" width="14" height="14" viewBox="0 0 20 20" fill="none">
-          <circle cx="9" cy="9" r="7" stroke="#9CA3AF" stroke-width="1.8"/>
-          <path d="M16 16l-3.5-3.5" stroke="#9CA3AF" stroke-width="1.8" stroke-linecap="round"/>
-        </svg>
-        <input type="text" class="search-input" id="search-input"
-          placeholder="Search dealerships…" autocomplete="off" />
-        <span class="search-shortcut">⌘K</span>
+
+    <!-- Row 1: Signal type filters + search/export -->
+    <div class="filter-row filter-row-1">
+      <div class="filter-pills" id="filter-pills">
+        <button class="filter-pill active" data-filter="All">All</button>
+        <button class="filter-pill" data-filter="Ownership Change">Ownership Change</button>
+        <button class="filter-pill" data-filter="Marketing Hire">Marketing Hire</button>
+        <button class="filter-pill" data-filter="Leadership Change">Leadership Change</button>
+        <button class="filter-pill" data-filter="Expansion">Expansion</button>
+        <button class="filter-pill" data-filter="Weak Digital">Weak Digital</button>
+        <button class="filter-pill hot-pill" data-filter="Hot Leads">🔥 Hot Leads</button>
       </div>
-      <button class="btn-export-csv" id="btn-export-csv">⬇ Export CSV</button>
-      <div class="results-meta" id="results-meta"></div>
+      <div class="filter-right">
+        <div class="search-wrap">
+          <svg class="search-icon" width="14" height="14" viewBox="0 0 20 20" fill="none">
+            <circle cx="9" cy="9" r="7" stroke="#9CA3AF" stroke-width="1.8"/>
+            <path d="M16 16l-3.5-3.5" stroke="#9CA3AF" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <input type="text" class="search-input" id="search-input"
+            placeholder="Search dealerships…" autocomplete="off" />
+          <span class="search-shortcut">⌘K</span>
+        </div>
+        <button class="btn-export-csv" id="btn-export-csv">⬇ Export CSV</button>
+        <div class="results-meta" id="results-meta"></div>
+      </div>
     </div>
+
+    <!-- Divider -->
+    <div class="filter-row-divider"></div>
+
+    <!-- Row 2: Pipeline stage filters -->
+    <div class="filter-row filter-row-2">
+      <span class="stage-label">Pipeline Stage</span>
+      <div class="stage-pills" id="stage-pills">
+        <button class="filter-pill stage-pill" data-filter="stage:new">🆕 New</button>
+        <button class="filter-pill stage-pill" data-filter="stage:contacted">📞 Contacted</button>
+        <button class="filter-pill stage-pill" data-filter="stage:in_conversation">💬 In Conv.</button>
+        <button class="filter-pill stage-pill" data-filter="stage:proposal_sent">📝 Proposal</button>
+        <button class="filter-pill stage-pill" data-filter="stage:won">✅ Won</button>
+        <button class="filter-pill stage-pill" data-filter="stage:lost">❌ Lost</button>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -2207,7 +2265,7 @@ document.getElementById('btn-top').addEventListener('click', () => {
 });
 
 /* ── Event wiring ── */
-document.getElementById('filter-pills').addEventListener('click', e => {
+document.querySelector('.filter-bar-wrap').addEventListener('click', e => {
   const pill = e.target.closest('.filter-pill');
   if (!pill) return;
   document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
