@@ -79,6 +79,13 @@ jobs:
           GOOGLE_PAGESPEED_API_KEY: ${{ secrets.GOOGLE_PAGESPEED_API_KEY }}
         run: python scripts/pagespeed_checker.py
 
+      - name: Check Yelp ratings for weak digital signals
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          YELP_API_KEY: ${{ secrets.YELP_API_KEY }}
+        run: python scripts/yelp_checker.py
+
       - name: Check Google Ads Transparency for weak digital signals
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

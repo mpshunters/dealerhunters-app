@@ -1474,10 +1474,240 @@
       .score-gauge svg { width: 44px !important; height: 44px !important; }
       .header-meta { display: none; }
       .main { padding: 0 12px 60px; }
+      .side-panel { width: 100vw; }
     }
+
+    /* ── Theme variables (dark mode) ── */
+    :root {
+      --bg:          #F0F2F7;
+      --card-bg:     #ffffff;
+      --card-border: #E8ECF4;
+      --text:        #1A1F36;
+      --text-muted:  #6B7280;
+      --stat-bg:     #ffffff;
+      --pitch-bg:    #F9FAFB;
+      --filter-bg:   #ffffff;
+      --input-bg:    #ffffff;
+    }
+    body.dark-mode {
+      --bg:          #0A0F1E;
+      --card-bg:     #111827;
+      --card-border: rgba(255,255,255,0.08);
+      --text:        #E5E7EB;
+      --text-muted:  #9CA3AF;
+      --stat-bg:     #1A2433;
+      --pitch-bg:    #0D1F35;
+      --filter-bg:   #111827;
+      --input-bg:    #1A2433;
+    }
+    body.dark-mode { background-color: var(--bg); color: var(--text); }
+    body.dark-mode .card { background: var(--card-bg); border-color: var(--card-border); }
+    body.dark-mode .stat-card { background: var(--stat-bg); border-color: var(--card-border); color: var(--text); }
+    body.dark-mode .stat-value { color: var(--text); }
+    body.dark-mode .stat-label { color: var(--text-muted); }
+    body.dark-mode .pitch-box { background: var(--pitch-bg); border-color: rgba(16,185,129,0.3); }
+    body.dark-mode .pitch-text { color: var(--text); }
+    body.dark-mode .summary { color: var(--text); }
+    body.dark-mode .filter-bar-wrap { background: var(--filter-bg); border-color: rgba(255,255,255,0.08); }
+    body.dark-mode .filter-row-divider { background: rgba(255,255,255,0.06); }
+    body.dark-mode .filter-pill { border-color: rgba(255,255,255,0.12); color: var(--text-muted); }
+    body.dark-mode .filter-pill:hover { border-color: #10B981; color: #10B981; background: rgba(16,185,129,0.06); }
+    body.dark-mode .search-input { background: var(--input-bg); border-color: rgba(255,255,255,0.12); color: var(--text); }
+    body.dark-mode .notes-textarea { background: var(--input-bg); border-color: rgba(255,255,255,0.12); color: var(--text); }
+    body.dark-mode .status-select { background: var(--input-bg); border-color: rgba(255,255,255,0.12); color: var(--text); }
+    body.dark-mode .main { background: transparent; }
+    body.dark-mode .chart-card { background: var(--card-bg); border-color: var(--card-border); }
+    body.dark-mode .map-card  { background: var(--card-bg); border-color: var(--card-border); }
+    body.dark-mode .dealer-name { color: var(--text); }
+    body.dark-mode .location { color: var(--text-muted); }
+    body.dark-mode .detected-time { color: var(--text-muted); }
+    body.dark-mode .section-hd { color: var(--text-muted); }
+    body.dark-mode .kanban-col { background: #0F1929; border-color: rgba(255,255,255,0.08); }
+    body.dark-mode .kcard { background: #1A2433; border-color: rgba(255,255,255,0.08); color: var(--text); }
+    body.dark-mode .side-panel { background: #111827; }
+    body.dark-mode .panel-header { border-color: rgba(255,255,255,0.08); }
+    body.dark-mode .panel-section { border-color: rgba(255,255,255,0.06); }
+    body.dark-mode .panel-name { color: #fff; }
+    body.dark-mode .panel-text { color: #D1D5DB; }
+    body.dark-mode .panel-pitch { background: var(--pitch-bg); border-left-color: #10B981; color: #D1D5DB; }
+    body.dark-mode .panel-status-select, body.dark-mode .panel-notes { background: #1A2433; border-color: rgba(255,255,255,0.12); color: var(--text); }
+    body.dark-mode .panel-close { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.6); }
+    body.dark-mode .score-gauge text { fill: #fff !important; }
+    body.dark-mode .kcard-name { color: var(--text); }
+
+    /* ── Dark mode toggle button ── */
+    .btn-dark-mode {
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14);
+      color: rgba(255,255,255,0.7); border-radius: 8px; padding: 5px 10px;
+      font-size: 14px; cursor: pointer; font-family: inherit; line-height: 1;
+      transition: background 0.15s;
+    }
+    .btn-dark-mode:hover { background: rgba(255,255,255,0.14); }
+
+    /* ── Side panel ── */
+    .panel-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45); z-index: 500;
+    }
+    .panel-overlay.open { display: block; }
+    .side-panel {
+      position: fixed; top: 0; right: 0; bottom: 0;
+      width: 420px; max-width: 100vw;
+      background: #fff; z-index: 501;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+      display: flex; flex-direction: column;
+      box-shadow: -8px 0 40px rgba(0,0,0,0.18);
+    }
+    .side-panel.open { transform: translateX(0); }
+    .panel-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 20px 16px;
+      border-bottom: 1px solid #E8ECF4; flex-shrink: 0;
+    }
+    .panel-title { font-size: 16px; font-weight: 700; color: #111827; }
+    .panel-close {
+      width: 32px; height: 32px; border: none; border-radius: 8px;
+      background: #F3F4F6; color: #6B7280; font-size: 18px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-family: inherit;
+    }
+    .panel-close:hover { background: #E5E7EB; }
+    .panel-body { flex: 1; overflow-y: auto; padding: 20px; }
+    .panel-section { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #F0F2F7; }
+    .panel-section:last-child { border-bottom: none; }
+    .panel-section-label {
+      font-size: 10px; font-weight: 700; color: #9CA3AF;
+      text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px;
+    }
+    .panel-name { font-size: 20px; font-weight: 800; color: #111827; margin-bottom: 6px; }
+    .panel-location { font-size: 13px; color: #6B7280; margin-bottom: 4px; }
+    .panel-location a { color: #10B981; text-decoration: none; }
+    .panel-contact-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+    .panel-contact-row a {
+      font-size: 12px; color: #374151; text-decoration: none;
+      background: #F3F4F6; padding: 5px 10px; border-radius: 6px;
+    }
+    .panel-contact-row a:hover { background: #E5E7EB; }
+    .panel-campaign-big {
+      font-size: 15px; font-weight: 700; color: #111827;
+      background: linear-gradient(135deg, #ECFDF5, #F0FFF4);
+      border: 1.5px solid #A7F3D0; border-radius: 10px;
+      padding: 14px 16px; margin-bottom: 4px;
+    }
+    .panel-text { font-size: 13px; color: #374151; line-height: 1.65; }
+    .panel-pitch {
+      background: #F9FAFB; border-left: 3px solid #10B981;
+      border-radius: 0 8px 8px 0; padding: 12px 14px;
+      font-size: 13px; color: #374151; line-height: 1.65;
+    }
+    .btn-panel-contact {
+      display: block; width: 100%; text-align: center;
+      background: #111827; color: #fff; font-size: 14px; font-weight: 700;
+      padding: 13px; border-radius: 10px; text-decoration: none;
+      margin-top: 4px; font-family: inherit; border: none; cursor: pointer;
+    }
+    .btn-panel-contact:hover { background: #1F2937; }
+    .panel-status-select {
+      width: 100%; font-family: inherit; font-size: 13px; font-weight: 500;
+      border: 1.5px solid #E5E7EB; border-radius: 8px; padding: 9px 12px;
+      color: #374151; background: #fff; cursor: pointer; outline: none;
+    }
+    .panel-notes {
+      width: 100%; font-family: inherit; font-size: 13px;
+      border: 1.5px solid #E5E7EB; border-radius: 8px;
+      padding: 10px 12px; resize: vertical; min-height: 80px;
+      color: #374151; outline: none;
+    }
+    .panel-notes:focus { border-color: #10B981; }
+    .btn-view-details {
+      font-size: 11px; color: #6B7280; background: #F9FAFB;
+      border: 1px solid #E5E7EB; border-radius: 6px; padding: 4px 9px;
+      cursor: pointer; font-family: inherit; white-space: nowrap;
+    }
+    .btn-view-details:hover { background: #F3F4F6; border-color: #D1D5DB; }
+
+    /* ── View toggle ── */
+    .view-toggle {
+      display: flex; gap: 2px;
+      background: #F3F4F6; border-radius: 8px; padding: 2px;
+      flex-shrink: 0;
+    }
+    .btn-view {
+      font-size: 12px; font-weight: 600; color: #9CA3AF;
+      padding: 5px 10px; border-radius: 6px; border: none;
+      background: transparent; cursor: pointer; font-family: inherit;
+      transition: all 0.15s;
+    }
+    .btn-view.active { background: #fff; color: #111827; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+    /* ── Kanban ── */
+    .kanban-wrap {
+      display: none; overflow-x: auto; padding: 0 16px 40px;
+      gap: 12px; -webkit-overflow-scrolling: touch;
+    }
+    .kanban-wrap.visible { display: flex; }
+    .kanban-col {
+      min-width: 220px; max-width: 240px; flex-shrink: 0;
+      background: #F9FAFB; border-radius: 12px; border: 1px solid #E8ECF4;
+      display: flex; flex-direction: column; max-height: calc(100vh - 220px);
+    }
+    .kanban-col[data-col="won"] { background: #F0FDF8; border-color: #A7F3D0; }
+    .kanban-col-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 14px 10px; font-size: 12px; font-weight: 700;
+      color: #374151; border-bottom: 1px solid #E8ECF4; flex-shrink: 0;
+    }
+    .kanban-col[data-col="won"] .kanban-col-header { color: #065F46; border-color: #A7F3D0; }
+    .kanban-count {
+      font-size: 11px; font-weight: 600; color: #9CA3AF;
+      background: #E5E7EB; padding: 1px 7px; border-radius: 999px;
+    }
+    .kanban-col[data-col="won"] .kanban-count { background: #A7F3D0; color: #065F46; }
+    .kanban-cards {
+      flex: 1; overflow-y: auto; padding: 8px;
+      display: flex; flex-direction: column; gap: 7px;
+    }
+    .kanban-cards.drag-over { background: rgba(16,185,129,0.06); border-radius: 8px; }
+    .kcard {
+      background: #fff; border: 1px solid #E8ECF4; border-radius: 9px;
+      padding: 10px 12px; cursor: grab; transition: box-shadow 0.15s;
+      border-left: 3px solid #10B981;
+    }
+    .kcard:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .kcard.dragging { opacity: 0.4; }
+    .kcard-header { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 5px; }
+    .kcard-info { flex: 1; min-width: 0; }
+    .kcard-name { font-size: 12px; font-weight: 700; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .kcard-loc  { font-size: 10px; color: #9CA3AF; margin-top: 1px; }
+    .kcard-badge { font-size: 9px; font-weight: 600; padding: 2px 7px; border-radius: 999px; margin-top: 4px; display: inline-block; }
+    .kcard-campaign { font-size: 9px; color: #E5E7EB; background: #1F2937; padding: 2px 7px; border-radius: 999px; display: inline-block; margin-top: 2px; }
+
+    /* ── Realtime toast ── */
+    .rt-toast {
+      position: fixed; top: 80px; right: 16px;
+      background: #111827; color: #fff; border-left: 4px solid #10B981;
+      border-radius: 10px; padding: 12px 16px; font-size: 13px; font-weight: 500;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25); z-index: 8000;
+      max-width: 320px; word-break: break-word;
+      animation: rt-slide-in 0.3s ease-out;
+      cursor: pointer;
+    }
+    @keyframes rt-slide-in {
+      from { transform: translateX(110%); opacity: 0; }
+      to   { transform: translateX(0);    opacity: 1; }
+    }
+    .rt-toast.dismissing { animation: rt-slide-out 0.3s ease-in forwards; }
+    @keyframes rt-slide-out { to { transform: translateX(110%); opacity: 0; } }
+    @keyframes new-card-flash {
+      0%   { box-shadow: 0 0 0 3px rgba(16,185,129,0.7), 0 0 20px rgba(16,185,129,0.3); }
+      100% { box-shadow: none; }
+    }
+    .card.new-flash { animation: new-card-flash 1.8s ease-out forwards; }
   </style>
 </head>
 <body>
+<script>if(localStorage.getItem('dh_color_mode')==='dark')document.body.classList.add('dark-mode');</script>
 
 <!-- ── Header ── -->
 <header class="header">
@@ -1512,6 +1742,7 @@
     </div>
     <span class="territory-chip" id="territory-chip"></span>
     <span class="user-chip" id="user-email"></span>
+    <button class="btn-dark-mode" id="btn-dark-mode" title="Toggle dark mode">🌙</button>
     <button class="btn-signout" id="btn-signout">Sign Out</button>
     <div class="settings-wrap" id="settings-wrap">
       <button class="settings-btn" id="settings-btn" title="Contact platform settings">
@@ -1554,6 +1785,10 @@
         <button class="filter-pill territory-pill" id="territory-filter-pill" data-filter="territory" style="display:none">📍 Territory</button>
       </div>
       <div class="filter-right">
+        <div class="view-toggle">
+          <button class="btn-view active" id="btn-view-list" title="List view">≡ List</button>
+          <button class="btn-view" id="btn-view-kanban" title="Kanban view">⊞ Kanban</button>
+        </div>
         <div class="search-wrap">
           <svg class="search-icon" width="14" height="14" viewBox="0 0 20 20" fill="none">
             <circle cx="9" cy="9" r="7" stroke="#9CA3AF" stroke-width="1.8"/>
@@ -1651,6 +1886,7 @@
   </div>
 
   <div id="results"></div>
+  <div id="kanban-view" class="kanban-wrap"></div>
 </main>
 
 <!-- ── Footer ── -->
@@ -1796,6 +2032,16 @@
 
     </div>
   </div>
+</div>
+
+<!-- ── Side Panel ── -->
+<div class="panel-overlay" id="panel-overlay"></div>
+<div class="side-panel" id="side-panel">
+  <div class="panel-header">
+    <div class="panel-title" id="panel-title">Lead Details</div>
+    <button class="panel-close" id="panel-close" aria-label="Close">×</button>
+  </div>
+  <div class="panel-body" id="panel-body"></div>
 </div>
 
 <!-- ── Won Value Modal ── -->
@@ -2288,6 +2534,7 @@ function buildCard(item, i) {
         <div class="card-footer-right">
           <a href="${esc(getContactUrl(name, item.website || ''))}"
             target="_blank" rel="noopener noreferrer" class="btn-find-contact">Find Contact</a>
+          <button class="btn-view-details" data-panel-id="${item.id}">Details</button>
           <select class="status-select" data-id="${item.id}">${stageOptions}</select>
         </div>
       </div>
@@ -2861,7 +3108,272 @@ async function loadOpportunities() {
   document.getElementById('last-updated').textContent = formatDate(latest.created_at);
 
   renderCards(getFiltered());
+  if (currentView === 'kanban') setView('kanban');
 }
+
+/* ── Dark mode ── */
+(function() {
+  const btn = document.getElementById('btn-dark-mode');
+  function applyMode(dark) {
+    document.body.classList.toggle('dark-mode', dark);
+    btn.textContent = dark ? '☀️' : '🌙';
+    localStorage.setItem('dh_color_mode', dark ? 'dark' : 'light');
+  }
+  applyMode(localStorage.getItem('dh_color_mode') === 'dark');
+  btn.addEventListener('click', () => applyMode(!document.body.classList.contains('dark-mode')));
+})();
+
+/* ── Side panel ── */
+let panelNoteTimer = null;
+
+function openPanel(id) {
+  const item = allData.find(d => String(d.id) === String(id));
+  if (!item) return;
+  const signal   = getSignal(item);
+  const score    = Number(item.confidence_score ?? item.fit_score ?? 0);
+  const name     = item.dealership_name || 'Unnamed Dealership';
+  const location = [item.city, item.state].filter(Boolean).join(', ');
+  const mapsUrl  = location ? `https://www.google.com/maps/search/${encodeURIComponent(name + ' ' + location)}` : null;
+  const campaign = CAMPAIGN_MAP[item.signal_type || item.opportunity_type || ''] || '';
+  const status   = item.status || 'new';
+  const steps    = item.outreach_steps || {};
+
+  const stageOptions = [
+    ['new','🆕 New'],['contacted','📞 Contacted'],['in_conversation','💬 In Conversation'],
+    ['proposal_sent','📝 Proposal Sent'],['won','✅ Won'],['lost','❌ Lost'],
+  ].map(([v,l]) => `<option value="${v}"${status===v?' selected':''}>${l}</option>`).join('');
+
+  const stepsHtml = OUTREACH_STEPS.map(s => `
+    <label class="outreach-step">
+      <input type="checkbox" class="panel-step-check" data-id="${item.id}" data-step="${s.key}"${steps[s.key]?' checked':''}>
+      <span class="toggle-track"><span class="toggle-thumb"></span></span>
+      <span class="outreach-step-label">${s.label}</span>
+    </label>`).join('');
+
+  document.getElementById('panel-title').textContent = name;
+  document.getElementById('panel-body').innerHTML = `
+    <div class="panel-section">
+      <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:10px;">
+        <div style="flex:1">
+          <div class="panel-name">${esc(name)}</div>
+          ${location ? `<div class="panel-location">${PIN_ICON} ${mapsUrl ? `<a href="${esc(mapsUrl)}" target="_blank" rel="noopener">${esc(location)}</a>` : esc(location)}</div>` : ''}
+        </div>
+        ${scoreGauge(score)}
+      </div>
+      <div>
+        <span class="badge" style="color:${signal.color};background:${signal.bg}">${signal.label}</span>
+        ${item.is_hot_lead ? ' <span class="hot-badge">🔥 Hot Lead</span>' : ''}
+        ${status === 'won' ? ' <span class="won-badge">🏆</span>' : ''}
+      </div>
+      <div class="panel-contact-row">
+        ${item.phone ? `<a href="tel:${esc(item.phone)}">📞 ${esc(item.phone)}</a>` : ''}
+        ${item.website ? `<a href="${esc(item.website)}" target="_blank" rel="noopener">🌐 ${esc(item.website.replace(/^https?:\/\/(www\.)?/,'').replace(/\/$/,''))}</a>` : ''}
+        ${item.source_url && item.source_url.startsWith('http') ? `<a href="${esc(item.source_url)}" target="_blank" rel="noopener">📰 Source</a>` : ''}
+      </div>
+      ${item.created_at ? `<div style="font-size:11px;color:#9CA3AF;margin-top:8px;">${timeAgo(item.created_at)} ${ageBadge(item.created_at)}</div>` : ''}
+    </div>
+
+    ${campaign ? `<div class="panel-section">
+      <div class="panel-section-label">Recommended Campaign</div>
+      <div class="panel-campaign-big">${esc(campaign)}</div>
+    </div>` : ''}
+
+    <div class="panel-section">
+      <div class="panel-section-label">AI Summary</div>
+      <div class="panel-text">${esc(item.ai_summary || 'No summary available.')}</div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-label">Suggested Pitch</div>
+      <div class="panel-pitch">${esc(item.pitch_angle || item.recommended_offer || 'No pitch available.')}</div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-label">Pipeline Stage</div>
+      <select class="panel-status-select" id="panel-status-select" data-id="${item.id}">${stageOptions}</select>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-label">Campaign Sequence</div>
+      <div class="outreach-steps-list">${stepsHtml}</div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-label">Notes</div>
+      <textarea class="panel-notes" id="panel-notes" data-id="${item.id}" rows="3">${esc(item.notes || '')}</textarea>
+    </div>
+
+    <div class="panel-section">
+      <a href="${esc(getContactUrl(name, item.website || ''))}" target="_blank" rel="noopener" class="btn-panel-contact">Find Contact →</a>
+    </div>
+  `;
+
+  document.getElementById('panel-status-select').addEventListener('change', async e => {
+    await updateStatus(e.target.dataset.id, e.target.value);
+    const cardSel = document.querySelector(`.status-select[data-id="${e.target.dataset.id}"]`);
+    if (cardSel) cardSel.value = e.target.value;
+  });
+
+  document.getElementById('panel-notes').addEventListener('input', e => {
+    const id    = e.target.dataset.id;
+    const notes = e.target.value;
+    clearTimeout(panelNoteTimer);
+    panelNoteTimer = setTimeout(async () => {
+      const it = allData.find(d => String(d.id) === String(id));
+      if (it) it.notes = notes;
+      await client.from('opportunities').update({ notes }).eq('id', id);
+      const cardTA = document.querySelector(`.notes-textarea[data-id="${id}"]`);
+      if (cardTA) cardTA.value = notes;
+    }, 500);
+  });
+
+  document.querySelectorAll('.panel-step-check').forEach(cb => {
+    cb.addEventListener('change', async () => {
+      const id   = cb.dataset.id;
+      const step = cb.dataset.step;
+      const it   = allData.find(d => String(d.id) === String(id));
+      if (!it) return;
+      if (!it.outreach_steps) it.outreach_steps = {};
+      it.outreach_steps[step] = cb.checked;
+      await client.from('opportunities').update({ outreach_steps: it.outreach_steps }).eq('id', id);
+    });
+  });
+
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    document.querySelectorAll('#panel-body .gauge-progress').forEach(el => {
+      el.style.strokeDashoffset = el.dataset.target;
+    });
+  }));
+
+  document.getElementById('panel-overlay').classList.add('open');
+  document.getElementById('side-panel').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePanel() {
+  document.getElementById('panel-overlay').classList.remove('open');
+  document.getElementById('side-panel').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('panel-close').addEventListener('click', closePanel);
+document.getElementById('panel-overlay').addEventListener('click', closePanel);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel(); });
+
+resultsEl.addEventListener('click', e => {
+  const detailBtn = e.target.closest('.btn-view-details');
+  if (detailBtn) { openPanel(detailBtn.dataset.panelId); return; }
+  const nameEl = e.target.closest('.dealer-name');
+  if (nameEl) {
+    const card = nameEl.closest('.card');
+    if (card) openPanel(card.dataset.cardId);
+  }
+});
+
+/* ── Kanban ── */
+const KANBAN_COLS = [
+  { key: 'new',             label: '🆕 New' },
+  { key: 'contacted',       label: '📞 Contacted' },
+  { key: 'in_conversation', label: '💬 In Conv.' },
+  { key: 'proposal_sent',   label: '📝 Proposal' },
+  { key: 'won',             label: '✅ Won' },
+  { key: 'lost',            label: '❌ Lost' },
+];
+
+let currentView = localStorage.getItem('dh_preferred_view') || 'list';
+let dragId      = null;
+
+function kcard(item) {
+  const signal   = getSignal(item);
+  const score    = Number(item.confidence_score ?? item.fit_score ?? 0);
+  const name     = item.dealership_name || 'Unnamed';
+  const location = [item.city, item.state].filter(Boolean).join(', ');
+  const campaign = CAMPAIGN_MAP[item.signal_type || item.opportunity_type || ''] || '';
+  const s        = Math.min(Math.max(score, 0), 100);
+  const stroke   = s >= 70 ? '#10B981' : s >= 40 ? '#F59E0B' : '#D0D5DD';
+  const r = 14; const circ = +(2 * Math.PI * r).toFixed(2);
+  const offset = +(circ * (1 - s / 100)).toFixed(2);
+  const gauge = `<svg width="36" height="36" viewBox="0 0 36 36" style="flex-shrink:0">
+    <circle cx="18" cy="18" r="${r}" fill="none" stroke="#F2F4F7" stroke-width="2.5"/>
+    <circle cx="18" cy="18" r="${r}" fill="none" stroke="${stroke}" stroke-width="2.5"
+      stroke-dasharray="${circ}" stroke-dashoffset="${offset}" stroke-linecap="round"
+      transform="rotate(-90 18 18)"/>
+    <text x="18" y="23" text-anchor="middle" fill="#1A1F36"
+      font-family="Inter,system-ui" font-size="10" font-weight="700">${s}</text>
+  </svg>`;
+  return `<div class="kcard" draggable="true" data-id="${item.id}" style="border-left-color:${signal.accent}">
+    <div class="kcard-header">
+      <div class="kcard-info">
+        <div class="kcard-name" title="${esc(name)}">${esc(name)}</div>
+        <div class="kcard-loc">${esc(location)}</div>
+      </div>
+      ${gauge}
+    </div>
+    <span class="kcard-badge" style="color:${signal.color};background:${signal.bg}">${signal.label}</span>
+    ${campaign ? `<br><span class="kcard-campaign">${esc(campaign)}</span>` : ''}
+  </div>`;
+}
+
+function renderKanban() {
+  const wrap = document.getElementById('kanban-view');
+  wrap.innerHTML = KANBAN_COLS.map(col => {
+    const items = allData.filter(d => (d.status || 'new') === col.key);
+    const cards = items.map(kcard).join('');
+    return `<div class="kanban-col" data-col="${col.key}">
+      <div class="kanban-col-header">
+        <span>${col.label}</span>
+        <span class="kanban-count">${items.length}</span>
+      </div>
+      <div class="kanban-cards" data-col="${col.key}">${cards}</div>
+    </div>`;
+  }).join('');
+
+  wrap.querySelectorAll('.kcard').forEach(card => {
+    card.addEventListener('dragstart', () => {
+      dragId = card.dataset.id;
+      setTimeout(() => card.classList.add('dragging'), 0);
+    });
+    card.addEventListener('dragend', () => card.classList.remove('dragging'));
+    card.addEventListener('click',   () => openPanel(card.dataset.id));
+  });
+  wrap.querySelectorAll('.kanban-cards').forEach(col => {
+    col.addEventListener('dragover',  e => { e.preventDefault(); col.classList.add('drag-over'); });
+    col.addEventListener('dragleave', () => col.classList.remove('drag-over'));
+    col.addEventListener('drop', async e => {
+      e.preventDefault();
+      col.classList.remove('drag-over');
+      const newStatus = col.dataset.col;
+      if (dragId && newStatus) {
+        await updateStatus(dragId, newStatus);
+        renderKanban();
+      }
+    });
+  });
+}
+
+function setView(v) {
+  currentView = v;
+  localStorage.setItem('dh_preferred_view', v);
+  const listView   = document.getElementById('results');
+  const kanbanView = document.getElementById('kanban-view');
+  const btnList    = document.getElementById('btn-view-list');
+  const btnKanban  = document.getElementById('btn-view-kanban');
+  if (v === 'kanban') {
+    listView.style.display = 'none';
+    kanbanView.classList.add('visible');
+    btnList.classList.remove('active');
+    btnKanban.classList.add('active');
+    renderKanban();
+  } else {
+    listView.style.display = '';
+    kanbanView.classList.remove('visible');
+    btnList.classList.add('active');
+    btnKanban.classList.remove('active');
+  }
+}
+
+document.getElementById('btn-view-list').addEventListener('click',   () => setView('list'));
+document.getElementById('btn-view-kanban').addEventListener('click', () => setView('kanban'));
 
 (async () => {
   const { data: { session } } = await client.auth.getSession();
@@ -2880,6 +3392,70 @@ async function loadOpportunities() {
 
   checkOnboarding(session);
   loadOpportunities();
+
+  /* ── Realtime subscription ── */
+  function showRtToast(msg) {
+    const el = document.createElement('div');
+    el.className   = 'rt-toast';
+    el.textContent = msg;
+    document.body.appendChild(el);
+    el.addEventListener('click', () => dismissRtToast(el));
+    setTimeout(() => dismissRtToast(el), 5000);
+  }
+  function dismissRtToast(el) {
+    el.classList.add('dismissing');
+    setTimeout(() => el.remove(), 300);
+  }
+
+  function handleNewOpportunity(payload) {
+    const item = payload.new;
+    if (!item || allData.find(d => d.id === item.id)) return;
+    allData.unshift(item);
+    updateStats(allData);
+    buildTrendChart(allData);
+    buildHeatMap(allData);
+    if (currentView === 'kanban') {
+      renderKanban();
+    } else {
+      const name    = item.dealership_name || 'Unknown';
+      const sigLabel = getSignal(item).label;
+      const cardHtml = buildCard(item, 0);
+      const existing = resultsEl.querySelector('.card, .section-hd');
+      if (existing) {
+        const div = document.createElement('div');
+        div.innerHTML = cardHtml;
+        const newCard = div.firstElementChild;
+        resultsEl.insertBefore(newCard, existing);
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          newCard.querySelectorAll('.gauge-progress').forEach(el => {
+            el.style.strokeDashoffset = el.dataset.target;
+          });
+          newCard.classList.add('new-flash');
+        }));
+      }
+      showRtToast(`🔔 New signal: ${name} — ${sigLabel}`);
+    }
+  }
+
+  function handleStatusUpdate(payload) {
+    const updated = payload.new;
+    if (!updated) return;
+    const it = allData.find(d => d.id === updated.id);
+    if (it) {
+      it.status = updated.status;
+      const card = document.querySelector(`.card[data-card-id="${updated.id}"]`);
+      if (card && card.dataset.status !== updated.status) {
+        card.dataset.status = updated.status;
+        const sel = card.querySelector('.status-select');
+        if (sel) sel.value = updated.status;
+      }
+    }
+  }
+
+  client.channel('opp-realtime')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'opportunities' }, handleNewOpportunity)
+    .on('postgres_changes', { event: 'UPDATE',  schema: 'public', table: 'opportunities' }, handleStatusUpdate)
+    .subscribe();
 })();
 </script>
 

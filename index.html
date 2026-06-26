@@ -1219,6 +1219,8 @@
     .access-error { font-size: 12px; color: #EF4444; margin-top: 8px; display: none; }
     .access-error.show { display: block; }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
 </head>
 <body>
 
@@ -1485,18 +1487,24 @@
 <section id="stats">
   <div style="padding: 100px 0; position:relative; z-index:1;">
   <div class="section-wrap">
+    <div style="text-align:center;margin-bottom:32px;">
+      <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:rgba(255,255,255,0.5);background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);border-radius:999px;padding:5px 14px;">
+        <span style="width:7px;height:7px;background:#10B981;border-radius:50%;display:inline-block;animation:live-pulse 2s ease-in-out infinite;"></span>
+        Live data
+      </span>
+    </div>
     <div class="stats-grid">
       <div class="stat-item fade-up">
-        <div class="stat-number"><span class="count-up" data-target="43000">0</span><span class="stat-suffix">+</span></div>
-        <div class="stat-label-lg">Dealerships in database</div>
+        <div class="stat-number"><span id="live-dealers" class="count-up" data-target="43000">43,000</span><span class="stat-suffix">+</span></div>
+        <div class="stat-label-lg">Dealerships monitored</div>
       </div>
       <div class="stat-item fade-up">
-        <div class="stat-number"><span class="count-up" data-target="22">0</span></div>
-        <div class="stat-label-lg">Live news sources</div>
+        <div class="stat-number"><span id="live-signals" class="count-up" data-target="0">—</span></div>
+        <div class="stat-label-lg">Signals this week</div>
       </div>
       <div class="stat-item fade-up">
-        <div class="stat-number"><span class="count-up" data-target="5">0</span></div>
-        <div class="stat-label-lg">Signal types detected</div>
+        <div class="stat-number"><span id="live-opps" class="count-up" data-target="0">—</span></div>
+        <div class="stat-label-lg">Opportunities last 30 days</div>
       </div>
       <div class="stat-item fade-up">
         <div class="stat-number">6<span style="font-size:0.5em;font-weight:700;letter-spacing:0;color:rgba(255,255,255,0.6);">am</span></div>
@@ -1851,6 +1859,44 @@ document.getElementById('access-form').addEventListener('submit', async e => {
     btn.textContent = 'Request Access →';
   }
 });
+</script>
+
+<script>
+/* ── Live stats ── */
+(async function initLiveStats() {
+  if (typeof SUPABASE_URL === 'undefined' || typeof SUPABASE_ANON_KEY === 'undefined') return;
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  function animateToVal(el, target) {
+    if (!el || isNaN(target) || target <= 0) return;
+    const start    = performance.now();
+    const duration = 800;
+    const from     = parseInt(el.textContent.replace(/\D/g, '')) || 0;
+    (function tick(now) {
+      const p = Math.min((now - start) / duration, 1);
+      el.textContent = Math.round(from + (target - from) * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) requestAnimationFrame(tick);
+    })(start);
+  }
+
+  async function fetchLiveStats() {
+    const weekAgo  = new Date(Date.now() - 7  * 864e5).toISOString();
+    const monthAgo = new Date(Date.now() - 30 * 864e5).toISOString();
+    try {
+      const [dealRes, sigRes, oppRes] = await Promise.all([
+        sb.from('dealerships').select('id', { count: 'exact', head: true }),
+        sb.from('signal_matches').select('id', { count: 'exact', head: true }).gte('created_at', weekAgo),
+        sb.from('opportunities').select('id', { count: 'exact', head: true }).gte('created_at', monthAgo),
+      ]);
+      if (dealRes.count)  animateToVal(document.getElementById('live-dealers'), dealRes.count);
+      if (sigRes.count)   animateToVal(document.getElementById('live-signals'), sigRes.count);
+      if (oppRes.count)   animateToVal(document.getElementById('live-opps'),    oppRes.count);
+    } catch (e) { /* silent — fallback values remain */ }
+  }
+
+  fetchLiveStats();
+  setInterval(fetchLiveStats, 60000);
+})();
 </script>
 
 </body>
