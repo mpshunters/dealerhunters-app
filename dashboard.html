@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <script src="config.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1072,6 +1073,97 @@
       font-size: 11px;
       color: rgba(255,255,255,0.16);
     }
+
+    /* ── Auth ── */
+    .user-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.55);
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 999px;
+      padding: 4px 12px;
+      white-space: nowrap;
+    }
+    .btn-signout {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.16);
+      color: rgba(255,255,255,0.45);
+      font-size: 11px;
+      font-family: inherit;
+      border-radius: 6px;
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .btn-signout:hover { color: #fff; border-color: rgba(255,255,255,0.38); }
+
+    /* ── Pipeline status ── */
+    .card { border-top: 3px solid transparent; }
+    .card[data-status="contacted"]       { border-top-color: #3B82F6; }
+    .card[data-status="in_conversation"] { border-top-color: #F59E0B; }
+    .card[data-status="proposal_sent"]   { border-top-color: #8B5CF6; }
+    .card[data-status="won"]             { border-top-color: #10B981; }
+    .card[data-status="lost"]            { border-top-color: #EF4444; opacity: 0.55; }
+
+    .status-select {
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      color: #374151;
+      background: #F9FAFB;
+      border: 1.5px solid #E5E7EB;
+      border-radius: 7px;
+      padding: 6px 10px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .status-select:hover { border-color: #9CA3AF; }
+
+    .won-badge { font-size: 15px; line-height: 1; }
+
+    /* ── Campaign badge ── */
+    .campaign-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 500;
+      color: #E5E7EB;
+      background: #1F2937;
+      border-radius: 999px;
+      padding: 3px 10px;
+      margin: 4px 0 2px;
+    }
+
+    /* ── Signal trend chart ── */
+    .chart-card {
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid #E8ECF4;
+      padding: 16px 20px 14px;
+      margin-bottom: 18px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    .chart-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #9CA3AF;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .chart-wrap { height: 120px; position: relative; }
+
+    /* ── Stage filter pill divider ── */
+    .pill-divider {
+      width: 1px;
+      height: 20px;
+      background: #E5E7EB;
+      margin: 0 4px;
+      flex-shrink: 0;
+      align-self: center;
+    }
   </style>
 </head>
 <body>
@@ -1107,6 +1199,8 @@
       Last updated: <strong id="last-updated">—</strong>
       <span class="refresh-status" id="refresh-status"></span>
     </div>
+    <span class="user-chip" id="user-email"></span>
+    <button class="btn-signout" id="btn-signout">Sign Out</button>
     <div class="settings-wrap" id="settings-wrap">
       <button class="settings-btn" id="settings-btn" title="Contact platform settings">
         <span class="gear-icon">⚙</span>
@@ -1142,6 +1236,13 @@
       <button class="filter-pill" data-filter="Expansion">Expansion</button>
       <button class="filter-pill" data-filter="Weak Digital">Weak Digital</button>
       <button class="filter-pill hot-pill" data-filter="Hot Leads">🔥 Hot Leads</button>
+      <span class="pill-divider"></span>
+      <button class="filter-pill" data-filter="stage:new">🆕 New</button>
+      <button class="filter-pill" data-filter="stage:contacted">📞 Contacted</button>
+      <button class="filter-pill" data-filter="stage:in_conversation">💬 In Conv.</button>
+      <button class="filter-pill" data-filter="stage:proposal_sent">📝 Proposal</button>
+      <button class="filter-pill" data-filter="stage:won">✅ Won</button>
+      <button class="filter-pill" data-filter="stage:lost">❌ Lost</button>
     </div>
     <div class="filter-right">
       <div class="search-wrap">
@@ -1185,6 +1286,10 @@
       <div class="stat-value" id="stat-contacted">0</div>
       <div class="stat-label">Contacted</div>
     </div>
+    <div class="stat-card green">
+      <div class="stat-value" id="stat-won">0</div>
+      <div class="stat-label">Won 🏆</div>
+    </div>
     <div class="stat-card">
       <div class="stat-value" id="stat-signals">—</div>
       <div class="stat-label">New This Week</div>
@@ -1192,6 +1297,13 @@
     <div class="stat-card">
       <div class="stat-value" id="stat-dealerships">—</div>
       <div class="stat-label">Dealerships in DB</div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title">Signal Activity — Last 30 Days</div>
+    <div class="chart-wrap">
+      <canvas id="trend-chart"></canvas>
     </div>
   </div>
 
@@ -1258,6 +1370,21 @@ const SIGNAL_CONFIG = {
   'New Rooftop':       { label: 'New Rooftop',       color: '#166534', bg: '#F0FDF4', accent: '#10B981' },
 };
 const DEFAULT_SIGNAL = { label: 'Signal', color: '#344054', bg: '#F2F4F7', accent: '#9CA3AF' };
+
+const CAMPAIGN_MAP = {
+  'ownership_change':  '🔄 Vendor Transition Campaign',
+  'Ownership Change':  '🔄 Vendor Transition Campaign',
+  'new_rooftop':       '🏗 Grand Opening Package',
+  'New Rooftop':       '🏗 Grand Opening Package',
+  'weak_digital':      '📱 Digital Rescue Package',
+  'Weak Digital':      '📱 Digital Rescue Package',
+  'hiring':            '👥 BDC Launch Campaign',
+  'Marketing Hire':    '👥 BDC Launch Campaign',
+  'oem_event':         '🏷 Factory Event Campaign',
+  'OEM Event':         '🏷 Factory Event Campaign',
+  'leadership_change': '🤝 New Leadership Outreach',
+  'Leadership Change': '🤝 New Leadership Outreach',
+};
 
 const OUTREACH_STEPS = [
   { key: 'ip_ad',          label: 'IP ad running' },
@@ -1389,9 +1516,13 @@ function exportCSV() {
 
 function getFiltered() {
   return allData.filter(item => {
-    if (item.status === 'contacted') return false;
-    if (activeFilter === 'Hot Leads') return !!item.is_hot_lead;
-    if (activeFilter !== 'All' && getSignal(item).label !== activeFilter) return false;
+    if (activeFilter.startsWith('stage:')) {
+      if ((item.status || 'new') !== activeFilter.replace('stage:', '')) return false;
+    } else if (activeFilter === 'Hot Leads') {
+      if (!item.is_hot_lead) return false;
+    } else if (activeFilter !== 'All') {
+      if (getSignal(item).label !== activeFilter) return false;
+    }
     if (searchQuery && !(item.dealership_name || '').toLowerCase().includes(searchQuery)) return false;
     return true;
   });
@@ -1447,7 +1578,7 @@ function renderScoreBars(data) {
 
 /* ── Stats ── */
 function updateStats(data) {
-  const active    = data.filter(d => d.status !== 'contacted');
+  const active    = data.filter(d => (d.status || 'new') !== 'lost');
   const yesterday = new Date(Date.now() - 864e5);
 
   const ownerCount = active.filter(d => {
@@ -1463,6 +1594,7 @@ function updateStats(data) {
   const scores = active.map(d => Number(d.confidence_score ?? d.fit_score ?? 0)).filter(Boolean);
   const avg    = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
 
+  const wonCount = data.filter(d => d.status === 'won').length;
   contactedCount = data.filter(d => d.status === 'contacted').length;
   totalActive    = active.length;
 
@@ -1478,6 +1610,8 @@ function updateStats(data) {
   animateCount(statHiring,  hiringCount);
   animateCount(statScore,   avg);
   animateCount(statContact, contactedCount);
+  const statWonEl = document.getElementById('stat-won');
+  if (statWonEl) animateCount(statWonEl, wonCount);
 
   const trendTotal = document.getElementById('stat-trend-total');
   const trendOwner = document.getElementById('stat-trend-ownership');
@@ -1549,7 +1683,9 @@ function buildCard(item, i) {
   const score    = item.confidence_score ?? item.fit_score ?? 0;
   const summary  = item.ai_summary  || 'No summary available.';
   const pitch    = item.pitch_angle || item.recommended_offer || 'No pitch available.';
-  const isNew    = item.status === 'new';
+  const status   = item.status || 'new';
+  const isNew    = status === 'new';
+  const isWon    = status === 'won';
   const delay    = Math.min(i, 8) * 75;
   const detected = timeAgo(item.created_at);
 
@@ -1586,8 +1722,22 @@ function buildCard(item, i) {
       <span class="outreach-step-label">${s.label}</span>
     </label>`).join('');
 
+  const campaignLabel = CAMPAIGN_MAP[item.signal_type || item.opportunity_type || ''];
+  const campaignHtml  = campaignLabel ? `<span class="campaign-badge">${campaignLabel}</span>` : '';
+
+  const stageOptions = [
+    ['new',             '🆕 New'],
+    ['contacted',       '📞 Contacted'],
+    ['in_conversation', '💬 In Conversation'],
+    ['proposal_sent',   '📝 Proposal Sent'],
+    ['won',             '✅ Won'],
+    ['lost',            '❌ Lost'],
+  ].map(([val, lbl]) =>
+    `<option value="${val}"${status === val ? ' selected' : ''}>${lbl}</option>`
+  ).join('');
+
   return `
-    <div class="card" style="animation-delay:${delay}ms;border-left-color:${signal.accent}">
+    <div class="card" data-status="${status}" data-card-id="${item.id}" style="animation-delay:${delay}ms;border-left-color:${signal.accent}">
       <div class="card-top">
         <div class="card-identity">
           <div class="card-name-row">
@@ -1595,6 +1745,7 @@ function buildCard(item, i) {
             <div class="dealer-name">${esc(name)}</div>
             ${item.is_hot_lead ? '<span class="hot-badge">🔥 Hot Lead</span>' : ''}
             ${isNew ? '<span class="new-badge">NEW</span>' : ''}
+            ${isWon ? '<span class="won-badge">🏆</span>' : ''}
           </div>
           <div class="location">${PIN_ICON} ${esc(location)}</div>
           ${websiteHtml}
@@ -1615,6 +1766,7 @@ function buildCard(item, i) {
         </div>
       </div>
       <span class="badge" style="color:${signal.color};background:${signal.bg}">${signal.label}</span>
+      ${campaignHtml}
       <div class="summary-wrap">
         <span class="ai-badge">AI</span>
         <div class="summary">${esc(summary)}</div>
@@ -1628,7 +1780,7 @@ function buildCard(item, i) {
         <div class="card-footer-right">
           <a href="${esc(getContactUrl(name, item.website || ''))}"
             target="_blank" rel="noopener noreferrer" class="btn-find-contact">Find Contact</a>
-          <button class="btn-contact" data-id="${item.id}">Mark Contacted</button>
+          <select class="status-select" data-id="${item.id}">${stageOptions}</select>
         </div>
       </div>
       <div class="outreach-tracker">
@@ -1699,75 +1851,103 @@ function renderCards(data) {
   triggerGauges();
 }
 
-/* ── Mark Contacted — success flip then collapse ── */
-async function markContacted(id, card, btn) {
-  btn.textContent = 'Saving…';
-  btn.disabled    = true;
-  card.style.pointerEvents = 'none';
-
-  const { error } = await client
-    .from('opportunities')
-    .update({ status: 'contacted' })
-    .eq('id', id);
-
-  if (error) {
-    console.error('Mark contacted error:', error);
-    btn.textContent = 'Mark Contacted';
-    btn.disabled    = false;
-    card.style.pointerEvents = '';
-    return;
-  }
+/* ── Status update (pipeline) ── */
+async function updateStatus(id, newStatus) {
+  const { error } = await client.from('opportunities').update({ status: newStatus }).eq('id', id);
+  if (error) { console.error('Status update error:', error); return; }
 
   const item = allData.find(d => String(d.id) === String(id));
-  if (item) item.status = 'contacted';
+  if (item) item.status = newStatus;
 
-  /* Lock height → swap to success state */
-  const h = card.scrollHeight;
-  card.style.maxHeight = h + 'px';
-  card.style.overflow  = 'hidden';
-  card.style.transition = 'background 0.3s ease, border-left-color 0.3s ease';
-  card.style.background      = 'rgba(240,253,244,0.7)';
-  card.style.borderLeftColor = '#10B981';
+  const card = document.querySelector(`.card[data-card-id="${id}"]`);
+  if (card) {
+    card.dataset.status = newStatus;
+    const nameRow   = card.querySelector('.card-name-row');
+    const wonBadge  = nameRow?.querySelector('.won-badge');
+    if (newStatus === 'won' && !wonBadge && nameRow) {
+      nameRow.insertAdjacentHTML('beforeend', '<span class="won-badge">🏆</span>');
+    } else if (newStatus !== 'won' && wonBadge) {
+      wonBadge.remove();
+    }
+  }
 
-  card.innerHTML = `
-    <div class="contacted-success">
-      <div class="contacted-check">✓</div>
-      <div class="contacted-success-text">Added to pipeline</div>
-      <div class="contacted-success-sub">Marked as contacted</div>
-    </div>`;
+  updateStats(allData);
+}
 
-  await sleep(1500);
+/* ── Signal trend chart ── */
+let trendChart = null;
 
-  card.style.transition = [
-    'opacity .28s ease',
-    'max-height .42s ease .06s',
-    'min-height .42s ease .06s',
-    'margin-bottom .42s ease .06s',
-    'padding .42s ease .06s',
-  ].join(', ');
+function buildTrendChart(data) {
+  const canvas = document.getElementById('trend-chart');
+  if (!canvas || typeof Chart === 'undefined') return;
 
-  card.style.opacity       = '0';
-  card.style.maxHeight     = '0';
-  card.style.minHeight     = '0';
-  card.style.marginBottom  = '0';
-  card.style.paddingTop    = '0';
-  card.style.paddingBottom = '0';
+  const labels     = [];
+  const allCounts  = [];
+  const hotCounts  = [];
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
 
-  await sleep(520);
-  card.remove();
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(todayStart);
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().slice(0, 10);
+    labels.push(i === 0 ? 'Today' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+    allCounts.push(data.filter(x => x.created_at && x.created_at.startsWith(dateStr)).length);
+    hotCounts.push(data.filter(x => x.created_at && x.created_at.startsWith(dateStr) && x.is_hot_lead).length);
+  }
 
-  /* Clean up orphaned separators */
-  resultsEl.querySelectorAll('.card-sep').forEach(sep => {
-    if (!sep.nextElementSibling || sep.nextElementSibling.classList.contains('card-sep')
-        || !sep.previousElementSibling) sep.remove();
+  if (trendChart) trendChart.destroy();
+  trendChart = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'All Signals',
+          data: allCounts,
+          borderColor: '#10B981',
+          backgroundColor: 'rgba(16,185,129,0.07)',
+          fill: true,
+          tension: 0.4,
+          pointRadius: 2,
+          pointHoverRadius: 5,
+          borderWidth: 2,
+        },
+        {
+          label: 'Hot Leads',
+          data: hotCounts,
+          borderColor: '#F97316',
+          backgroundColor: 'rgba(249,115,22,0.05)',
+          fill: true,
+          tension: 0.4,
+          pointRadius: 2,
+          pointHoverRadius: 5,
+          borderWidth: 2,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          labels: { color: '#9CA3AF', font: { family: 'Inter', size: 11 }, boxWidth: 10, padding: 16 },
+        },
+        tooltip: { mode: 'index', intersect: false },
+      },
+      scales: {
+        x: {
+          ticks: { color: '#9CA3AF', font: { size: 10 }, maxTicksLimit: 8, maxRotation: 0 },
+          grid:  { color: 'rgba(0,0,0,0.03)' },
+        },
+        y: {
+          ticks: { color: '#9CA3AF', font: { size: 10 }, stepSize: 1, precision: 0 },
+          grid:  { color: 'rgba(0,0,0,0.03)' },
+          beginAtZero: true,
+        },
+      },
+    },
   });
-
-  contactedCount++;
-  totalActive  = Math.max(0, totalActive  - 1);
-  totalShowing = Math.max(0, totalShowing - 1);
-  animateCount(statContact, contactedCount);
-  statTotal.textContent = totalActive;
-  updateMeta();
 }
 
 /* ── Event wiring ── */
@@ -1795,12 +1975,6 @@ document.addEventListener('keydown', e => {
   }
 });
 
-resultsEl.addEventListener('click', e => {
-  const btn = e.target.closest('.btn-contact');
-  if (!btn || btn.disabled) return;
-  markContacted(btn.dataset.id, btn.closest('.card'), btn);
-});
-
 document.getElementById('btn-export-csv').addEventListener('click', exportCSV);
 
 const notesSaveTimers = {};
@@ -1818,6 +1992,9 @@ resultsEl.addEventListener('focusout', async e => {
 });
 
 resultsEl.addEventListener('change', async e => {
+  const sel = e.target.closest('.status-select');
+  if (sel) { await updateStatus(sel.dataset.id, sel.value); return; }
+
   const checkbox = e.target.closest('.step-check');
   if (!checkbox) return;
 
@@ -1934,6 +2111,7 @@ async function loadOpportunities() {
   const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
   animateCount(statSignals, data.filter(d => new Date(d.created_at).getTime() >= oneWeekAgo).length);
   updateStats(data);
+  buildTrendChart(data);
 
   const latest = data.reduce((a, b) =>
     new Date(a.created_at) > new Date(b.created_at) ? a : b, data[0]);
@@ -1942,7 +2120,20 @@ async function loadOpportunities() {
   renderCards(getFiltered());
 }
 
-loadOpportunities();
+(async () => {
+  const { data: { session } } = await client.auth.getSession();
+  if (!session) { window.location.href = '/login'; return; }
+
+  const emailEl = document.getElementById('user-email');
+  if (emailEl) emailEl.textContent = session.user.email;
+
+  document.getElementById('btn-signout').addEventListener('click', async () => {
+    await client.auth.signOut();
+    window.location.href = '/login';
+  });
+
+  loadOpportunities();
+})();
 </script>
 
 </body>

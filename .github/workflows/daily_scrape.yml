@@ -13,6 +13,16 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      - name: Check day of week
+        id: check_day
+        run: |
+          DAY=$(date +%u)
+          if [ "$DAY" = "1" ]; then
+            echo "is_monday=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_monday=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -78,3 +88,13 @@ jobs:
           DIGEST_EMAIL_TO: ${{ secrets.DIGEST_EMAIL_TO }}
           DIGEST_EMAIL_FROM: ${{ secrets.DIGEST_EMAIL_FROM }}
         run: python scripts/send_daily_digest.py
+
+      - name: Send weekly report
+        if: github.event_name == 'schedule' && steps.check_day.outputs.is_monday == 'true'
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          DIGEST_EMAIL_TO: ${{ secrets.DIGEST_EMAIL_TO }}
+          DIGEST_EMAIL_FROM: ${{ secrets.DIGEST_EMAIL_FROM }}
+        run: python scripts/send_weekly_report.py

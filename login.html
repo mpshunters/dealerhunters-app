@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>DealerHunters – Sign In</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: #0F172A;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .login-card {
+      background: #1F2937;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+    }
+
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 32px;
+    }
+
+    .logo-wordmark { display: flex; flex-direction: column; gap: 2px; }
+
+    .logo-name {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      line-height: 1;
+    }
+
+    .logo-name .dealer  { color: #fff; }
+    .logo-name .hunters { color: #10B981; }
+
+    .logo-tagline {
+      font-size: 10px;
+      color: rgba(255,255,255,0.35);
+      font-weight: 400;
+    }
+
+    h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: rgba(255,255,255,0.45);
+      margin-bottom: 28px;
+    }
+
+    .field { margin-bottom: 16px; }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.55);
+      margin-bottom: 6px;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      background: rgba(255,255,255,0.06);
+      border: 1.5px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #fff;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input[type="email"]:focus,
+    input[type="password"]:focus { border-color: #10B981; }
+
+    input::placeholder { color: rgba(255,255,255,0.22); }
+
+    .btn-signin {
+      width: 100%;
+      background: #10B981;
+      color: #fff;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      padding: 11px;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.15s, opacity 0.15s;
+    }
+
+    .btn-signin:hover:not(:disabled) { background: #059669; }
+    .btn-signin:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .error-msg {
+      background: rgba(239,68,68,0.12);
+      border: 1px solid rgba(239,68,68,0.28);
+      color: #FCA5A5;
+      font-size: 12.5px;
+      border-radius: 7px;
+      padding: 9px 12px;
+      margin-top: 14px;
+      display: none;
+    }
+
+    .error-msg.visible { display: block; }
+
+    .request-access {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.35);
+    }
+
+    .request-access a {
+      color: #10B981;
+      text-decoration: none;
+    }
+
+    .request-access a:hover { text-decoration: underline; }
+
+    .footer-note {
+      margin-top: 32px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.15);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-card">
+  <div class="logo-row">
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+      <circle cx="20" cy="20" r="18" stroke="#10B981" stroke-width="1.5"/>
+      <line x1="20" y1="1"  x2="20" y2="9"  stroke="#10B981" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="20" y1="31" x2="20" y2="39" stroke="#10B981" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="1"  y1="20" x2="9"  y2="20" stroke="#10B981" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="31" y1="20" x2="39" y2="20" stroke="#10B981" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="20" cy="20" r="2" fill="#10B981"/>
+      <rect x="5" y="21" width="30" height="8" rx="1.5" stroke="#10B981" stroke-width="1.5"/>
+      <path d="M9 21 L13 13 H27 L32 21" stroke="#10B981" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="12.5" cy="29" r="4" stroke="#10B981" stroke-width="1.5"/>
+      <circle cx="27.5" cy="29" r="4" stroke="#10B981" stroke-width="1.5"/>
+    </svg>
+    <div class="logo-wordmark">
+      <div class="logo-name">
+        <span class="dealer">Dealer</span><span class="hunters">Hunters</span>
+      </div>
+      <div class="logo-tagline">Dealer signals. Delivered daily.</div>
+    </div>
+  </div>
+
+  <h2>Sign in</h2>
+  <p class="subtitle">Access your intelligence dashboard</p>
+
+  <form id="login-form" novalidate>
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" placeholder="you@company.com"
+        required autocomplete="email" />
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="••••••••"
+        required autocomplete="current-password" />
+    </div>
+    <button type="submit" class="btn-signin" id="btn-signin">Sign In</button>
+    <div class="error-msg" id="error-msg"></div>
+  </form>
+
+  <div class="request-access">
+    Not a member?
+    <a href="mailto:signals@mpshunters.com?subject=DealerHunters Access Request">Request Access</a>
+  </div>
+</div>
+
+<p class="footer-note">© 2026 DealerHunters · True Measure Advisors, LLC</p>
+
+<script>
+const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+client.auth.getSession().then(({ data: { session } }) => {
+  if (session) window.location.href = '/dashboard';
+});
+
+const form   = document.getElementById('login-form');
+const btn    = document.getElementById('btn-signin');
+const errMsg = document.getElementById('error-msg');
+
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  btn.disabled    = true;
+  btn.textContent = 'Signing in…';
+  errMsg.classList.remove('visible');
+
+  const email    = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+
+  const { error } = await client.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    errMsg.textContent = error.message === 'Invalid login credentials'
+      ? 'Incorrect email or password. Try again.'
+      : error.message;
+    errMsg.classList.add('visible');
+    btn.disabled    = false;
+    btn.textContent = 'Sign In';
+    return;
+  }
+
+  window.location.href = '/dashboard';
+});
+</script>
+</body>
+</html>
