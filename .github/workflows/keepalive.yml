@@ -1,0 +1,14 @@
+name: Keep Workflows Active
+
+on:
+  schedule:
+    - cron: "0 10 * * *"
+  workflow_dispatch:
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Keep alive
+        run: echo "Keepalive ping $(date)"
