@@ -1164,6 +1164,118 @@
       flex-shrink: 0;
       align-self: center;
     }
+
+    /* ── Account tooltip ── */
+    .user-chip[title] { cursor: default; }
+
+    /* ── Revenue Won stat card ── */
+    .stat-card.revenue { background: linear-gradient(135deg, #065F46, #047857); }
+    .stat-card.revenue .stat-value { color: #fff; font-size: 22px; }
+    .stat-card.revenue .stat-label { color: rgba(255,255,255,0.75); }
+    .stat-card.revenue .stat-sublabel { font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 2px; }
+
+    /* ── Won Value Modal ── */
+    .won-modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55); z-index: 9999;
+      align-items: center; justify-content: center;
+    }
+    .won-modal-overlay.open { display: flex; }
+    .won-modal {
+      background: #fff; border-radius: 14px;
+      padding: 28px 32px; width: 340px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    }
+    .won-modal h3 { margin: 0 0 8px; font-size: 17px; color: #111827; }
+    .won-modal p  { margin: 0 0 18px; font-size: 13px; color: #6B7280; }
+    .won-modal input {
+      width: 100%; box-sizing: border-box;
+      font-size: 24px; font-weight: 700; text-align: center;
+      border: 2px solid #E5E7EB; border-radius: 10px;
+      padding: 12px 16px; margin-bottom: 18px;
+      font-family: inherit; color: #111827;
+      outline: none; transition: border-color 0.15s;
+    }
+    .won-modal input:focus { border-color: #10B981; }
+    .won-modal-actions { display: flex; gap: 10px; }
+    .won-modal-actions button {
+      flex: 1; padding: 10px; border-radius: 8px;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+      border: none; font-family: inherit;
+    }
+    .btn-won-skip { background: #F3F4F6; color: #6B7280; }
+    .btn-won-save { background: #10B981; color: #fff; }
+    .btn-won-skip:hover { background: #E5E7EB; }
+    .btn-won-save:hover { background: #059669; }
+
+    /* ── Market heat map ── */
+    .map-card {
+      background: #fff; border-radius: 12px;
+      border: 1px solid #E8ECF4; padding: 16px 20px 18px;
+      margin-bottom: 18px; box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    .map-card-header {
+      display: flex; align-items: center;
+      justify-content: space-between; margin-bottom: 12px;
+    }
+    .map-title {
+      font-size: 11px; font-weight: 700; color: #9CA3AF;
+      letter-spacing: 0.8px; text-transform: uppercase;
+    }
+    .btn-toggle-map {
+      font-size: 11px; background: #F3F4F6; border: none;
+      border-radius: 6px; padding: 4px 10px; cursor: pointer;
+      color: #6B7280; font-family: inherit; font-weight: 500;
+    }
+    .btn-toggle-map:hover { background: #E5E7EB; }
+    .state-grid {
+      display: grid;
+      grid-template-columns: repeat(11, 1fr);
+      grid-template-rows: repeat(10, 1fr);
+      gap: 3px; height: 160px;
+    }
+    .state-tile {
+      border-radius: 3px; display: flex;
+      align-items: center; justify-content: center;
+      font-size: 8px; font-weight: 700; color: #fff;
+      position: relative; cursor: default;
+    }
+    .state-tile:hover::after {
+      content: attr(data-tip);
+      position: absolute; bottom: 115%; left: 50%;
+      transform: translateX(-50%);
+      background: #111827; color: #fff; font-size: 10px;
+      padding: 4px 8px; border-radius: 6px;
+      white-space: nowrap; z-index: 100; pointer-events: none;
+    }
+
+    /* ── Back to top ── */
+    .btn-top {
+      display: none; position: fixed;
+      bottom: 24px; right: 24px;
+      width: 40px; height: 40px;
+      background: #10B981; color: #fff;
+      border: none; border-radius: 50%;
+      font-size: 18px; cursor: pointer;
+      box-shadow: 0 4px 12px rgba(16,185,129,0.4);
+      z-index: 200; align-items: center; justify-content: center;
+      transition: background 0.15s;
+    }
+    .btn-top.visible { display: flex; }
+    .btn-top:hover { background: #059669; }
+
+    /* ── Mobile ── */
+    @media (max-width: 768px) {
+      .filter-pills { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+      .btn-export-csv { display: none; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .card-footer { flex-direction: column; gap: 8px; }
+      .card-footer-right { width: 100%; justify-content: space-between; }
+      .score-gauge { width: 44px !important; height: 44px !important; }
+      .score-gauge svg { width: 44px !important; height: 44px !important; }
+      .header-meta { display: none; }
+      .main { padding: 0 12px 60px; }
+    }
   </style>
 </head>
 <body>
@@ -1290,6 +1402,11 @@
       <div class="stat-value" id="stat-won">0</div>
       <div class="stat-label">Won 🏆</div>
     </div>
+    <div class="stat-card revenue">
+      <div class="stat-value" id="stat-revenue">$0</div>
+      <div class="stat-label">Revenue Won 💰</div>
+      <div class="stat-sublabel" id="stat-pipeline">Pipeline: $0</div>
+    </div>
     <div class="stat-card">
       <div class="stat-value" id="stat-signals">—</div>
       <div class="stat-label">New This Week</div>
@@ -1297,6 +1414,16 @@
     <div class="stat-card">
       <div class="stat-value" id="stat-dealerships">—</div>
       <div class="stat-label">Dealerships in DB</div>
+    </div>
+  </div>
+
+  <div class="map-card" id="map-card">
+    <div class="map-card-header">
+      <div class="map-title">Market Coverage — Leads by State</div>
+      <button class="btn-toggle-map" id="btn-toggle-map">Hide Map</button>
+    </div>
+    <div id="state-grid-wrap">
+      <div class="state-grid" id="state-grid"></div>
     </div>
   </div>
 
@@ -1347,6 +1474,22 @@
   </div>
 </footer>
 
+<!-- ── Won Value Modal ── -->
+<div class="won-modal-overlay" id="won-modal-overlay">
+  <div class="won-modal">
+    <h3>🏆 Deal Won!</h3>
+    <p>Enter the deal value to track revenue (optional)</p>
+    <input type="number" id="won-value-input" placeholder="0" min="0" step="100" />
+    <div class="won-modal-actions">
+      <button class="btn-won-skip" id="btn-won-skip">Skip</button>
+      <button class="btn-won-save" id="btn-won-save">Save Value</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Back to top ── -->
+<button class="btn-top" id="btn-top" aria-label="Back to top">↑</button>
+
 <script>
 const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -1393,6 +1536,34 @@ const OUTREACH_STEPS = [
   { key: 'email_sequence', label: 'Email sequence started' },
   { key: 'phone_call',     label: 'Phone call made' },
 ];
+
+/* ── State tile cartogram: [abbr, col, row] ── */
+const TILE_MAP = [
+  ['AK', 1,  1], ['ME', 11, 1],
+  ['VT', 10, 2], ['NH', 11, 2],
+  ['WA', 1,  3], ['MT', 2,  3], ['ND', 3,  3], ['MN', 4,  3], ['WI', 6,  3], ['MI', 7,  3], ['NY', 9,  3], ['MA', 10, 3],
+  ['OR', 1,  4], ['ID', 2,  4], ['SD', 3,  4], ['IA', 4,  4], ['IL', 5,  4], ['IN', 6,  4], ['OH', 7,  4], ['PA', 8,  4], ['NJ', 9,  4], ['CT', 10, 4], ['RI', 11, 4],
+  ['NV', 1,  5], ['WY', 2,  5], ['NE', 3,  5], ['MO', 4,  5], ['KY', 5,  5], ['WV', 6,  5], ['VA', 7,  5], ['MD', 8,  5], ['DE', 9,  5],
+  ['CA', 1,  6], ['UT', 2,  6], ['CO', 3,  6], ['KS', 4,  6], ['AR', 5,  6], ['TN', 6,  6], ['NC', 7,  6], ['SC', 8,  6],
+  ['AZ', 2,  7], ['NM', 3,  7], ['OK', 4,  7], ['LA', 5,  7], ['MS', 6,  7], ['AL', 7,  7], ['GA', 8,  7],
+  ['TX', 4,  8], ['FL', 7,  8],
+  ['HI', 1,  10],
+];
+
+function formatCurrency(n) {
+  if (n >= 1000000) return `$${(n / 1000000).toFixed(1)}M`;
+  if (n >= 1000)    return `$${(n / 1000).toFixed(0)}K`;
+  return `$${n.toLocaleString()}`;
+}
+
+function tileColor(count, max) {
+  if (count === 0) return '#E5E7EB';
+  const t = Math.min(count / Math.max(max, 1), 1);
+  const r = Math.round(167 - 161 * t);
+  const g = Math.round(243 - 148 * t);
+  const b = Math.round(208 - 138 * t);
+  return `rgb(${r},${g},${b})`;
+}
 
 const PIN_ICON = `<svg width="10" height="13" viewBox="0 0 12 15" fill="none">
   <path d="M6 0C3.51 0 1.5 2.01 1.5 4.5c0 3.375 4.5 9 4.5 9s4.5-5.625 4.5-9C10.5 2.01 8.49 0 6 0zm0 6.375A1.875 1.875 0 1 1 6 2.625a1.875 1.875 0 0 1 0 3.75z" fill="#9CA3AF"/>
@@ -1594,7 +1765,12 @@ function updateStats(data) {
   const scores = active.map(d => Number(d.confidence_score ?? d.fit_score ?? 0)).filter(Boolean);
   const avg    = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
 
-  const wonCount = data.filter(d => d.status === 'won').length;
+  const wonItems     = data.filter(d => d.status === 'won');
+  const wonCount     = wonItems.length;
+  const revenueWon   = wonItems.reduce((s, d) => s + (Number(d.won_value) || 0), 0);
+  const pipelineVal  = data
+    .filter(d => ['contacted', 'in_conversation', 'proposal_sent'].includes(d.status || ''))
+    .reduce((s, d) => s + (Number(d.won_value) || 0), 0);
   contactedCount = data.filter(d => d.status === 'contacted').length;
   totalActive    = active.length;
 
@@ -1612,6 +1788,11 @@ function updateStats(data) {
   animateCount(statContact, contactedCount);
   const statWonEl = document.getElementById('stat-won');
   if (statWonEl) animateCount(statWonEl, wonCount);
+
+  const statRevEl  = document.getElementById('stat-revenue');
+  const statPipeEl = document.getElementById('stat-pipeline');
+  if (statRevEl)  statRevEl.textContent  = formatCurrency(revenueWon);
+  if (statPipeEl) statPipeEl.textContent = `Pipeline: ${formatCurrency(pipelineVal)}`;
 
   const trendTotal = document.getElementById('stat-trend-total');
   const trendOwner = document.getElementById('stat-trend-ownership');
@@ -1872,6 +2053,7 @@ async function updateStatus(id, newStatus) {
   }
 
   updateStats(allData);
+  if (newStatus === 'won') showWonModal(id);
 }
 
 /* ── Signal trend chart ── */
@@ -1949,6 +2131,80 @@ function buildTrendChart(data) {
     },
   });
 }
+
+/* ── Market heat map ── */
+function buildHeatMap(data) {
+  const gridEl = document.getElementById('state-grid');
+  if (!gridEl) return;
+
+  const counts = {};
+  data.forEach(d => {
+    const st = d.state;
+    if (st) counts[st] = (counts[st] || 0) + 1;
+  });
+  const max = Math.max(...Object.values(counts), 1);
+
+  gridEl.innerHTML = TILE_MAP.map(([abbr, col, row]) => {
+    const n   = counts[abbr] || 0;
+    const bg  = tileColor(n, max);
+    const tip = `${abbr}: ${n} lead${n !== 1 ? 's' : ''}`;
+    return `<div class="state-tile"
+      style="grid-column:${col};grid-row:${row};background:${bg}"
+      data-tip="${tip}">${abbr}</div>`;
+  }).join('');
+}
+
+/* ── Won value modal ── */
+let wonModalId = null;
+
+function showWonModal(id) {
+  wonModalId = id;
+  const overlay = document.getElementById('won-modal-overlay');
+  const input   = document.getElementById('won-value-input');
+  input.value   = '';
+  overlay.classList.add('open');
+  setTimeout(() => input.focus(), 80);
+}
+
+function closeWonModal() {
+  document.getElementById('won-modal-overlay').classList.remove('open');
+  wonModalId = null;
+}
+
+document.getElementById('won-modal-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('won-modal-overlay')) closeWonModal();
+});
+
+document.getElementById('btn-won-skip').addEventListener('click', closeWonModal);
+
+document.getElementById('btn-won-save').addEventListener('click', async () => {
+  const val = parseFloat(document.getElementById('won-value-input').value) || 0;
+  if (wonModalId && val > 0) {
+    await client.from('opportunities').update({ won_value: val }).eq('id', wonModalId);
+    const item = allData.find(d => String(d.id) === String(wonModalId));
+    if (item) item.won_value = val;
+    updateStats(allData);
+  }
+  closeWonModal();
+});
+
+/* ── Heat map toggle ── */
+document.getElementById('btn-toggle-map').addEventListener('click', () => {
+  const wrap = document.getElementById('state-grid-wrap');
+  const btn  = document.getElementById('btn-toggle-map');
+  const hidden = wrap.style.display === 'none';
+  wrap.style.display = hidden ? '' : 'none';
+  btn.textContent    = hidden ? 'Hide Map' : 'Show Map';
+});
+
+/* ── Back to top ── */
+window.addEventListener('scroll', () => {
+  const btn = document.getElementById('btn-top');
+  if (btn) btn.classList.toggle('visible', window.scrollY > 400);
+});
+document.getElementById('btn-top').addEventListener('click', () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
 
 /* ── Event wiring ── */
 document.getElementById('filter-pills').addEventListener('click', e => {
@@ -2112,6 +2368,7 @@ async function loadOpportunities() {
   animateCount(statSignals, data.filter(d => new Date(d.created_at).getTime() >= oneWeekAgo).length);
   updateStats(data);
   buildTrendChart(data);
+  buildHeatMap(data);
 
   const latest = data.reduce((a, b) =>
     new Date(a.created_at) > new Date(b.created_at) ? a : b, data[0]);
@@ -2125,7 +2382,10 @@ async function loadOpportunities() {
   if (!session) { window.location.href = '/login'; return; }
 
   const emailEl = document.getElementById('user-email');
-  if (emailEl) emailEl.textContent = session.user.email;
+  if (emailEl) {
+    emailEl.textContent = '👤 CR Advertising';
+    emailEl.title       = session.user.email;
+  }
 
   document.getElementById('btn-signout').addEventListener('click', async () => {
     await client.auth.signOut();
