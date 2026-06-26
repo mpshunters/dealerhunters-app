@@ -134,6 +134,49 @@ rules = [
         "fit_score": 2,
         "active": True,
     },
+
+    # ── v3 additions ──────────────────────────────────────────────────────────
+
+    # hiring — digital/marketing roles (very specific to CR Advertising targets)
+    {
+        "rule_name": "hiring_high_v3",
+        "signal_type": "hiring",
+        "keywords": [
+            "e-commerce director", "digital retailing manager",
+            "online sales director", "customer experience manager",
+            "brand ambassador", "social media manager",
+            "paid media manager", "SEM specialist",
+            "automotive marketing manager",
+        ],
+        "fit_score": 3,
+        "active": True,
+    },
+
+    # hiring — growth/analytics roles (moderate signal)
+    {
+        "rule_name": "hiring_mid_v3",
+        "signal_type": "hiring",
+        "keywords": [
+            "customer success", "lead generation", "growth manager",
+            "demand generation", "performance marketing",
+            "account manager", "business analyst", "data analyst",
+        ],
+        "fit_score": 2,
+        "active": True,
+    },
+
+    # oem_event — sales events and manufacturer programs (very specific)
+    {
+        "rule_name": "oem_event_high_v3",
+        "signal_type": "oem_event",
+        "keywords": [
+            "employee pricing", "friends and family pricing",
+            "conquest event", "pull ahead program",
+            "loyalty event", "red tag event", "tent sale",
+        ],
+        "fit_score": 3,
+        "active": True,
+    },
 ]
 
 inserted = 0
