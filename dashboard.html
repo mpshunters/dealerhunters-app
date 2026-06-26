@@ -216,6 +216,7 @@
     .platform-option.selected { color: #10B981; }
 
     /* ── Filter bar ───────────────────────────────────────────── */
+    /* ── Filter bar ── */
     .filter-bar-wrap {
       background: #ffffff;
       border-bottom: 1px solid #E8ECF4;
@@ -224,65 +225,109 @@
       z-index: 100;
       box-shadow: 0 2px 14px rgba(0,0,0,0.07);
     }
-
     .filter-bar {
       max-width: 960px;
       margin: 0 auto;
-      padding: 12px 16px 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-    }
-
-    .filter-row {
+      padding: 8px 16px;
       display: flex;
       align-items: center;
       gap: 10px;
+      transition: padding 0.2s;
     }
-    .filter-row-1 { padding-bottom: 10px; }
-    .filter-row-divider {
-      height: 1px;
-      background: #E8ECF4;
-      margin: 0 -16px;
-    }
-    .filter-row-2 { padding-top: 10px; }
+    .filter-bar-wrap.collapsed .filter-bar { padding-top: 5px; padding-bottom: 5px; }
 
-    .stage-label {
-      font-size: 10px;
-      font-weight: 700;
-      color: #C4C9D4;
-      letter-spacing: 0.9px;
-      text-transform: uppercase;
-      white-space: nowrap;
-      flex-shrink: 0;
+    /* Scrollable pills container */
+    .pills-outer {
+      flex: 1;
+      position: relative;
+      min-width: 0;
+      overflow: hidden;
     }
-
     .filter-pills {
       display: flex;
       align-items: center;
-      gap: 7px;
-      flex-wrap: wrap;
-      flex: 1;
-    }
-
-    .stage-pills {
-      display: flex;
-      align-items: center;
       gap: 6px;
-      flex-wrap: wrap;
+      overflow-x: auto;
+      flex-wrap: nowrap;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      padding: 3px 2px;
+    }
+    .filter-pills::-webkit-scrollbar { display: none; }
+    .pills-fade-left, .pills-fade-right {
+      position: absolute; top: 0; bottom: 0; width: 28px;
+      pointer-events: none; z-index: 2;
+    }
+    .pills-fade-left  { left:  0; background: linear-gradient(to right, #fff 40%, transparent); }
+    .pills-fade-right { right: 0; background: linear-gradient(to left,  #fff 40%, transparent); }
+    .pill-sep {
+      width: 1px; height: 18px; background: #E8ECF4;
+      flex-shrink: 0; margin: 0 3px; display: inline-block;
     }
 
+    /* Mini bar (collapsed state) */
+    .mini-filter-left {
+      display: none; align-items: center; gap: 8px; flex-shrink: 0;
+    }
+    .filter-bar-wrap.collapsed .pills-outer { display: none; }
+    .filter-bar-wrap.collapsed .mini-filter-left { display: flex; }
+    .mini-active-pill {
+      font-size: 12px; font-weight: 600; color: #111827;
+      background: #F3F4F6; border-radius: 999px;
+      padding: 4px 12px; white-space: nowrap;
+      max-width: 160px; overflow: hidden; text-overflow: ellipsis;
+    }
+    .btn-filters-toggle {
+      font-size: 12px; font-weight: 500; color: #6B7280;
+      background: transparent; border: 1.5px solid #E5E7EB;
+      border-radius: 999px; padding: 4px 11px;
+      cursor: pointer; font-family: inherit; white-space: nowrap;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-filters-toggle:hover { border-color: #10B981; color: #10B981; }
+
+    /* Temporary pills dropdown (collapsed + Filters▾ clicked) */
+    .pills-dropdown {
+      display: none;
+      position: absolute; left: 0; right: 0; top: 100%;
+      background: #fff; border-bottom: 1px solid #E8ECF4;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+      z-index: 99; padding: 10px 16px;
+    }
+    .pills-dropdown.open { display: block; }
+    .pills-dropdown-inner {
+      max-width: 960px; margin: 0 auto;
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    }
+
+    /* Pill styles */
+    .filter-pill {
+      background: transparent;
+      border: 1.5px solid #E5E7EB;
+      color: #6B7280;
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+      white-space: nowrap;
+      line-height: 1.4;
+      flex-shrink: 0;
+    }
+    .filter-pill:hover { border-color: #10B981; color: #10B981; }
+    .filter-pill.active {
+      background: #10B981; border-color: #10B981; color: #ffffff;
+      box-shadow: 0 0 0 3px rgba(16,185,129,0.18), 0 2px 8px rgba(16,185,129,0.3);
+    }
     .stage-pill {
-      font-size: 12px !important;
-      padding: 4px 10px !important;
-      color: #9CA3AF !important;
-      border-color: #EAECF0 !important;
-      background: #FAFAFA !important;
+      font-size: 12px; padding: 4px 10px;
+      color: #9CA3AF; border-color: #EAECF0; background: #FAFAFA;
     }
     .stage-pill:hover { border-color: #6366F1 !important; color: #6366F1 !important; background: transparent !important; }
     .stage-pill.active {
-      background: #6366F1 !important;
-      border-color: #6366F1 !important;
+      background: #6366F1 !important; border-color: #6366F1 !important;
       color: #fff !important;
       box-shadow: 0 0 0 3px rgba(99,102,241,0.15), 0 2px 6px rgba(99,102,241,0.25) !important;
     }
@@ -295,40 +340,14 @@
     }
     .territory-pill:hover { background: rgba(16,185,129,0.12) !important; }
     .territory-pill.active {
-      background: #10B981 !important;
-      border-color: #10B981 !important;
-      color: #fff !important;
-      box-shadow: 0 0 0 3px rgba(16,185,129,0.18) !important;
-    }
-
-    .filter-pill {
-      background: transparent;
-      border: 1.5px solid #E5E7EB;
-      color: #6B7280;
-      padding: 7px 16px;
-      border-radius: 999px;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      font-family: inherit;
-      transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
-      white-space: nowrap;
-      line-height: 1.4;
-    }
-
-    .filter-pill:hover { border-color: #10B981; color: #10B981; }
-
-    .filter-pill.active {
-      background: #10B981;
-      border-color: #10B981;
-      color: #ffffff;
-      box-shadow: 0 0 0 3px rgba(16,185,129,0.18), 0 2px 8px rgba(16,185,129,0.3);
+      background: #10B981 !important; border-color: #10B981 !important;
+      color: #fff !important; box-shadow: 0 0 0 3px rgba(16,185,129,0.18) !important;
     }
 
     .filter-right {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       flex-shrink: 0;
     }
 
@@ -1465,7 +1484,7 @@
 
     /* ── Mobile ── */
     @media (max-width: 768px) {
-      .filter-pills, .stage-pills { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+      .pills-outer { max-width: none; }
       .btn-export-csv { display: none; }
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
       .card-footer { flex-direction: column; gap: 8px; }
@@ -1509,9 +1528,14 @@
     body.dark-mode .pitch-text { color: var(--text); }
     body.dark-mode .summary { color: var(--text); }
     body.dark-mode .filter-bar-wrap { background: var(--filter-bg); border-color: rgba(255,255,255,0.08); }
-    body.dark-mode .filter-row-divider { background: rgba(255,255,255,0.06); }
     body.dark-mode .filter-pill { border-color: rgba(255,255,255,0.12); color: var(--text-muted); }
     body.dark-mode .filter-pill:hover { border-color: #10B981; color: #10B981; background: rgba(16,185,129,0.06); }
+    body.dark-mode .pills-fade-left  { background: linear-gradient(to right, #111827 40%, transparent); }
+    body.dark-mode .pills-fade-right { background: linear-gradient(to left,  #111827 40%, transparent); }
+    body.dark-mode .pills-dropdown { background: #111827; border-color: rgba(255,255,255,0.08); }
+    body.dark-mode .mini-active-pill { background: #1A2433; color: #E5E7EB; }
+    body.dark-mode .btn-filters-toggle { border-color: rgba(255,255,255,0.12); color: #9CA3AF; }
+    body.dark-mode .pill-sep { background: rgba(255,255,255,0.1); }
     body.dark-mode .search-input { background: var(--input-bg); border-color: rgba(255,255,255,0.12); color: var(--text); }
     body.dark-mode .notes-textarea { background: var(--input-bg); border-color: rgba(255,255,255,0.12); color: var(--text); }
     body.dark-mode .status-select { background: var(--input-bg); border-color: rgba(255,255,255,0.12); color: var(--text); }
@@ -1769,11 +1793,18 @@
 </header>
 
 <!-- ── Filter bar ── -->
-<div class="filter-bar-wrap">
+<div class="filter-bar-wrap" id="filter-bar-wrap">
   <div class="filter-bar">
 
-    <!-- Row 1: Signal type filters + search/export -->
-    <div class="filter-row filter-row-1">
+    <!-- Mini left: shown only when collapsed -->
+    <div class="mini-filter-left" id="mini-filter-left">
+      <span class="mini-active-pill" id="mini-active-pill">All</span>
+      <button class="btn-filters-toggle" id="btn-filters-toggle">Filters ▾</button>
+    </div>
+
+    <!-- Single scrollable pill row -->
+    <div class="pills-outer" id="pills-outer">
+      <div class="pills-fade-left"></div>
       <div class="filter-pills" id="filter-pills">
         <button class="filter-pill active" data-filter="All">All</button>
         <button class="filter-pill" data-filter="Ownership Change">Ownership Change</button>
@@ -1783,34 +1814,7 @@
         <button class="filter-pill" data-filter="Weak Digital">Weak Digital</button>
         <button class="filter-pill hot-pill" data-filter="Hot Leads">🔥 Hot Leads</button>
         <button class="filter-pill territory-pill" id="territory-filter-pill" data-filter="territory" style="display:none">📍 Territory</button>
-      </div>
-      <div class="filter-right">
-        <div class="view-toggle">
-          <button class="btn-view active" id="btn-view-list" title="List view">≡ List</button>
-          <button class="btn-view" id="btn-view-kanban" title="Kanban view">⊞ Kanban</button>
-        </div>
-        <div class="search-wrap">
-          <svg class="search-icon" width="14" height="14" viewBox="0 0 20 20" fill="none">
-            <circle cx="9" cy="9" r="7" stroke="#9CA3AF" stroke-width="1.8"/>
-            <path d="M16 16l-3.5-3.5" stroke="#9CA3AF" stroke-width="1.8" stroke-linecap="round"/>
-          </svg>
-          <input type="text" class="search-input" id="search-input"
-            placeholder="Search dealerships…" autocomplete="off" />
-          <span class="search-shortcut">⌘K</span>
-        </div>
-        <button class="btn-export-csv" id="btn-export-csv">⬇ Export CSV</button>
-        <button class="btn-report" id="btn-report">📄 Download Report</button>
-        <div class="results-meta" id="results-meta"></div>
-      </div>
-    </div>
-
-    <!-- Divider -->
-    <div class="filter-row-divider"></div>
-
-    <!-- Row 2: Pipeline stage filters -->
-    <div class="filter-row filter-row-2">
-      <span class="stage-label">Pipeline Stage</span>
-      <div class="stage-pills" id="stage-pills">
+        <span class="pill-sep" aria-hidden="true"></span>
         <button class="filter-pill stage-pill" data-filter="stage:new">🆕 New</button>
         <button class="filter-pill stage-pill" data-filter="stage:contacted">📞 Contacted</button>
         <button class="filter-pill stage-pill" data-filter="stage:in_conversation">💬 In Conv.</button>
@@ -1818,8 +1822,33 @@
         <button class="filter-pill stage-pill" data-filter="stage:won">✅ Won</button>
         <button class="filter-pill stage-pill" data-filter="stage:lost">❌ Lost</button>
       </div>
+      <div class="pills-fade-right"></div>
     </div>
 
+    <!-- Right: view toggle, search, export, report, count -->
+    <div class="filter-right">
+      <div class="view-toggle">
+        <button class="btn-view active" id="btn-view-list" title="List view">≡ List</button>
+        <button class="btn-view" id="btn-view-kanban" title="Kanban view">⊞ Kanban</button>
+      </div>
+      <div class="search-wrap">
+        <svg class="search-icon" width="14" height="14" viewBox="0 0 20 20" fill="none">
+          <circle cx="9" cy="9" r="7" stroke="#9CA3AF" stroke-width="1.8"/>
+          <path d="M16 16l-3.5-3.5" stroke="#9CA3AF" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <input type="text" class="search-input" id="search-input"
+          placeholder="Search dealerships…" autocomplete="off" />
+        <span class="search-shortcut">⌘K</span>
+      </div>
+      <button class="btn-export-csv" id="btn-export-csv">⬇ Export CSV</button>
+      <button class="btn-report" id="btn-report">📄 Download Report</button>
+      <div class="results-meta" id="results-meta"></div>
+    </div>
+
+  </div>
+  <!-- Temporary dropdown: shown when collapsed + Filters▾ clicked -->
+  <div class="pills-dropdown" id="pills-dropdown">
+    <div class="pills-dropdown-inner" id="pills-dropdown-inner"></div>
   </div>
 </div>
 
@@ -2780,13 +2809,88 @@ document.getElementById('btn-top').addEventListener('click', () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 
+/* ── Collapsible filter bar ── */
+const STAGE_LABELS = {
+  'stage:new': '🆕 New', 'stage:contacted': '📞 Contacted',
+  'stage:in_conversation': '💬 In Conv.', 'stage:proposal_sent': '📝 Proposal',
+  'stage:won': '✅ Won', 'stage:lost': '❌ Lost',
+};
+
+function updateMiniActivePill() {
+  const el = document.getElementById('mini-active-pill');
+  if (!el) return;
+  let label = activeFilter === 'territory' ? '📍 Territory'
+            : STAGE_LABELS[activeFilter] || activeFilter;
+  el.textContent = label;
+}
+
+function closePillsDropdown() {
+  document.getElementById('pills-dropdown').classList.remove('open');
+  const btn = document.getElementById('btn-filters-toggle');
+  if (btn) btn.textContent = 'Filters ▾';
+}
+
+function openPillsDropdown() {
+  const dropdown = document.getElementById('pills-dropdown');
+  const inner    = document.getElementById('pills-dropdown-inner');
+  // Clone the current pill row into the dropdown
+  const src = document.getElementById('filter-pills');
+  inner.innerHTML = '';
+  Array.from(src.children).forEach(child => {
+    if (child.classList.contains('pill-sep')) {
+      const sep = document.createElement('span');
+      sep.className = 'pill-sep';
+      sep.setAttribute('aria-hidden', 'true');
+      inner.appendChild(sep);
+    } else if (child.tagName === 'BUTTON') {
+      const btn = child.cloneNode(true);
+      inner.appendChild(btn);
+    }
+  });
+  dropdown.classList.add('open');
+  document.getElementById('btn-filters-toggle').textContent = 'Filters ▴';
+}
+
+document.getElementById('btn-filters-toggle').addEventListener('click', () => {
+  const dropdown = document.getElementById('pills-dropdown');
+  dropdown.classList.contains('open') ? closePillsDropdown() : openPillsDropdown();
+});
+
+// Clicks inside the dropdown pill row apply the filter then close
+document.getElementById('pills-dropdown').addEventListener('click', e => {
+  const pill = e.target.closest('.filter-pill');
+  if (!pill) return;
+  activeFilter = pill.dataset.filter;
+  document.querySelectorAll('.filter-pill').forEach(p =>
+    p.classList.toggle('active', p.dataset.filter === activeFilter)
+  );
+  updateMiniActivePill();
+  renderFiltered();
+  closePillsDropdown();
+});
+
+// Close dropdown when clicking outside the filter bar
+document.addEventListener('click', e => {
+  if (!document.getElementById('filter-bar-wrap').contains(e.target)) closePillsDropdown();
+}, true);
+
+let _barCollapsed = false;
+window.addEventListener('scroll', () => {
+  const shouldCollapse = window.scrollY > 150;
+  if (shouldCollapse === _barCollapsed) return;
+  _barCollapsed = shouldCollapse;
+  document.getElementById('filter-bar-wrap').classList.toggle('collapsed', shouldCollapse);
+  if (!shouldCollapse) closePillsDropdown();
+}, { passive: true });
+
 /* ── Event wiring ── */
 document.querySelector('.filter-bar-wrap').addEventListener('click', e => {
   const pill = e.target.closest('.filter-pill');
-  if (!pill) return;
-  document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+  if (!pill || e.target.closest('#pills-dropdown')) return;
+  document.querySelectorAll('#filter-pills .filter-pill').forEach(p => p.classList.remove('active'));
   pill.classList.add('active');
   activeFilter = pill.dataset.filter;
+  updateMiniActivePill();
   renderFiltered();
 });
 
