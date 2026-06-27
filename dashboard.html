@@ -226,7 +226,7 @@
     .filter-bar {
       max-width: 960px;
       margin: 0 auto;
-      padding: 12px 16px 10px;
+      padding: 10px 16px;
       display: flex;
       flex-direction: column;
       gap: 0;
@@ -237,13 +237,26 @@
       align-items: center;
       gap: 10px;
     }
-    .filter-row-1 { padding-bottom: 10px; }
     .filter-row-divider {
       height: 1px;
-      background: #E8ECF4;
+      background: #E5E7EB;
       margin: 0 -16px;
     }
-    .filter-row-2 { padding-top: 10px; }
+
+    /* Row 0 — toolbar */
+    .filter-row-0 { padding-bottom: 8px; }
+    .filter-toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: auto;
+    }
+
+    /* Row 1 — signal pills */
+    .filter-row-1 { padding: 8px 0; }
+
+    /* Row 2 — stage pills */
+    .filter-row-2 { padding-top: 8px; }
 
     .stage-label {
       font-size: 10px;
@@ -258,7 +271,7 @@
     .filter-pills {
       display: flex;
       align-items: center;
-      gap: 7px;
+      gap: 8px;
       flex-wrap: wrap;
       flex: 1;
     }
@@ -1785,24 +1798,13 @@
 <div class="filter-bar-wrap">
   <div class="filter-bar">
 
-    <!-- Row 1: Signal type filters + search/export -->
-    <div class="filter-row filter-row-1">
-      <div class="filter-pills" id="filter-pills">
-        <button class="filter-pill active" data-filter="All" title="Show all opportunities">All</button>
-        <button class="filter-pill" data-filter="Ownership Change" title="Show dealerships with recent ownership changes">Ownership Change</button>
-        <button class="filter-pill" data-filter="Marketing Hire" title="Show dealerships hiring for marketing roles">Marketing Hire</button>
-        <button class="filter-pill" data-filter="Leadership Change" title="Show dealerships with new leadership">Leadership Change</button>
-        <button class="filter-pill" data-filter="Expansion" title="Show dealerships opening new locations">Expansion</button>
-        <button class="filter-pill" data-filter="Weak Digital" title="Show dealerships with weak digital presence">Weak Digital</button>
-        <button class="filter-pill hot-pill" data-filter="Hot Leads" title="Show dealerships with multiple signals detected">🔥 Hot Leads</button>
-        <button class="filter-pill" data-filter="Surging" title="Show dealerships with rapidly increasing signal mentions">📈 Surging</button>
-        <button class="filter-pill territory-pill" id="territory-filter-pill" data-filter="territory" title="Showing your territory — click to toggle" style="display:none">📍 Territory</button>
+    <!-- Row 0: Toolbar — view toggle, search, export, count -->
+    <div class="filter-row filter-row-0">
+      <div class="view-toggle">
+        <button class="btn-view active" id="btn-view-list" title="List view">≡ List</button>
+        <button class="btn-view" id="btn-view-kanban" title="Kanban view">⊞ Kanban</button>
       </div>
-      <div class="filter-right">
-        <div class="view-toggle">
-          <button class="btn-view active" id="btn-view-list" title="List view">≡ List</button>
-          <button class="btn-view" id="btn-view-kanban" title="Kanban view">⊞ Kanban</button>
-        </div>
+      <div class="filter-toolbar-right">
         <div class="search-wrap">
           <svg class="search-icon" width="14" height="14" viewBox="0 0 20 20" fill="none">
             <circle cx="9" cy="9" r="7" stroke="#9CA3AF" stroke-width="1.8"/>
@@ -1815,6 +1817,24 @@
         <button class="btn-export-csv" id="btn-export-csv">⬇ Export CSV</button>
         <button class="btn-report" id="btn-report">📄 Download Report</button>
         <div class="results-meta" id="results-meta"></div>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="filter-row-divider"></div>
+
+    <!-- Row 1: Signal type filters -->
+    <div class="filter-row filter-row-1">
+      <div class="filter-pills" id="filter-pills">
+        <button class="filter-pill active" data-filter="All" title="Show all opportunities">All</button>
+        <button class="filter-pill" data-filter="Ownership Change" title="Show dealerships with recent ownership changes">Ownership Change</button>
+        <button class="filter-pill" data-filter="Marketing Hire" title="Show dealerships hiring for marketing roles">Marketing Hire</button>
+        <button class="filter-pill" data-filter="Leadership Change" title="Show dealerships with new leadership">Leadership Change</button>
+        <button class="filter-pill" data-filter="Expansion" title="Show dealerships opening new locations">Expansion</button>
+        <button class="filter-pill" data-filter="Weak Digital" title="Show dealerships with weak digital presence">Weak Digital</button>
+        <button class="filter-pill hot-pill" data-filter="Hot Leads" title="Show dealerships with multiple signals detected">🔥 Hot Leads</button>
+        <button class="filter-pill" data-filter="Surging" title="Show dealerships with rapidly increasing signal mentions">📈 Surging</button>
+        <button class="filter-pill territory-pill" id="territory-filter-pill" data-filter="territory" title="Showing your territory — click to toggle" style="display:none">📍 Territory</button>
       </div>
     </div>
 
