@@ -1995,13 +1995,13 @@ document.getElementById('access-form').addEventListener('submit', async e => {
   const dismiss = document.getElementById('capture-bar-dismiss');
   const thanks  = document.getElementById('capture-bar-thanks');
 
-  if (localStorage.getItem('dh_capture_done')) return;
+  if (localStorage.getItem('dh_capture_shown')) return;
 
   const timer = setTimeout(() => bar.classList.add('visible'), 30000);
 
   dismiss.addEventListener('click', () => {
     bar.classList.remove('visible');
-    localStorage.setItem('dh_capture_done', '1');
+    localStorage.setItem('dh_capture_shown', '1');
     clearTimeout(timer);
   });
 
@@ -2030,7 +2030,7 @@ document.getElementById('access-form').addEventListener('submit', async e => {
     btn.style.display   = 'none';
     document.querySelector('.capture-bar-text').style.display = 'none';
     thanks.classList.add('show');
-    localStorage.setItem('dh_capture_done', '1');
+    localStorage.setItem('dh_capture_shown', '1');
     setTimeout(() => bar.classList.remove('visible'), 3000);
   });
 })();
