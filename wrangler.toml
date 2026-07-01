@@ -1,0 +1,6 @@
+name = "dealerhunters-pipeline-trigger"
+main = "workers/pipeline-trigger.js"
+compatibility_date = "2024-09-01"
+
+[triggers]
+crons = ["17 11 * * *"]

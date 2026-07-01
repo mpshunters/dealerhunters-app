@@ -1,8 +1,8 @@
 name: Keep Workflows Active
 
 on:
-  schedule:
-    - cron: "0 12 * * *"  # 7am Central — fires after both 11:17 and 11:47 UTC windows
+  # schedule:
+  #   - cron: "0 12 * * *"  # disabled — CF Worker now triggers daily_scrape.yml
   workflow_dispatch:
 
 permissions:
