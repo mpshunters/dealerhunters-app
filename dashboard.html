@@ -1780,11 +1780,14 @@
         <label class="platform-option" data-platform="apollo">
           <input type="radio" name="contactPlatform" value="apollo" /> Apollo.io
         </label>
+        <label class="platform-option" data-platform="google">
+          <input type="radio" name="contactPlatform" value="google" /> Google Search
+        </label>
         <label class="platform-option" data-platform="zoominfo">
           <input type="radio" name="contactPlatform" value="zoominfo" /> ZoomInfo
         </label>
         <label class="platform-option" data-platform="linkedin">
-          <input type="radio" name="contactPlatform" value="linkedin" /> LinkedIn Sales Navigator
+          <input type="radio" name="contactPlatform" value="linkedin" /> LinkedIn
         </label>
         <label class="platform-option" data-platform="hunter">
           <input type="radio" name="contactPlatform" value="hunter" /> Hunter.io
@@ -2176,8 +2179,9 @@ const PIN_ICON = `<svg width="10" height="13" viewBox="0 0 12 15" fill="none">
 /* ── Contact platform ── */
 const PLATFORM_LABELS = {
   apollo:   'Apollo.io',
+  google:   'Google Search',
   zoominfo: 'ZoomInfo',
-  linkedin: 'LinkedIn Sales Nav',
+  linkedin: 'LinkedIn',
   hunter:   'Hunter.io',
 };
 
@@ -2186,6 +2190,8 @@ let contactPlatform = localStorage.getItem('contactPlatform') || 'apollo';
 function getContactUrl(name, website) {
   const n = encodeURIComponent(name);
   switch (contactPlatform) {
+    case 'google':
+      return `https://www.google.com/search?q=${n}+%22general+manager%22+OR+%22marketing+director%22`;
     case 'zoominfo':
       return `https://www.zoominfo.com/companies?companyName=${n}`;
     case 'linkedin': {
@@ -2199,11 +2205,8 @@ function getContactUrl(name, website) {
       }
       return `https://hunter.io/search/${n}`;
     case 'apollo':
-    default: {
-      const titles = ['General Manager', 'Marketing Director', 'Dealer Principal']
-        .map(t => `person_titles[]=${encodeURIComponent(t)}`).join('&');
-      return `https://app.apollo.io/#/people?q_organization_name=${n}&${titles}`;
-    }
+    default:
+      return `https://app.apollo.io/#/companies?q_organization_name=${n}`;
   }
 }
 
