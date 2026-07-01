@@ -2187,9 +2187,11 @@ function getContactUrl(name, website) {
   const n = encodeURIComponent(name);
   switch (contactPlatform) {
     case 'zoominfo':
-      return `https://app.zoominfo.com/insights/search/company?companyName=${n}`;
-    case 'linkedin':
-      return `https://www.linkedin.com/sales/search/people?keywords=${n}&titleIncluded=General%20Manager`;
+      return `https://www.zoominfo.com/companies?companyName=${n}`;
+    case 'linkedin': {
+      const titleFilter = encodeURIComponent(JSON.stringify(['General Manager', 'Marketing Director']));
+      return `https://www.linkedin.com/search/results/people/?keywords=${n}&titleFilter=${titleFilter}`;
+    }
     case 'hunter':
       if (website) {
         const domain = website.replace(/^https?:\/\/(www\.)?/, '').replace(/\/.*$/, '');
@@ -2197,8 +2199,11 @@ function getContactUrl(name, website) {
       }
       return `https://hunter.io/search/${n}`;
     case 'apollo':
-    default:
-      return `https://app.apollo.io/#/people?organizationName=${n}&personTitles[]=General Manager&personTitles[]=Marketing Director`;
+    default: {
+      const titles = ['General Manager', 'Marketing Director', 'Dealer Principal']
+        .map(t => `person_titles[]=${encodeURIComponent(t)}`).join('&');
+      return `https://app.apollo.io/#/people?q_organization_name=${n}&${titles}`;
+    }
   }
 }
 
